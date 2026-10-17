@@ -10,4 +10,6 @@ output/*.mp4
 output/*.wav
 output/*.mp3
 output/*.png
+output/*.jpg
+output/*.jpeg
 !output/artifacts/
