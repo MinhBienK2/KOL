@@ -1,0 +1,13 @@
+
+__pycache__/
+*.pyc
+.pytest_cache/
+output/raw_clips/
+output/synced_clips/
+output/audio/
+output/keyframes/
+output/*.mp4
+output/*.wav
+output/*.mp3
+output/*.png
+!output/artifacts/

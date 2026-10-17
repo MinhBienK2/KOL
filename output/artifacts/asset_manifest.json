@@ -35,6 +35,11 @@
     }
   ],
   "audio_stems": [],
-  "raw_video_clips": [],
+  "raw_video_clips": [
+    "/home/minhbien/Documents/KOL/output/raw_clips/shot_01.mp4",
+    "/home/minhbien/Documents/KOL/output/raw_clips/shot_02.mp4",
+    "/home/minhbien/Documents/KOL/output/raw_clips/shot_03.mp4",
+    "/home/minhbien/Documents/KOL/output/raw_clips/shot_04.mp4"
+  ],
   "synced_video_clips": []
 }
