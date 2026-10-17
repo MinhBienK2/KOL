@@ -1,0 +1,49 @@
+{
+  "campaign_id": "campaign_lumina_mug_01",
+  "master_video_path": "/home/minhbien/Documents/KOL/output/final_commercial_master.mp4",
+  "file_size_bytes": 4974880,
+  "duration_seconds": 24.267,
+  "video_codec": "h264",
+  "audio_codec": "aac",
+  "width": 1080,
+  "height": 1920,
+  "aspect_ratio": "9:16",
+  "verification_gates": [
+    {
+      "gate_name": "technical_integrity_gate",
+      "passed": true,
+      "details": {
+        "width": 1080,
+        "height": 1920,
+        "video_codec": "h264",
+        "audio_codec": "aac",
+        "sample_rate": 48000,
+        "duration_seconds": 24.267,
+        "size_bytes": 4974880
+      },
+      "error_message": null
+    },
+    {
+      "gate_name": "character_consistency_gate",
+      "passed": true,
+      "details": {
+        "character_name": "Minh Anh",
+        "character_tag": "[KOL_MA]",
+        "total_keyframes": 4,
+        "all_files_exist": true,
+        "watermark_cleaned": true
+      },
+      "error_message": null
+    },
+    {
+      "gate_name": "continuity_gate",
+      "passed": true,
+      "details": {
+        "expected_beats": 4,
+        "actual_synced_clips": 4
+      },
+      "error_message": null
+    }
+  ],
+  "overall_status": "PASSED"
+}
