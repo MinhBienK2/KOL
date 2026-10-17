@@ -1,0 +1,39 @@
+{
+  "name": "Minh Anh",
+  "character_tag": "[KOL_MA]",
+  "role": "Lead Presenter / Protagonist",
+  "is_main": true,
+  "gender": "female",
+  "age_group": "youth",
+  "ethnicity": "Vietnamese",
+  "body_type": "Slim, well-proportioned, 165cm, natural posture",
+  "description": "Professional Vietnamese female KOL / presenter. Clean, modern, trustworthy aesthetic.",
+  "face_prompt": "Vietnamese young woman, early 20s, refined oval face shape, natural straight black collarbone-length bob hair, neat center-part, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin, calm intelligent and approachable expression, studio portrait lighting, 8k",
+  "appearance_details": "Crisp tailored white button-down collared dress shirt, long sleeves neatly fitted, dark navy blue tailored slim-fit trousers, polished dark brown loafers",
+  "portrait_image": "assets/characters/kol_main/portrait.png",
+  "identities": [
+    {
+      "identity_id": "kol_main_office",
+      "identity_name": "Office Professional",
+      "character_tag": "[KOL_MA_OFFICE]",
+      "appearance_details": "Crisp tailored white button-down collared dress shirt, dark navy blue tailored slim-fit trousers, polished dark brown loafers",
+      "reference_sheet": "assets/characters/kol_main/identities/default.png",
+      "turnaround_bust": "assets/characters/kol_main/identities/turnaround_bust_4panel.png",
+      "turnaround_body": "assets/characters/kol_main/identities/turnaround_body_3panel.png"
+    }
+  ],
+  "expressions": {
+    "grid": "assets/characters/kol_main/expressions/expressions_grid_2x3.png",
+    "neutral": "assets/characters/kol_main/expressions/01_neutral.jpg",
+    "smiling": "assets/characters/kol_main/expressions/02_smiling.jpg",
+    "surprised": "assets/characters/kol_main/expressions/03_surprised.jpg",
+    "thoughtful": "assets/characters/kol_main/expressions/04_looking_down.jpg",
+    "three_quarter": "assets/characters/kol_main/expressions/05_three_quarter.jpg",
+    "profile_90deg": "assets/characters/kol_main/expressions/06_profile_90deg.jpg"
+  },
+  "full_body_standings": {
+    "front": "assets/characters/kol_main/full_body/01_standing_front_0deg.jpg",
+    "side": "assets/characters/kol_main/full_body/02_standing_side_90deg.jpg",
+    "back": "assets/characters/kol_main/full_body/03_standing_back_180deg.jpg"
+  }
+}
