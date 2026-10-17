@@ -1,8 +1,8 @@
 {
   "campaign_id": "campaign_lumina_mug_01",
   "master_video_path": "/home/minhbien/Documents/KOL/output/final_commercial_master.mp4",
-  "file_size_bytes": 4974880,
-  "duration_seconds": 24.267,
+  "file_size_bytes": 5049458,
+  "duration_seconds": 23.167,
   "video_codec": "h264",
   "audio_codec": "aac",
   "width": 1080,
@@ -18,8 +18,8 @@
         "video_codec": "h264",
         "audio_codec": "aac",
         "sample_rate": 48000,
-        "duration_seconds": 24.267,
-        "size_bytes": 4974880
+        "duration_seconds": 23.167,
+        "size_bytes": 5049458
       },
       "error_message": null
     },
