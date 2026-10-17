@@ -1,62 +1,97 @@
-# KOL Character Studio (DramaClaw Production Standard)
+# KOL Character Studio & Autonomous Commercial Video Director
 
-Bộ tài nguyên nhân vật chuẩn hóa theo kiến trúc sản xuất video của **DramaClaw**, phục vụ tạo ảnh cảnh quay (First Frame) và làm video nhất quán (Image-to-Video).
+Hệ thống sản xuất video quảng cáo thương mại tự trị (Autonomous Commercial Video Pipeline) tích hợp kiến trúc điều phối của **OpenMontage** và kỹ thuật khóa danh tính nhân vật & kiểm định thị giác của **DramaClaw**.
 
 ---
 
-## 1. Cấu trúc thư mục chuẩn hóa
+## 1. Kiến trúc Pipeline 8 Bước Thống Nhất
+
+```
+[1. Briefing & Phân tích USP]          ──> output/artifacts/brief.json
+               │
+               ▼
+[2. Biên kịch High-Conversion Script]  ──> output/artifacts/script.json
+               │
+               ▼
+[3. Phân cảnh Storyboard 6-Part]      ──> output/artifacts/scene_plan.json
+               │
+               ▼
+[4. Khóa KOL & Keyframe 9:16]          ──> output/artifacts/asset_manifest.json + Telea Inpainting
+               │
+               ▼
+[5. Render Video I2V Phân đoạn]        ──> output/raw_clips/shot_XX.mp4
+               │
+               ▼
+[6. Neural TTS & Lip-sync Match]       ──> output/synced_clips/shot_XX.mp4
+               │
+               ▼
+[7. FFmpeg Dựng phim & Audio Ducking]  ──> output/artifacts/edit_decisions.json + final_commercial_master.mp4
+               │
+               ▼
+[8. Kiểm định Độc lập & Đóng gói]      ──> output/artifacts/render_report.json + publish_log.json
+```
+
+---
+
+## 2. Cách Vận Hành Pipeline Tự Trị
+
+### Chạy toàn bộ chiến dịch bằng Director CLI:
+```bash
+# Chạy toàn bộ pipeline từ Step 1 đến Step 8:
+python3 tools/director.py --campaign campaign_lumina_mug_01 --product "Ly Giữ Nhiệt Thông Minh Lumina Pro"
+
+# Chạy với chế độ sinh video qua API MiniMax Hailuo:
+python3 tools/director.py --video-mode api
+
+# Phục hồi / chạy tiếp từ một bước cụ thể (ví dụ Step 6):
+python3 tools/director.py --from-stage 6
+```
+
+---
+
+## 3. Chạy Kiểm Thử Tự Động (TDD Test Suite)
+
+Toàn bộ các module đều được kiểm thử tự động với Pytest:
+
+```bash
+python3 -m pytest tests/ -v
+```
+
+---
+
+## 4. Cấu Trúc Thư Mục & Artifacts Chuẩn Hóa
 
 ```
 KOL/
-├── assets/characters/kol_main/
-│   ├── character.json                   # Hồ sơ nhân vật (Schema DramaClaw: face_prompt + identity)
-│   ├── portrait.png                     # Face Anchor 1:1 (khóa nhận diện khuôn mặt bất biến)
-│   │
-│   ├── identities/                      # Thư mục Identity (trang phục & mỏ neo hình thể)
-│   │   ├── default.png                  # Turnaround sheet 4-panel bán thân chuẩn DramaClaw
-│   │   ├── turnaround_bust_4panel.png   # 4 góc bán thân (0°, 45°, 90°, 180°)
-│   │   └── turnaround_body_3panel.png   # 3 góc toàn thân đứng thẳng (0°, 90°, 180°)
-│   │
-│   ├── expressions/                     # Bộ biểu cảm khuôn mặt sạch sẽ (không có bàn tay)
-│   │   ├── expressions_grid_2x3.png     # Lưới 6 sắc thái: Neutral, Smiling, Surprised, Looking Down...
-│   │   ├── 01_neutral.jpg
-│   │   ├── 02_smiling.jpg
-│   │   ├── 03_surprised.jpg
-│   │   └── ...
-│   │
-│   └── full_body/                       # Ảnh toàn thân đứng thẳng riêng lẻ
-│       ├── 01_standing_front_0deg.jpg
-│       ├── 02_standing_side_90deg.jpg
-│       └── 03_standing_back_180deg.jpg
-│
+├── CONTEXT.md                       # Thuật ngữ chuyên ngành (TVC, Hook, I2V, Telea Inpainting, Ducking)
+├── docs/adr/                        # Hồ sơ quyết định kiến trúc (ADR 0001 - 0004)
+├── assets/characters/kol_main/      # Hồ sơ và mỏ neo danh tính KOL Minh Anh ([KOL_MA])
+│   ├── character.json
+│   ├── portrait.png
+│   ├── identities/
+│   └── expressions/
+├── assets/audio/                    # Nhạc nền BGM & hiệu ứng âm thanh SFX
+│   ├── music/commercial_bgm.mp3
+│   └── sfx/pop.mp3, chime.mp3
+├── pipeline/                        # Mã nguồn pipeline tự trị
+│   ├── config.py
+│   ├── schemas.py                   # Canonical Pydantic Schemas
+│   ├── briefing.py                  # Step 1: Phân tích USP
+│   ├── scriptwriter.py              # Step 2: Kịch bản chuyển đổi cao
+│   ├── storyboard.py                # Step 3: Phân cảnh 6 lớp DramaClaw
+│   ├── identity_keyframe.py         # Step 4: Khóa danh tính & Telea Inpainting
+│   ├── video_engine.py              # Step 5: Render video I2V
+│   ├── audio_lip_sync.py            # Step 6: Neural TTS & đồng bộ khẩu hình
+│   ├── composer.py                  # Step 7: FFmpeg ducking & typography
+│   ├── verification.py              # Step 8: Bộ 3 cổng kiểm định độc lập
+│   └── director.py                  # Orchestrator điều phối toàn trình
 ├── tools/
-│   └── dramaclaw_shot_builder.py        # Tool tạo prompt DramaClaw + sinh First Frame qua MiniMax + xóa watermark
-│
-├── output/                              # Thư mục chứa các First Frame đã render
-└── archive_raw/                         # Thư mục lưu trữ các file dư thừa/lỗi thời
+│   ├── director.py                  # CLI điều hành Tổng Đạo Diễn
+│   ├── dramaclaw_shot_builder.py
+│   └── generate_video.py
+├── output/
+│   ├── final_commercial_master.mp4  # Video thành phẩm xuất xưởng (1080x1920, H.264, AAC)
+│   ├── thumbnail_master.jpg         # Poster frame xuất bản
+│   └── artifacts/                   # 7 Canonical JSON Artifacts
+└── tests/                           # 13 Unit & Integration tests
 ```
-
----
-
-## 2. Cách sinh First Frame (Ảnh mốc cảnh quay)
-
-Sử dụng tool `dramaclaw_shot_builder.py` để tự động tạo prompt và gọi model MiniMax:
-
-```bash
-# Xem prompt chuẩn DramaClaw:
-python3 tools/dramaclaw_shot_builder.py --scene "standing at a minimalist coffee counter, smiling warm"
-
-# Sinh trực tiếp ảnh First Frame sạch (tự động xóa watermark):
-python3 tools/dramaclaw_shot_builder.py \
-  --scene "standing at a minimalist coffee counter, smiling warm" \
-  --output output/shot_coffee_01.png \
-  --generate
-```
-
----
-
-## 3. Luồng đưa sang Video (Image-to-Video)
-
-1. Lấy ảnh thành phẩm trong thư mục `output/` (ví dụ: `output/shot_coffee_01.png`).
-2. Nạp tấm ảnh này vào **Kling**, **Wan 2.1**, **Runway Gen-3** hoặc **Seedance 2.0**.
-3. Nhân vật trong video sẽ chuyển động tự nhiên và đúng 100% diện mạo khuôn mặt gốc.
