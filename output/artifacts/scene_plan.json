@@ -1,0 +1,65 @@
+{
+  "campaign_id": "campaign_lumina_mug_01",
+  "shots": [
+    {
+      "shot_id": "shot_01",
+      "scene_id": "shot_01_hook",
+      "shot_type": "Close-up with presenter reaction",
+      "angle": "Eye level slightly low angle",
+      "camera_motion": "Slow smooth push-in",
+      "lighting": "Cool corporate morning daylight with soft rim light",
+      "character_tag": "[KOL_MA]",
+      "identity_lock_directive": "Same character, consistent facial structure, Vietnamese young woman, early 20s, refined oval face shape, natural straight black collarbone-length bob hair, neat center-part, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin, calm intelligent and approachable expression, studio portrait lighting, 8k",
+      "style_constraints": "cinematic photorealistic, modern minimalist office, high-end commercial aesthetic, studio softbox lighting, 8k, tack sharp focus, clean background | Avoid: watermark, text, logo overlay, deformed limbs, bad hands, blurry, lowres, oversaturated, 3d render, cartoon",
+      "scene_description": "[KOL_MA] sitting at a modern wooden office desk looking at a cold cup of coffee, touching the cold mug and shaking her head with an expressive surprised and disappointed look",
+      "prompt_6part": "Generate a [9:16] aspect ratio cinematic commercial shot. Character: [KOL_MA]. Identity lock: Same character, consistent facial structure, Vietnamese young woman, early 20s, refined oval face shape, natural straight black collarbone-length bob hair, neat center-part, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin, calm intelligent and approachable expression, studio portrait lighting, 8k. Style: cinematic photorealistic, modern minimalist office, high-end commercial aesthetic, studio softbox lighting, 8k, tack sharp focus, clean background. Avoid: watermark, text, logo overlay, deformed limbs, bad hands, blurry, lowres, oversaturated, 3d render, cartoon. Scene action: [KOL_MA] sitting at a modern wooden office desk looking at a cold cup of coffee, touching the cold mug and shaking her head with an expressive surprised and disappointed look. Camera choreography: Camera motion: slow push-in, shallow depth of field, 4k 60fps feel.",
+      "estimated_duration": 3.5,
+      "reference_expression": "assets/characters/kol_main/expressions/03_surprised.jpg"
+    },
+    {
+      "shot_id": "shot_02",
+      "scene_id": "shot_02_pain",
+      "shot_type": "Over-the-shoulder POV to desk",
+      "angle": "High-angle POV looking down to workspace",
+      "camera_motion": "Subtle handheld tracking tilt",
+      "lighting": "Contrasty office daylight highlighting liquid condensation",
+      "character_tag": "[KOL_MA]",
+      "identity_lock_directive": "Same character, consistent facial structure, Vietnamese young woman, early 20s, refined oval face shape, natural straight black collarbone-length bob hair, neat center-part, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin, calm intelligent and approachable expression, studio portrait lighting, 8k",
+      "style_constraints": "cinematic photorealistic, modern minimalist office, high-end commercial aesthetic, studio softbox lighting, 8k, tack sharp focus, clean background | Avoid: watermark, text, logo overlay, deformed limbs, bad hands, blurry, lowres, oversaturated, 3d render, cartoon",
+      "scene_description": "Close-up of workspace where melting water droplets drip from a cold cup onto important paper reports and laptop keyboard, [KOL_MA] hands gently wiping the droplets with a tissue with frustrated gesture",
+      "prompt_6part": "Generate a [9:16] aspect ratio cinematic commercial shot. Character: [KOL_MA]. Identity lock: Same character, consistent facial structure, Vietnamese young woman, early 20s, refined oval face shape, natural straight black collarbone-length bob hair, neat center-part, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin, calm intelligent and approachable expression, studio portrait lighting, 8k. Style: cinematic photorealistic, modern minimalist office, high-end commercial aesthetic, studio softbox lighting, 8k, tack sharp focus, clean background. Avoid: watermark, text, logo overlay, deformed limbs, bad hands, blurry, lowres, oversaturated, 3d render, cartoon. Scene action: Close-up of workspace where melting water droplets drip from a cold cup onto important paper reports and laptop keyboard, [KOL_MA] hands gently wiping the droplets with a tissue with frustrated gesture. Camera choreography: Camera motion: steady tracking pan, crisp macro focus on droplets, dynamic commercial pacing.",
+      "estimated_duration": 5.0,
+      "reference_expression": "assets/characters/kol_main/expressions/04_looking_down.jpg"
+    },
+    {
+      "shot_id": "shot_03",
+      "scene_id": "shot_03_solution",
+      "shot_type": "Medium Glamour Product Presenter Shot",
+      "angle": "Straight on slightly dynamic three-quarter angle",
+      "camera_motion": "Cinematic slow arc orbit with shallow DOF",
+      "lighting": "Warm studio luxury backlight, soft beauty key light",
+      "character_tag": "[KOL_MA]",
+      "identity_lock_directive": "Same character, consistent facial structure, Vietnamese young woman, early 20s, refined oval face shape, natural straight black collarbone-length bob hair, neat center-part, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin, calm intelligent and approachable expression, studio portrait lighting, 8k",
+      "style_constraints": "cinematic photorealistic, modern minimalist office, high-end commercial aesthetic, studio softbox lighting, 8k, tack sharp focus, clean background | Avoid: watermark, text, logo overlay, deformed limbs, bad hands, blurry, lowres, oversaturated, 3d render, cartoon",
+      "scene_description": "[KOL_MA] holding the sleek matte-finish Lumina Smart Mug with both hands, gently tapping the glossy touch LED lid that illuminates '65°C', taking a warm sip and smiling with immense satisfaction",
+      "prompt_6part": "Generate a [9:16] aspect ratio cinematic commercial shot. Character: [KOL_MA]. Identity lock: Same character, consistent facial structure, Vietnamese young woman, early 20s, refined oval face shape, natural straight black collarbone-length bob hair, neat center-part, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin, calm intelligent and approachable expression, studio portrait lighting, 8k. Style: cinematic photorealistic, modern minimalist office, high-end commercial aesthetic, studio softbox lighting, 8k, tack sharp focus, clean background. Avoid: watermark, text, logo overlay, deformed limbs, bad hands, blurry, lowres, oversaturated, 3d render, cartoon. Scene action: [KOL_MA] holding the sleek matte-finish Lumina Smart Mug with both hands, gently tapping the glossy touch LED lid that illuminates '65°C', taking a warm sip and smiling with immense satisfaction. Camera choreography: Camera motion: slow cinematic orbit zoom-in, smooth floating stabilizer movement, high luxury commercial feel.",
+      "estimated_duration": 12.0,
+      "reference_expression": "assets/characters/kol_main/expressions/02_smiling.jpg"
+    },
+    {
+      "shot_id": "shot_04",
+      "scene_id": "shot_04_cta",
+      "shot_type": "Medium Presenter CTA Shot",
+      "angle": "Eye level centered hero angle",
+      "camera_motion": "Slow forward push-in with cheerful natural posture",
+      "lighting": "Bright radiant commercial key lighting, vibrant and trustworthy",
+      "character_tag": "[KOL_MA]",
+      "identity_lock_directive": "Same character, consistent facial structure, Vietnamese young woman, early 20s, refined oval face shape, natural straight black collarbone-length bob hair, neat center-part, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin, calm intelligent and approachable expression, studio portrait lighting, 8k",
+      "style_constraints": "cinematic photorealistic, modern minimalist office, high-end commercial aesthetic, studio softbox lighting, 8k, tack sharp focus, clean background | Avoid: watermark, text, logo overlay, deformed limbs, bad hands, blurry, lowres, oversaturated, 3d render, cartoon",
+      "scene_description": "[KOL_MA] standing upright in professional tailored office attire, holding up the Lumina Smart Mug toward the camera, smiling warmly and gesturing with invitation to check the link below",
+      "prompt_6part": "Generate a [9:16] aspect ratio cinematic commercial shot. Character: [KOL_MA]. Identity lock: Same character, consistent facial structure, Vietnamese young woman, early 20s, refined oval face shape, natural straight black collarbone-length bob hair, neat center-part, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin, calm intelligent and approachable expression, studio portrait lighting, 8k. Style: cinematic photorealistic, modern minimalist office, high-end commercial aesthetic, studio softbox lighting, 8k, tack sharp focus, clean background. Avoid: watermark, text, logo overlay, deformed limbs, bad hands, blurry, lowres, oversaturated, 3d render, cartoon. Scene action: [KOL_MA] standing upright in professional tailored office attire, holding up the Lumina Smart Mug toward the camera, smiling warmly and gesturing with invitation to check the link below. Camera choreography: Camera motion: gentle push-in, perfect centering for bottom CTA badge and promo graphic.",
+      "estimated_duration": 6.5,
+      "reference_expression": "assets/characters/kol_main/expressions/02_smiling.jpg"
+    }
+  ]
+}
