@@ -1,0 +1,40 @@
+{
+  "campaign_id": "campaign_lumina_mug_01",
+  "keyframes": [
+    {
+      "shot_id": "shot_01",
+      "image_path": "/home/minhbien/Documents/KOL/assets/characters/kol_main/expressions/03_surprised.jpg",
+      "cleaned_image_path": "/home/minhbien/Documents/KOL/output/keyframes/shot_01_clean.png",
+      "watermark_removed": true,
+      "width": 1080,
+      "height": 1920
+    },
+    {
+      "shot_id": "shot_02",
+      "image_path": "/home/minhbien/Documents/KOL/assets/characters/kol_main/expressions/04_looking_down.jpg",
+      "cleaned_image_path": "/home/minhbien/Documents/KOL/output/keyframes/shot_02_clean.png",
+      "watermark_removed": true,
+      "width": 1080,
+      "height": 1920
+    },
+    {
+      "shot_id": "shot_03",
+      "image_path": "/home/minhbien/Documents/KOL/assets/characters/kol_main/expressions/02_smiling.jpg",
+      "cleaned_image_path": "/home/minhbien/Documents/KOL/output/keyframes/shot_03_clean.png",
+      "watermark_removed": true,
+      "width": 1080,
+      "height": 1920
+    },
+    {
+      "shot_id": "shot_04",
+      "image_path": "/home/minhbien/Documents/KOL/assets/characters/kol_main/expressions/02_smiling.jpg",
+      "cleaned_image_path": "/home/minhbien/Documents/KOL/output/keyframes/shot_04_clean.png",
+      "watermark_removed": true,
+      "width": 1080,
+      "height": 1920
+    }
+  ],
+  "audio_stems": [],
+  "raw_video_clips": [],
+  "synced_video_clips": []
+}
