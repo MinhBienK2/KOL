@@ -1,0 +1,75 @@
+{
+  "character_id": "kol_main",
+  "name": "KOL Main Character",
+  "version": "2.0.0",
+  "audit_status": "Cleaned & Harmonized",
+  "anchors": {
+    "face_anchor": "kol_face_1024x1024.jpg",
+    "turnaround_bust_4panel": "composite/character_turnaround_bust_4panel.jpg",
+    "turnaround_body_3panel": "composite/character_turnaround_body_3panel.jpg",
+    "expressions_grid": "composite/character_expressions_grid_2x3.jpg"
+  },
+  "tier_1_core_references": {
+    "kol_face_1024x1024.jpg": {
+      "role": "face_id_anchor",
+      "framing": "face_portrait_1x1",
+      "purpose": "Khuôn mặt cận cảnh 1:1, dùng để khóa Face ID cho InsightFace / IP-Adapter / Avatar"
+    },
+    "ref_01_front_0deg.jpg": {
+      "role": "bust_front_neutral",
+      "framing": "bust_head_and_shoulders",
+      "purpose": "Bán thân chính diện neutral chuẩn tỉ lệ, dùng làm mốc cho mọi cảnh cận/trung"
+    },
+    "ref_02_three_quarter_45deg.jpg": {
+      "role": "bust_3quarter_45deg",
+      "framing": "bust_head_and_shoulders",
+      "purpose": "Bán thân nghiêng 45°, dùng cho các cảnh hội thoại đối đáp điện ảnh"
+    },
+    "ref_03_full_body.jpg": {
+      "role": "full_body_front",
+      "framing": "full_body_standing",
+      "purpose": "Toàn thân chính diện head-to-toe, khóa tỷ lệ cơ thể và trang phục quần tây áo sơ mi"
+    },
+    "ref_04_side_profile_90deg.jpg": {
+      "role": "bust_side_profile_90deg",
+      "framing": "bust_head_and_shoulders",
+      "purpose": "Bán thân nghiêng 90°, khóa sống mũi, góc cằm, góc nhìn ngang"
+    },
+    "ref_07_back_view_180deg.jpg": {
+      "role": "full_body_back_180deg",
+      "framing": "full_body_standing",
+      "purpose": "Toàn thân sau lưng 180°, khóa kiểu tóc sau, sống lưng, trang phục sau"
+    },
+    "ref_05_smiling_front.jpg": {
+      "role": "expression_smiling",
+      "framing": "bust_head_and_shoulders",
+      "purpose": "Bán thân nụ cười tự nhiên, không vướng bàn tay"
+    }
+  },
+  "tier_2_secondary_references": {
+    "ref_08_side_body_profile_90deg.jpg": {
+      "role": "full_body_side_90deg",
+      "framing": "full_body_standing",
+      "purpose": "Toàn thân nghiêng 90°, dùng cho cảnh bước đi ngang khung hình"
+    },
+    "ref_11_looking_down_pitch.jpg": {
+      "role": "expression_looking_down",
+      "framing": "bust_head_and_shoulders",
+      "purpose": "Nhìn xuống, dùng cho cảnh đọc sách, bấm điện thoại, suy tư"
+    },
+    "ref_13_surprised_reaction.jpg": {
+      "role": "expression_surprised",
+      "framing": "bust_head_and_shoulders",
+      "purpose": "Ngạc nhiên / giật mình kịch tính"
+    }
+  },
+  "tier_3_redundant_files": {
+    "ref_06_seated_pose.jpg": "Đã loại bỏ khỏi Turnaround Sheet để giữ đồng nhất tư thế đứng thẳng.",
+    "ref_09_three_quarter_left_45deg.jpg": "Trùng lặp đối xứng với ref_02. Không cần thiết cho AI.",
+    "ref_10_speaking_hand_gesture.jpg": "Trùng nụ cười với ref_05 nhưng thừa tay, dễ khiến AI sinh tật tay thừa.",
+    "ref_12_looking_up_low_angle.jpg": "Góc ngước nhìn dễ làm AI méo cằm, chỉ dùng khi có kịch bản đặc thù."
+  },
+  "missing_for_future": [
+    "Toàn thân nghiêng 45° (Three-Quarter Full Body) - để hoàn thiện bộ xoay toàn thân 4 góc chuẩn"
+  ]
+}
