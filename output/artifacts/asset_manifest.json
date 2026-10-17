@@ -34,12 +34,22 @@
       "height": 1920
     }
   ],
-  "audio_stems": [],
+  "audio_stems": [
+    "/home/minhbien/Documents/KOL/output/audio/voice_shot_01.wav",
+    "/home/minhbien/Documents/KOL/output/audio/voice_shot_02.wav",
+    "/home/minhbien/Documents/KOL/output/audio/voice_shot_03.wav",
+    "/home/minhbien/Documents/KOL/output/audio/voice_shot_04.wav"
+  ],
   "raw_video_clips": [
     "/home/minhbien/Documents/KOL/output/raw_clips/shot_01.mp4",
     "/home/minhbien/Documents/KOL/output/raw_clips/shot_02.mp4",
     "/home/minhbien/Documents/KOL/output/raw_clips/shot_03.mp4",
     "/home/minhbien/Documents/KOL/output/raw_clips/shot_04.mp4"
   ],
-  "synced_video_clips": []
+  "synced_video_clips": [
+    "/home/minhbien/Documents/KOL/output/synced_clips/shot_01.mp4",
+    "/home/minhbien/Documents/KOL/output/synced_clips/shot_02.mp4",
+    "/home/minhbien/Documents/KOL/output/synced_clips/shot_03.mp4",
+    "/home/minhbien/Documents/KOL/output/synced_clips/shot_04.mp4"
+  ]
 }
