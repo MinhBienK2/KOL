@@ -56,21 +56,22 @@ def upload_first_frame(image_path: str | Path) -> str:
 
 
 def submit_video_job(
-    image_url: str,
     prompt: str,
+    image_url: str | None = None,
     aspect_ratio: str = "9:16",
     duration: int = 6,
-    model: str = "MiniMax-Hailuo-2.3"
+    model: str = "MiniMax-Hailuo-2.3",
 ) -> str:
+    valid_duration = 10 if duration >= 8.5 else 6
     url = f"{API_BASE_URL.rstrip('/')}/v1/media/video"
-    payload = {
+    payload: dict = {
         "model": model,
         "prompt": prompt,
-        "input_image": image_url,
         "aspect_ratio": aspect_ratio,
-        "duration": duration,
+        "duration": valid_duration,
     }
-
+    if image_url:
+        payload["input_image"] = image_url
     req = urllib.request.Request(
         url,
         data=json.dumps(payload).encode("utf-8"),

@@ -10,6 +10,8 @@ import numpy as np
 from PIL import Image
 
 from pipeline.config import ARTIFACTS_DIR, BASE_DIR, CHARACTER_PATH, KEYFRAMES_DIR
+from pipeline.archetypes import CharacterRole, ProductArchetype
+from pipeline.wardrobe import resolve_wardrobe_and_environment
 from pipeline.schemas import AssetManifestArtifact, KeyframeAsset, ScenePlanArtifact
 from tools.dramaclaw_shot_builder import clean_watermark_inpaint
 
@@ -59,8 +61,10 @@ def prepare_9_16_frame(
 
     out_path = Path(out_img_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    cv2.imwrite(str(out_path), bg_cv)
-
+    if out_path.suffix.lower() in (".jpg", ".jpeg"):
+        cv2.imwrite(str(out_path), bg_cv, [cv2.IMWRITE_JPEG_QUALITY, 92])
+    else:
+        cv2.imwrite(str(out_path), bg_cv)
     # Clean bottom-right watermark area with Telea Inpainting
     clean_watermark_inpaint(out_path, out_path)
 
@@ -90,18 +94,51 @@ def generate_clean_keyframes(
         char_data = json.load(f)
 
     default_portrait = BASE_DIR / char_data.get("portrait_image", "assets/characters/kol_main/portrait.png")
+    # Resolve active wardrobe and staging profile from script.json
+    script_file = target_artifacts_dir / "script.json"
+    archetype_val = ProductArchetype.GENERAL_COMMERCIAL
+    if script_file.exists():
+        try:
+            with open(script_file, "r", encoding="utf-8") as f:
+                s_data = json.load(f)
+                archetype_val = ProductArchetype(s_data.get("archetype", "general_commercial"))
+        except Exception:
+            pass
+
+    wardrobe, environment = resolve_wardrobe_and_environment(archetype_val)
 
     keyframe_assets: List[KeyframeAsset] = []
 
     for shot in scene_plan.shots:
-        ref_path = default_portrait
+        is_prod_only = getattr(shot, "character_role", None) == CharacterRole.PRODUCT_ONLY or (
+            hasattr(shot.character_role, "value") and shot.character_role.value == "product_only"
+        )
+        # Authoritative reference selection: 100% locked to canonical KOL Minh Anh
+        char_base = BASE_DIR / "assets" / "characters" / "kol_main"
+        archive_base = BASE_DIR / "archive_raw"
+
+        # Map shot narrative beat to Minh Anh's canonical visual anchors:
+        kol_beat_map = {
+            "shot_01": archive_base / "ref_10_speaking_hand_gesture.jpg",
+            "shot_02": char_base / "full_body" / "01_standing_front_0deg.jpg",
+            "shot_03": archive_base / "ref_10_speaking_hand_gesture.jpg",
+            "shot_04": char_base / "expressions" / "04_looking_down.jpg",
+            "shot_05": archive_base / "ref_09_three_quarter_left_45deg.jpg",
+            "shot_06": char_base / "expressions" / "02_smiling.jpg",
+        }
+
         if shot.reference_expression:
             custom_ref = BASE_DIR / shot.reference_expression
             if custom_ref.exists():
                 ref_path = custom_ref
+            else:
+                ref_path = kol_beat_map.get(shot.shot_id, default_portrait)
+        else:
+            ref_path = kol_beat_map.get(shot.shot_id, default_portrait)
 
-        raw_keyframe_path = target_keyframes_dir / f"{shot.shot_id}_raw.png"
-        clean_keyframe_path = target_keyframes_dir / f"{shot.shot_id}_clean.png"
+        if not ref_path or not ref_path.exists():
+            ref_path = default_portrait
+        clean_keyframe_path = target_keyframes_dir / f"{shot.shot_id}_clean.jpg"
 
         # Format and fit into 9:16 target with Telea Inpainting
         w, h = prepare_9_16_frame(ref_path, clean_keyframe_path, target_width=1080, target_height=1920)
@@ -116,7 +153,6 @@ def generate_clean_keyframes(
                 height=h,
             )
         )
-
     manifest = AssetManifestArtifact(
         campaign_id=scene_plan.campaign_id,
         keyframes=keyframe_assets,

@@ -1,0 +1,117 @@
+{
+  "campaign_id": "campaign_blazer_minhanh_master",
+  "product_url": "https://www.tiktok.com/?_r=1",
+  "product_intel": {
+    "title": "Áo Khoác Blazer Nữ Form Rộng Phong Cách Hàn Quốc Vải Tuyết Mưa",
+    "brand": "Korean Fashion Studio",
+    "category": "Women's Blazers & Outerwear",
+    "product_archetype": "fashion_apparel",
+    "pricing": {
+      "current_price": 289000.0,
+      "original_price": 450000.0,
+      "currency": "VND",
+      "discount_percent": 36,
+      "price_tier": "mid-range"
+    },
+    "features": [
+      "Form rộng chuẩn phong cách Hàn Quốc tôn dáng",
+      "Chất vải tuyết mưa cao cấp chống nhăn tuyệt đối",
+      "Đệm vai nhẹ giúp giữ dáng áo đứng phom chuẩn mực",
+      "Thiết kế đa năng dễ dàng phối cùng áo sơ mi công sở hoặc áo thun dạo phố"
+    ],
+    "dramatic_benefits": [
+      "Biến hóa diện mạo thành cô nàng công sở thanh lịch, tự tin và đầy khí chất chỉ trong 3 giây khoác áo",
+      "Thoải mái ngồi làm việc cả ngày hay di chuyển bằng xe máy mà không lo áo bị nhăn nhúm, mất phom",
+      "Che triệt để khuyết điểm bắp tay to và vòng 2 chưa thon gọn nhờ đường cắt may form rộng thông minh"
+    ],
+    "target_personas": [
+      "Nữ nhân viên công sở 22-35 tuổi yêu thích phong cách tối giản, thanh lịch nhưng vẫn hiện đại",
+      "Bạn trẻ Gen Z thích phối đồ streetwear, đi cà phê, chụp ảnh sống ảo với phong cách Hàn Quốc"
+    ],
+    "awareness_level": "Problem Aware",
+    "objection_matrix": [
+      {
+        "objection": "Mặc áo form rộng sợ bị nuốt dáng hoặc nhìn bị thô cứng, già nua.",
+        "counter_evidence": "Miếng đệm vai nhẹ tỉ lệ chuẩn cùng đường chiết eo suông giúp định hình vai thẳng đứng mà vẫn giữ độ rủ tự nhiên.",
+        "demonstration_technique": "So sánh trước/sau trên cùng một người: Áo thường rũ rượi làm vai xuôi mất dáng vs Blazer khoác lên giúp bờ vai vuông vức, lưng thẳng và cao ráo tức thì."
+      },
+      {
+        "objection": "Vải tuyết mưa dễ bị giặt xù lông hoặc nhăn nheo sau khi ngồi lâu.",
+        "counter_evidence": "Cấu trúc sợi dệt đôi mật độ cao của vải tuyết mưa cao cấp chịu lực đàn hồi tốt và chống đứt gãy sợi vải.",
+        "demonstration_technique": "Cực đoan: Người mẫu vo tròn vặn chặt tay áo blazer trong 10 giây trên camera, sau đó thả ra và rũ nhẹ—bề mặt vải lập tức phẳng lì không một nếp gấp."
+      },
+      {
+        "objection": "Áo khoác blazer thường gây nóng bí khi mặc mùa hè hoặc đi ngoài đường.",
+        "counter_evidence": "Chất vải tuyết mưa thoáng khí, không lót dầy nén ép, tạo khoảng trống lưu thông không khí giữa áo và cơ thể.",
+        "demonstration_technique": "Cận cảnh rọi đèn pin xuyên qua chất vải để thấy độ thoáng khí và trọng lượng siêu nhẹ khi đung đưa trước quạt gió."
+      }
+    ],
+    "sensory_anchors": [
+      "Tiếng 'sột soạt' mượt mà khi vuốt tay qua bề mặt vải tuyết mưa đanh mịn",
+      "Cú rũ áo nghe phập mạnh đầy sức sống khi đưa áo ra khỏi tủ đồ",
+      "Cận cảnh nếp gấp áo tự nhả phẳng lì ngay khi buông tay",
+      "Cảm giác êm ái nhẹ nhàng của lớp đệm vai nâng đỡ dáng áo đứng chuẩn"
+    ]
+  },
+  "competitor_landscape": {
+    "saturated_angles": [
+      "Boring OOTD lookbooks with chill lo-fi background music and zero talking",
+      "Generic '3 ways to style a blazer for office workers' slideshows",
+      "Over-edited studio try-on hauls on ultra-skinny models that don't reflect real body types"
+    ],
+    "competitor_weaknesses": [
+      "Cheap blazers lack internal shoulder structure, making buyers look slouched or boxy",
+      "Thin fabric wrinkles instantly after 15 minutes of riding a motorbike or sitting at a desk",
+      "Poorly cut oversized sleeves that exaggerate thick upper arms instead of hiding them"
+    ],
+    "whitespace_opportunities": [
+      "Extreme durability & wrinkle stress-tests (wringing, balling up, sitting on the blazer)",
+      "Real-time 'Flaw Eradication' side-by-side comparison (Big arms & tummy before vs. after in 3 seconds)",
+      "Motorbike commuter survival guide: Staying crease-free and cool under tropical humidity"
+    ]
+  },
+  "viral_hook_library": [
+    {
+      "hook_type": "shock_interrupt",
+      "spoken_line": "Đừng vội vứt cái blazer nhăn nheo của bà đi, nhìn tôi vo chiếc này này!",
+      "visual_action": "Creator aggressively rolls the blazer into a tight ball, stomps on it on a clean table, then pops it open to reveal absolute ZERO creases in 1.5 seconds.",
+      "on_screen_text": "VO VÀ NÉN BLAZER CỰC ĐẠI? KHÔNG MỘT NẾP NHĂN!",
+      "retention_mechanism": "Triggers shock and open-loop anxiety (is she ruining the coat?), immediately solved by the surprising wrinkle-free reveal.",
+      "projected_stop_ratio": 0.89
+    },
+    {
+      "hook_type": "contrarian_debunking",
+      "spoken_line": "Mặc blazer form rộng bị nuốt dáng? Do bà mua nhầm hàng chợ thiếu đệm vai rồi!",
+      "visual_action": "Split-screen or quick-cut: Left side shows a limp, cheap blazer making shoulders droop; Right side shows this blazer snapping into a sharp, Korean-style hourglass silhouette.",
+      "on_screen_text": "TẠI SAO BẠN MẶC BLAZER BỊ GIÀ VÀ THÔ?",
+      "retention_mechanism": "Challenges the common objection directly, validating the viewer's past bad experiences while offering an immediate structural fix.",
+      "projected_stop_ratio": 0.86
+    },
+    {
+      "hook_type": "sensory_asmr",
+      "spoken_line": "Nghe tiếng đanh của vải tuyết mưa cao cấp này, khác hẳn hàng rẻ tiền nha.",
+      "visual_action": "Macro close-up shot: Fingers sweeping across the smooth Tuyet Mua texture, a crisp snap audio of the light shoulder pad flicking into shape, glides onto body effortlessly.",
+      "on_screen_text": "ASMR VẢI TUYẾT MƯA CHỐNG NHĂN TUYỆT ĐỐI",
+      "retention_mechanism": "Tactile micro-auditory triggers calm the scroll impulse, delivering immediate visual and acoustic proof of premium material quality.",
+      "projected_stop_ratio": 0.83
+    },
+    {
+      "hook_type": "problem_agitation",
+      "spoken_line": "Chạy xe máy tới công ty mà áo bị nhăn như xơ dừa thì quê chết!",
+      "visual_action": "Creator zooms in on a severely wrinkled back of a cheap blazer after riding a bike, then cuts to her standing up from a scooter wearing this blazer—flawlessly smooth.",
+      "on_screen_text": "ÁO BỊ NHĂN SAU KHI ĐI XE MÁY? CƠN CÁC MỘNG CÔNG SỞ",
+      "retention_mechanism": "Evokes visceral relatable embarrassment for Vietnamese female commuters, offering an instant visual antidote.",
+      "projected_stop_ratio": 0.91
+    },
+    {
+      "hook_type": "pov_story",
+      "spoken_line": "POV: Mới tăng 3kg, bụng mỡ bắp tay to nhưng 3 giây sau phải gặp sếp...",
+      "visual_action": "POV shot rushing into office wearing a tight fitted tee showing tummy/arm insecurity. She grabs the oversized blazer, throws it on in 1 motion, turning into an instant sleek 'Boss Babe'.",
+      "on_screen_text": "POV: CHE BỤNG MỠ VÀ BẮP TAY TRONG 3 GIÂY",
+      "retention_mechanism": "High emotional empathy paired with rapid visual transformation speed-run creates a high-satisfaction retention curve.",
+      "projected_stop_ratio": 0.87
+    }
+  ],
+  "primary_persona": "Nữ nhân viên công sở 22-35 tuổi yêu thích phong cách tối giản, thanh lịch nhưng vẫn hiện đại",
+  "price_anchor_strategy": "Định giá 289,000 VND chiết khấu 36% so với giá gốc"
+}

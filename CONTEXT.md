@@ -65,3 +65,29 @@ _Avoid_: Edit script, cut plan
 **Verification Gate**:
 An automated deterministic or perceptual check validating video format, character consistency, or continuity before final release.
 _Avoid_: Manual QA, eyeball test
+
+### Directorial Strategy & Market Intelligence
+
+**Competitor Research & Whitespace Analysis**:
+Automated competitive discovery extracting saturated creative clichés and identifying untapped visual angles and viral hooks across TikTok/Reels/Shorts.
+_Avoid_: Competitor copying, generic market research
+
+**Directorial Archetype**:
+Product-category tailored visual and auditory production methodology (Fashion Lookbook, Tech Teardown, Beauty Glow, Cozy Sanctuary, General DR).
+_Avoid_: One-size-fits-all script, hardcoded template
+
+**Character Role Matrix**:
+Distinction between Presenter (direct talking-head with lip-sync), Model (visual acting, movement flow, off-camera VO/music only), and Product-Only (macro cinematography with suppressed character references).
+_Avoid_: Talking-head obsession, forced face in macro shots
+
+**Audio Strategy Routing**:
+Dynamic stem selection between On-Camera Speech, Off-Camera Voiceover, Pure Music + SFX Beat-Sync, and ASMR Foley Hybrid.
+_Avoid_: Monolithic dubbing, silence on non-speech shots
+
+**DramaClaw Spatial Scene Contract**:
+Explicit staging contract establishing camera choreography, lighting color temperature (Kelvin), depth zones, and spatial anchors across continuous shots.
+_Avoid_: Floating camera, disjointed lighting cuts
+
+**OpenMontage Slideshow Risk Gate**:
+A 6-dimension automated evaluator scoring repetition, decorative visuals, weak motion, weak shot intent, typography overreliance, and unsupported cinematic claims to prevent static photo slideshow outputs.
+_Avoid_: Ken Burns slideshow, static image zoompan

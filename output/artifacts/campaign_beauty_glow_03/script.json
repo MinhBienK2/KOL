@@ -1,0 +1,92 @@
+{
+  "campaign_id": "campaign_beauty_glow_03",
+  "product_name": "Serum Tinh Chất Phục Hồi Da Căng Bóng GlowRevive Phức Hợp 5 Multi-Peptide & Niacinamide 10%",
+  "target_duration": 24.5,
+  "beats": [
+    {
+      "scene_id": "shot_01_hook",
+      "beat_type": "hook",
+      "spoken_text": "Một giọt serum tinh chất có thể thay đổi làn da của bạn như thế nào?",
+      "on_screen_text": "GLOW SKIN REVOLUTION",
+      "visual_cue": "Góc cận cảnh macro macro_push_in, giọt tinh chất Serum Tinh Chất Phục Hồi Da Căng Bóng GlowRevive Phức Hợp 5 Multi-Peptide & Niacinamide 10% óng ánh rơi từ ống nhỏ giọt thủy tinh",
+      "estimated_duration": 3.0,
+      "archetype": "beauty_skincare",
+      "character_role": "product_only",
+      "audio_strategy": "asmr_hybrid",
+      "camera_choreography": "macro_push_in",
+      "lighting_contract": "beauty_high_key",
+      "narrative_purpose": "Hypnotic ultra-slow motion serum drop releasing from glass pipette."
+    },
+    {
+      "scene_id": "shot_02_skin_agitation",
+      "beat_type": "skin_agitation",
+      "spoken_text": "Nếu làn da bạn đang gặp tình trạng: Phức hợp 5 loại Multi-Peptide cao cấp hỗ trợ tái tạo màng tế bào và phục hồi hàng rào bảo vệ da...",
+      "on_screen_text": "DA THIẾU NƯỚC & KÉM SẮC?",
+      "visual_cue": "Góc zoom_in cận mặt [BEAUTY_MC] chạm nhẹ lên gò má bày tỏ nỗi lo",
+      "estimated_duration": 3.5,
+      "archetype": "beauty_skincare",
+      "character_role": "model",
+      "audio_strategy": "off_camera_vo",
+      "camera_choreography": "zoom_in",
+      "lighting_contract": "beauty_high_key",
+      "narrative_purpose": "Relatable focus on tired, dehydrated skin barrier under harsh air conditioning."
+    },
+    {
+      "scene_id": "shot_03_texture_macro",
+      "beat_type": "texture_macro",
+      "spoken_text": "Chất kem mỏng nhẹ như nhung, tan ngay khi chạm vào da.",
+      "on_screen_text": "VELVET TEXTURE • FAST ABSORPTION",
+      "visual_cue": "Macro macro_push_in swatch tinh chất sánh mịn trên phiến đá pha lê bắt sáng lấp lánh",
+      "estimated_duration": 4.5,
+      "archetype": "beauty_skincare",
+      "character_role": "product_only",
+      "audio_strategy": "asmr_hybrid",
+      "camera_choreography": "macro_push_in",
+      "lighting_contract": "beauty_high_key",
+      "narrative_purpose": "Show cream/gel texture gliding effortlessly across fingertip or glass tile."
+    },
+    {
+      "scene_id": "shot_04_application_method",
+      "beat_type": "application_method",
+      "spoken_text": "Chứa công thức độc quyền: Thức dậy mỗi sáng với làn da căng bóng chuẩn 'Glass Skin' mịn mượt, xua tan vẻ mệt mỏi xỉn màu.",
+      "on_screen_text": "THỨC DẬY MỖI SÁNG VỚI LÀN DA CĂNG BÓNG CHUẨN ",
+      "visual_cue": "Góc nghiêng tilt, [BEAUTY_MC] thoa tinh chất nhẹ nhàng lên gò má, tạo độ bóng căng mọng",
+      "estimated_duration": 5.0,
+      "archetype": "beauty_skincare",
+      "character_role": "model",
+      "audio_strategy": "asmr_hybrid",
+      "camera_choreography": "tilt",
+      "lighting_contract": "beauty_high_key",
+      "narrative_purpose": "Model gently pressing serum into cheekbones, instantly revealing luminous dewy bounce."
+    },
+    {
+      "scene_id": "shot_05_transformation_proof",
+      "beat_type": "transformation_proof",
+      "spoken_text": "Làn da căng bóng ngậm nước rạng ngời suốt cả ngày dài.",
+      "on_screen_text": "RADIANT GLASS SKIN • 24H HYDRATION",
+      "visual_cue": "Góc quay orbit bắt trọn ánh sáng tự nhiên trên làn da mịn màng, nụ cười rạng rỡ của [BEAUTY_MC]",
+      "estimated_duration": 4.5,
+      "archetype": "beauty_skincare",
+      "character_role": "model",
+      "audio_strategy": "off_camera_vo",
+      "camera_choreography": "orbit",
+      "lighting_contract": "beauty_high_key",
+      "narrative_purpose": "Radiant daylight check: model turning head gracefully, light catching healthy cheekbone."
+    },
+    {
+      "scene_id": "shot_06_cta",
+      "beat_type": "cta",
+      "spoken_text": "Yêu thương làn da cùng Serum Tinh Chất Phục Hồi Da Căng Bóng GlowRevive Phức Hợp 5 Multi-Peptide & Niacinamide 10%, nhận ngay bộ quà tặng độc quyền tại link bio!",
+      "on_screen_text": "MUA 1 TẶNG 1 • LINK TẠI BIO",
+      "visual_cue": "Chai Serum Tinh Chất Phục Hồi Da Căng Bóng GlowRevive Phức Hợp 5 Multi-Peptide & Niacinamide 10% bên cạnh hoa cỏ thanh khiết, đồ họa quà tặng cao cấp xuất hiện",
+      "estimated_duration": 4.0,
+      "archetype": "beauty_skincare",
+      "character_role": "model",
+      "audio_strategy": "off_camera_vo",
+      "camera_choreography": "zoom_in",
+      "lighting_contract": "beauty_high_key",
+      "narrative_purpose": "Bottle placed beside fresh botanical ingredients, limited gift-with-purchase callout."
+    }
+  ],
+  "archetype": "general_commercial"
+}

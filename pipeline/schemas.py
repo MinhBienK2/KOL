@@ -1,10 +1,15 @@
 """Canonical artifact schemas and validation."""
 
-from __future__ import annotations
-
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
+from pipeline.archetypes import (
+    AudioStrategy,
+    CameraChoreography,
+    CharacterRole,
+    LightingContract,
+    ProductArchetype,
+)
 
 class PresenterInfo(BaseModel):
     name: str = "Minh Anh"
@@ -22,7 +27,10 @@ class BriefArtifact(BaseModel):
     visual_tone: str
     aspect_ratio: str = "9:16"
     presenter: PresenterInfo = Field(default_factory=PresenterInfo)
-
+    archetype: ProductArchetype = ProductArchetype.GENERAL_COMMERCIAL
+    category: Optional[str] = None
+    character_role: CharacterRole = CharacterRole.PRESENTER
+    target_audio_strategy: AudioStrategy = AudioStrategy.ON_CAMERA_SPEECH
 
 class ScriptBeat(BaseModel):
     scene_id: str
@@ -31,14 +39,19 @@ class ScriptBeat(BaseModel):
     on_screen_text: str
     visual_cue: str
     estimated_duration: float
-
+    archetype: Optional[ProductArchetype] = None
+    character_role: CharacterRole = CharacterRole.PRESENTER
+    audio_strategy: AudioStrategy = AudioStrategy.ON_CAMERA_SPEECH
+    camera_choreography: Optional[CameraChoreography] = None
+    lighting_contract: Optional[LightingContract] = None
+    narrative_purpose: Optional[str] = None
 
 class ScriptArtifact(BaseModel):
     campaign_id: str
     product_name: str
     target_duration: float
     beats: List[ScriptBeat]
-
+    archetype: ProductArchetype = ProductArchetype.GENERAL_COMMERCIAL
 
 class StoryboardShot(BaseModel):
     shot_id: str
@@ -54,22 +67,28 @@ class StoryboardShot(BaseModel):
     prompt_6part: str
     estimated_duration: float
     reference_expression: Optional[str] = None
-
+    character_role: Optional[CharacterRole] = None
+    camera_choreography: Optional[str] = None
+    lighting_contract: Optional[str] = None
+    spatial_staging: Optional[str] = None
+    color_temp_kelvin: Optional[int] = None
+    shot_intent: Optional[str] = None
+    kinetic_action: Optional[str] = None
+    is_hero_moment: Optional[bool] = False
 
 class ScenePlanArtifact(BaseModel):
     campaign_id: str
     shots: List[StoryboardShot]
-
-
+    slideshow_risk: Optional[Dict[str, Any]] = None
+    spatial_staging_contract: Optional[Dict[str, Any]] = None
+    storyboard_contact_sheet: Optional[str] = None
 class KeyframeAsset(BaseModel):
     shot_id: str
-    image_path: str
-    cleaned_image_path: str
-    watermark_removed: bool
-    width: int
-    height: int
-
-
+    image_path: Optional[str] = None
+    cleaned_image_path: Optional[str] = None
+    watermark_removed: bool = False
+    width: int = 1080
+    height: int = 1920
 class AssetManifestArtifact(BaseModel):
     campaign_id: str
     keyframes: List[KeyframeAsset]
@@ -127,3 +146,20 @@ class PublishLogArtifact(BaseModel):
     description: str
     hashtags: List[str]
     published_at: str
+
+# ==============================================================================
+# Competitor Research & Creative Concept Artifact Re-exports
+# ==============================================================================
+from pipeline.researcher import (
+    CompetitorLandscape,
+    CompetitorResearchArtifact,
+    CreativeAngle,
+    CreativeConceptArtifact,
+    DirectorialDirectives,
+    HookStrategy,
+    ObjectionProof,
+    ProductIntel,
+    ProductPricing,
+    SelectedWinningAngle,
+    ViralHookCandidate,
+)

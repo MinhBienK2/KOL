@@ -1,0 +1,189 @@
+{
+  "campaign_id": "campaign_fashion_dress_01",
+  "shots": [
+    {
+      "shot_id": "shot_01",
+      "scene_id": "shot_01_hook",
+      "shot_type": "Hook Shot",
+      "angle": "Eye level commercial framing",
+      "camera_motion": "pedestal",
+      "lighting": "editorial_fashion",
+      "character_tag": "[KOL_MA]",
+      "identity_lock_directive": "Same character [KOL_MA], Vietnamese young woman, early 20s, refined oval face shape, natural straight black collarbone-length bob hair, neat center-part, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin",
+      "style_constraints": "Direct Problem-Solution Agitator commercial aesthetic | Avoid: watermark, text, logo overlay, deformed limbs, bad hands, blurry, lowres, oversaturated, 3d render, cartoon",
+      "scene_description": "Góc máy pedestal từ thấp lên cao, [MODEL_LD] bước sải chân tự tin trên sàn diễn runway",
+      "prompt_6part": "Commercial fashion and lifestyle video featuring [KOL_MA] Minh Anh. Subject: Vietnamese young woman, early 20s, refined oval face shape, natural straight black collarbone-length bob hair, neat center-part, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin. Wardrobe and styling: Crisp tailored white button-down collared dress shirt, dark navy tailored slim trousers, approachable smart-casual presenter look.. Visual acting action: Góc máy pedestal từ thấp lên cao, [MODEL_LD] bước sải chân tự tin trên sàn diễn runway. Poise: Expressive, highly credible presenter. Direct eye contact, relatable conversational gestures, sharp contrast between initial annoyance and genuine relief upon using solution.. Camera movement: pedestal around subject. Environment: Clean contemporary studio setting with balanced warm and cool lighting accents.. Lighting: editorial_fashion with elegant skin tones, 8k cinematic master shot",
+      "estimated_duration": 3.0,
+      "reference_expression": "assets/characters/kol_main/expressions/03_surprised.jpg",
+      "character_role": "model",
+      "camera_choreography": "pedestal",
+      "lighting_contract": "editorial_fashion",
+      "spatial_staging": null,
+      "color_temp_kelvin": 5500,
+      "shot_intent": null,
+      "kinetic_action": null,
+      "is_hero_moment": false
+    },
+    {
+      "shot_id": "shot_02",
+      "scene_id": "shot_02_reveal",
+      "shot_type": "Reveal Shot",
+      "angle": "Eye level commercial framing",
+      "camera_motion": "orbit",
+      "lighting": "editorial_fashion",
+      "character_tag": "[KOL_MA]",
+      "identity_lock_directive": "Same character [KOL_MA], Vietnamese young woman, early 20s, refined oval face shape, natural straight black collarbone-length bob hair, neat center-part, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin",
+      "style_constraints": "Direct Problem-Solution Agitator commercial aesthetic | Avoid: watermark, text, logo overlay, deformed limbs, bad hands, blurry, lowres, oversaturated, 3d render, cartoon",
+      "scene_description": "Camera orbit xoay 360 quanh [MODEL_LD], khoe trọn phom dáng thanh lịch của High-End French Satin Silk Evening Gown with Elegant Side Slit",
+      "prompt_6part": "Commercial fashion and lifestyle video featuring [KOL_MA] Minh Anh. Subject: Vietnamese young woman, early 20s, refined oval face shape, natural straight black collarbone-length bob hair, neat center-part, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin. Wardrobe and styling: Crisp tailored white button-down collared dress shirt, dark navy tailored slim trousers, approachable smart-casual presenter look.. Visual acting action: Camera orbit xoay 360 quanh [MODEL_LD], khoe trọn phom dáng thanh lịch của High-End French Satin Silk Evening Gown with Elegant Side Slit. Poise: Expressive, highly credible presenter. Direct eye contact, relatable conversational gestures, sharp contrast between initial annoyance and genuine relief upon using solution.. Camera movement: orbit around subject. Environment: Clean contemporary studio setting with balanced warm and cool lighting accents.. Lighting: editorial_fashion with elegant skin tones, 8k cinematic master shot",
+      "estimated_duration": 4.0,
+      "reference_expression": "assets/characters/kol_main/expressions/01_neutral.jpg",
+      "character_role": "model",
+      "camera_choreography": "orbit",
+      "lighting_contract": "editorial_fashion",
+      "spatial_staging": null,
+      "color_temp_kelvin": 5500,
+      "shot_intent": null,
+      "kinetic_action": null,
+      "is_hero_moment": true
+    },
+    {
+      "shot_id": "shot_03",
+      "scene_id": "shot_03_fabric_macro",
+      "shot_type": "Fabric_macro Shot",
+      "angle": "Eye level commercial framing",
+      "camera_motion": "macro_push_in",
+      "lighting": "editorial_fashion",
+      "character_tag": null,
+      "identity_lock_directive": null,
+      "style_constraints": "Direct Problem-Solution Agitator commercial aesthetic | Avoid: watermark, text, logo overlay, deformed limbs, bad hands, blurry, lowres, oversaturated, 3d render, cartoon",
+      "scene_description": "Góc cận cảnh macro macro_push_in, bắt trọn từng thớ vải mịn màng đung đưa chuyển động chậm",
+      "prompt_6part": "Commercial macro product cinematography of High-End French Satin Silk Evening Gown with Elegant Side Slit. Action and interaction: Góc cận cảnh macro macro_push_in, bắt trọn từng thớ vải mịn màng đung đưa chuyển động chậm. Camera movement: macro_push_in with shallow depth of field, sharp focal plane on product geometry and surface materials. Environment and staging: Clean contemporary studio setting with balanced warm and cool lighting accents.. Lighting key: editorial_fashion at 5500K, realistic reflections and highlights. Cinematic 8k commercial quality, photorealistic, zero character face, hyper-detailed textures",
+      "estimated_duration": 4.0,
+      "reference_expression": null,
+      "character_role": "product_only",
+      "camera_choreography": "macro_push_in",
+      "lighting_contract": "editorial_fashion",
+      "spatial_staging": null,
+      "color_temp_kelvin": 5500,
+      "shot_intent": null,
+      "kinetic_action": null,
+      "is_hero_moment": true
+    },
+    {
+      "shot_id": "shot_04",
+      "scene_id": "shot_04_movement_flow",
+      "shot_type": "Movement_flow Shot",
+      "angle": "Eye level commercial framing",
+      "camera_motion": "truck",
+      "lighting": "editorial_fashion",
+      "character_tag": "[KOL_MA]",
+      "identity_lock_directive": "Same character [KOL_MA], Vietnamese young woman, early 20s, refined oval face shape, natural straight black collarbone-length bob hair, neat center-part, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin",
+      "style_constraints": "Direct Problem-Solution Agitator commercial aesthetic | Avoid: watermark, text, logo overlay, deformed limbs, bad hands, blurry, lowres, oversaturated, 3d render, cartoon",
+      "scene_description": "Camera truck tracking song song khi [MODEL_LD] rảo bước năng động trên phố",
+      "prompt_6part": "Commercial fashion and lifestyle video featuring [KOL_MA] Minh Anh. Subject: Vietnamese young woman, early 20s, refined oval face shape, natural straight black collarbone-length bob hair, neat center-part, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin. Wardrobe and styling: Crisp tailored white button-down collared dress shirt, dark navy tailored slim trousers, approachable smart-casual presenter look.. Visual acting action: Camera truck tracking song song khi [MODEL_LD] rảo bước năng động trên phố. Poise: Expressive, highly credible presenter. Direct eye contact, relatable conversational gestures, sharp contrast between initial annoyance and genuine relief upon using solution.. Camera movement: truck around subject. Environment: Clean contemporary studio setting with balanced warm and cool lighting accents.. Lighting: editorial_fashion with elegant skin tones, 8k cinematic master shot",
+      "estimated_duration": 4.5,
+      "reference_expression": "assets/characters/kol_main/expressions/01_neutral.jpg",
+      "character_role": "model",
+      "camera_choreography": "truck",
+      "lighting_contract": "editorial_fashion",
+      "spatial_staging": null,
+      "color_temp_kelvin": 5500,
+      "shot_intent": null,
+      "kinetic_action": null,
+      "is_hero_moment": false
+    },
+    {
+      "shot_id": "shot_05",
+      "scene_id": "shot_05_styling_versatility",
+      "shot_type": "Styling_versatility Shot",
+      "angle": "Eye level commercial framing",
+      "camera_motion": "zoom_in",
+      "lighting": "editorial_fashion",
+      "character_tag": "[KOL_MA]",
+      "identity_lock_directive": "Same character [KOL_MA], Vietnamese young woman, early 20s, refined oval face shape, natural straight black collarbone-length bob hair, neat center-part, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin",
+      "style_constraints": "Direct Problem-Solution Agitator commercial aesthetic | Avoid: watermark, text, logo overlay, deformed limbs, bad hands, blurry, lowres, oversaturated, 3d render, cartoon",
+      "scene_description": "Cắt nhanh zoom_in đổi phong cách phối đồ linh hoạt cùng phụ kiện",
+      "prompt_6part": "Commercial fashion and lifestyle video featuring [KOL_MA] Minh Anh. Subject: Vietnamese young woman, early 20s, refined oval face shape, natural straight black collarbone-length bob hair, neat center-part, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin. Wardrobe and styling: Crisp tailored white button-down collared dress shirt, dark navy tailored slim trousers, approachable smart-casual presenter look.. Visual acting action: Cắt nhanh zoom_in đổi phong cách phối đồ linh hoạt cùng phụ kiện. Poise: Expressive, highly credible presenter. Direct eye contact, relatable conversational gestures, sharp contrast between initial annoyance and genuine relief upon using solution.. Camera movement: zoom_in around subject. Environment: Clean contemporary studio setting with balanced warm and cool lighting accents.. Lighting: editorial_fashion with elegant skin tones, 8k cinematic master shot",
+      "estimated_duration": 4.5,
+      "reference_expression": "assets/characters/kol_main/expressions/01_neutral.jpg",
+      "character_role": "model",
+      "camera_choreography": "zoom_in",
+      "lighting_contract": "editorial_fashion",
+      "spatial_staging": null,
+      "color_temp_kelvin": 5500,
+      "shot_intent": null,
+      "kinetic_action": null,
+      "is_hero_moment": false
+    },
+    {
+      "shot_id": "shot_06",
+      "scene_id": "shot_06_cta",
+      "shot_type": "Cta Shot",
+      "angle": "Eye level commercial framing",
+      "camera_motion": "pedestal",
+      "lighting": "editorial_fashion",
+      "character_tag": "[KOL_MA]",
+      "identity_lock_directive": "Same character [KOL_MA], Vietnamese young woman, early 20s, refined oval face shape, natural straight black collarbone-length bob hair, neat center-part, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin",
+      "style_constraints": "Direct Problem-Solution Agitator commercial aesthetic | Avoid: watermark, text, logo overlay, deformed limbs, bad hands, blurry, lowres, oversaturated, 3d render, cartoon",
+      "scene_description": "[MODEL_LD] tạo dáng editorial cực ngầu, logo thương hiệu và nút mua hàng xuất hiện",
+      "prompt_6part": "Commercial fashion and lifestyle video featuring [KOL_MA] Minh Anh. Subject: Vietnamese young woman, early 20s, refined oval face shape, natural straight black collarbone-length bob hair, neat center-part, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin. Wardrobe and styling: Crisp tailored white button-down collared dress shirt, dark navy tailored slim trousers, approachable smart-casual presenter look.. Visual acting action: [MODEL_LD] tạo dáng editorial cực ngầu, logo thương hiệu và nút mua hàng xuất hiện. Poise: Expressive, highly credible presenter. Direct eye contact, relatable conversational gestures, sharp contrast between initial annoyance and genuine relief upon using solution.. Camera movement: pedestal around subject. Environment: Clean contemporary studio setting with balanced warm and cool lighting accents.. Lighting: editorial_fashion with elegant skin tones, 8k cinematic master shot",
+      "estimated_duration": 4.0,
+      "reference_expression": "assets/characters/kol_main/expressions/02_smiling.jpg",
+      "character_role": "model",
+      "camera_choreography": "pedestal",
+      "lighting_contract": "editorial_fashion",
+      "spatial_staging": null,
+      "color_temp_kelvin": 5500,
+      "shot_intent": null,
+      "kinetic_action": null,
+      "is_hero_moment": false
+    }
+  ],
+  "slideshow_risk": {
+    "average_score": 0.83,
+    "verdict": "strong",
+    "passed": true,
+    "dimensions": {
+      "repetition": {
+        "score": 0.0,
+        "reason": "Healthy variety in shot types, camera choreography, and duration rhythm.",
+        "flagged_shots": []
+      },
+      "decorative_visuals": {
+        "score": 0.8,
+        "reason": "All shots possess clear communicative commercial roles",
+        "flagged_shots": [
+          "shot_03"
+        ]
+      },
+      "weak_motion": {
+        "score": 1.7,
+        "reason": "5/6 shots lack active kinetic subject action verbs",
+        "flagged_shots": []
+      },
+      "weak_shot_intent": {
+        "score": 2.5,
+        "reason": "3/6 shots lack recognized commercial intent taxonomy",
+        "flagged_shots": [
+          "shot_03",
+          "shot_04",
+          "shot_05"
+        ]
+      },
+      "typography_overreliance": {
+        "score": 0.0,
+        "reason": "Visual-first video storytelling with zero static text card dependency",
+        "flagged_shots": []
+      },
+      "unsupported_cinematic_claims": {
+        "score": 0.0,
+        "reason": "Cinematic claims are fully backed by camera choreography and lighting contracts",
+        "flagged_shots": []
+      }
+    },
+    "hard_reject_reasons": [],
+    "recommendations": []
+  },
+  "spatial_staging_contract": null
+}

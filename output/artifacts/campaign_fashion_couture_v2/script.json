@@ -1,0 +1,92 @@
+{
+  "campaign_id": "campaign_fashion_couture_v2",
+  "product_name": "High-End French Satin Silk Evening Gown with Thigh Slit",
+  "target_duration": 24.0,
+  "beats": [
+    {
+      "scene_id": "shot_01_hook",
+      "beat_type": "hook",
+      "spoken_text": "",
+      "on_screen_text": "NEW DROP • HIGH-END FRENCH SATIN SILK EVENING GOWN WITH THIGH SLIT",
+      "visual_cue": "Góc máy pedestal từ thấp lên cao, [MODEL_LD] bước sải chân tự tin trên sàn diễn runway",
+      "estimated_duration": 3.0,
+      "archetype": "fashion_apparel",
+      "character_role": "model",
+      "audio_strategy": "music_and_sfx_only",
+      "camera_choreography": "pedestal",
+      "lighting_contract": "editorial_fashion",
+      "narrative_purpose": "Stop the scroll with dramatic low-angle runway step and silhouette reveal."
+    },
+    {
+      "scene_id": "shot_02_reveal",
+      "beat_type": "reveal",
+      "spoken_text": "",
+      "on_screen_text": "PERFECT SILHOUETTE • 360° FIT",
+      "visual_cue": "Camera orbit xoay 360 quanh [MODEL_LD], khoe trọn phom dáng thanh lịch của High-End French Satin Silk Evening Gown with Thigh Slit",
+      "estimated_duration": 4.0,
+      "archetype": "fashion_apparel",
+      "character_role": "model",
+      "audio_strategy": "music_and_sfx_only",
+      "camera_choreography": "orbit",
+      "lighting_contract": "editorial_fashion",
+      "narrative_purpose": "Showcase overall silhouette, tailoring, fit, and proportions in 360 degrees."
+    },
+    {
+      "scene_id": "shot_03_fabric_macro",
+      "beat_type": "fabric_macro",
+      "spoken_text": "",
+      "on_screen_text": "PREMIUM FABRIC • ULTRA-COMFORT",
+      "visual_cue": "Góc cận cảnh macro macro_push_in, bắt trọn từng thớ vải mịn màng đung đưa chuyển động chậm",
+      "estimated_duration": 4.0,
+      "archetype": "fashion_apparel",
+      "character_role": "product_only",
+      "audio_strategy": "music_and_sfx_only",
+      "camera_choreography": "macro_push_in",
+      "lighting_contract": "editorial_fashion",
+      "narrative_purpose": "Highlight premium material texture, stitching quality, seam lines, and tactile drape."
+    },
+    {
+      "scene_id": "shot_04_movement_flow",
+      "beat_type": "movement_flow",
+      "spoken_text": "",
+      "on_screen_text": "FLUID MOVEMENT • STREET READY",
+      "visual_cue": "Camera truck tracking song song khi [MODEL_LD] rảo bước năng động trên phố",
+      "estimated_duration": 4.5,
+      "archetype": "fashion_apparel",
+      "character_role": "model",
+      "audio_strategy": "music_and_sfx_only",
+      "camera_choreography": "truck",
+      "lighting_contract": "editorial_fashion",
+      "narrative_purpose": "Show how the garment flows naturally during real-world urban movement."
+    },
+    {
+      "scene_id": "shot_05_styling_versatility",
+      "beat_type": "styling_versatility",
+      "spoken_text": "Dễ dàng biến hóa đa phong cách từ công sở đến dạo phố.",
+      "on_screen_text": "MIX & MATCH • DAY TO NIGHT",
+      "visual_cue": "Cắt nhanh zoom_in đổi phong cách phối đồ linh hoạt cùng phụ kiện",
+      "estimated_duration": 4.5,
+      "archetype": "fashion_apparel",
+      "character_role": "model",
+      "audio_strategy": "off_camera_vo",
+      "camera_choreography": "zoom_in",
+      "lighting_contract": "editorial_fashion",
+      "narrative_purpose": "Demonstrate versatility (pairing with accessories, jacket on/off)."
+    },
+    {
+      "scene_id": "shot_06_cta",
+      "beat_type": "cta",
+      "spoken_text": "Sắm ngay High-End French Satin Silk Evening Gown with Thigh Slit hôm nay để nâng tầm gu thời trang nhé!",
+      "on_screen_text": "LIMITED DROP • TAP BIO FOR 30% OFF",
+      "visual_cue": "[MODEL_LD] tạo dáng editorial cực ngầu, logo thương hiệu và nút mua hàng xuất hiện",
+      "estimated_duration": 4.0,
+      "archetype": "fashion_apparel",
+      "character_role": "model",
+      "audio_strategy": "off_camera_vo",
+      "camera_choreography": "pedestal",
+      "lighting_contract": "editorial_fashion",
+      "narrative_purpose": "Strong aspirational closer with exclusive collection discount tag in bio."
+    }
+  ],
+  "archetype": "fashion_apparel"
+}

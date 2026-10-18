@@ -1,0 +1,93 @@
+{
+  "campaign_id": "campaign_beauty_glow_03",
+  "product_name": "Serum Tinh Chất Phục Hồi Da Căng Bóng GlowRevive Phức Hợp 5 Multi-Peptide & Niacinamide 10%",
+  "concept_options": [
+    {
+      "angle_id": "angle_a_shock_interrupt",
+      "angle_archetype": "shock_pattern_interrupt",
+      "title": "Thử Thách 'Zero-Stickiness' Niacinamide 10%",
+      "target_audience_segment": "Tín đồ skincare Gen Z/Millennials từng bị dị ứng, rát da hoặc nổi mụn ẩn do dùng Niacinamide nồng độ cao",
+      "character_role": "presenter",
+      "audio_strategy": "on_camera_speech",
+      "hook_strategy": {
+        "spoken_hook": "Dùng Niacinamide 10% mà bị rát với dính bệt? Bỏ ngay cách cũ đi!",
+        "visual_hook": "Presenter áp nguyên xấp giấy thấm dầu lên mặt vừa thoa serum, sau đó buông tay ra và toàn bộ giấy rơi sạch xuống bàn trong 1 giây.",
+        "on_screen_text": "NIACINAMIDE 10% GÂY BẾT DÍNH & RÁT DA?",
+        "retention_trigger": "Bắt lỗi lầm phổ biến và chứng minh thực tế ngược lại bằng hành động cực đoan."
+      },
+      "narrative_arc": [
+        "0-3s: Presenter dán xấp giấy thấm dầu lên mặt vừa thoa serum GlowRevive, giấy rơi ngay tức thì chứng minh độ thẩm thấu tuyệt đối.",
+        "3-7s: Đẩy cao nỗi sợ: Nhiều người dùng Niacinamide 10% bị châm chít, mẩn đỏ và bít tắc lỗ sinh mụn ẩn do chất serum quá đặc.",
+        "7-15s: Giải mã công nghệ: GlowRevive kết hợp 5 Multi-Peptide giúp làm dịu màng tế bào, giúp 10% Niacinamide đi sâu thẩm thấu êm ru không rát.",
+        "15-20s: Zoom cận cảnh làn da căng bóng chuẩn Glass Skin sau khi thoa, kiểm tra bề mặt da khô thoáng mịn mượt tức thì.",
+        "20-25s: Kêu gọi hành động: Săn deal độc quyền giảm 36% chỉ còn 289.000đ tại giỏ hàng ngay hôm nay."
+      ],
+      "conversion_thesis": "Đập tan lập tức rào cản sợ châm chít và bết rít của Niacinamide nồng độ cao bằng hình ảnh trực quan sinh động, kích thích mua hàng impulsive.",
+      "projected_retention_score": 9.2,
+      "projected_conversion_score": 9.4
+    },
+    {
+      "angle_id": "angle_b_aesthetic_sensory",
+      "angle_archetype": "aesthetic_sensory_asmr",
+      "title": "Đánh Thức Làn Da Glass Skin Mới Tinh Mỗi Sáng",
+      "target_audience_segment": "Phụ nữ văn phòng 22-35 tuổi yêu thích vẻ đẹp tự nhiên, chuẩn Hàn Quốc, chú trọng chăm sóc bản thân cao cấp",
+      "character_role": "model",
+      "audio_strategy": "asmr_hybrid",
+      "hook_strategy": {
+        "spoken_hook": "Cảm giác thức dậy với làn da căng bóng chuẩn Glass Skin mướt mịn...",
+        "visual_hook": "Cú quay Macro cận cảnh giọt tinh chất GlowRevive rơi chậm trong suốt trên bề mặt da mịn màng, phản chiếu ánh sáng tự nhiên rạng rỡ.",
+        "on_screen_text": "CĂNG BÓNG chuẩn 'GLASS SKIN' 48H",
+        "retention_trigger": "Mãn nhãn thị giác và thính giác, đánh vào mong muốn có làn da mộc hoàn hảo."
+      },
+      "narrative_arc": [
+        "0-3s: Macro cận cảnh giọt serum mỏng nhẹ tan nhanh như nước trên da mặt mộc ửng hồng căng mượt.",
+        "3-7s: Tái hiện vẻ mệt mỏi xỉn màu của làn da thiếu ẩm ban đêm đối lập với sự tươi tắn tức thì khi chạm tinh chất GlowRevive.",
+        "7-15s: Từng giọt serum chứa 5 Multi-Peptide thẩm thấu tầng sâu, khóa ẩm 48 giờ mà không để lại một chút vệt nhờn.",
+        "15-20s: Người mẫu dùng thanh lăn thạch anh lướt nhẹ trên má, phản chiếu nền da Glass Skin trong trẻo không khuyết điểm.",
+        "20-25s: Nhẹ nhàng nhắn nhủ trải nghiệm làn da mộc rạng rỡ chỉ với 289.000đ kèm ưu đãi giảm 36%."
+      ],
+      "conversion_thesis": "Đánh vào khát khao thẩm mỹ cao cấp (Aspirational Beauty), dùng trải nghiệm thị giác mượt mà để khẳng định chất lượng serum tương xứng phân khúc xa xỉ.",
+      "projected_retention_score": 8.7,
+      "projected_conversion_score": 8.6
+    },
+    {
+      "angle_id": "angle_c_problem_agitation",
+      "angle_archetype": "direct_problem_agitation",
+      "title": "Cứu Cánh Cho Làn Da Thâm Mụn & Mỏng Yếu",
+      "target_audience_segment": "Khách hàng đang bất lực với thâm mụn lâu năm, nền da yếu dễ kích ứng và lỗ chân lông to",
+      "character_role": "presenter",
+      "audio_strategy": "on_camera_speech",
+      "hook_strategy": {
+        "spoken_hook": "Mụn hết rồi mà thâm đen lâu năm cứ bám rễ hoài không tan?",
+        "visual_hook": "Presenter chỉ tay trực tiếp vào các vết thâm mụn đỏ đốm nâu trên má dưới ánh sáng chiếu soi khuyết điểm thực tế.",
+        "on_screen_text": "THÂM MỤN LÂU NĂM & DA MỎNG YẾU?",
+        "retention_trigger": "Chạm đúng nỗi đau thực tế của da sau mụn và mong muốn phục hồi cấp tốc."
+      },
+      "narrative_arc": [
+        "0-3s: Cận cảnh nền da xỉn màu, nhiều vết thâm sau mụn và lỗ chân lông to rõ rệt.",
+        "3-7s: Xoáy sâu nỗi đau: Dùng sản phẩm trị thâm mạnh thì bị rát đỏ, dùng dưỡng ẩm thì bị bí da nổi thêm mụn ẩn.",
+        "7-15s: So sánh đối chiếu: Khám phá GlowRevive - Niacinamide 10% đập tan đốm nâu kết hợp 5 Multi-Peptide tái sinh màng tế bào mỏng yếu.",
+        "15-20s: Bảng so sánh ROI giá trị: Phức hợp Peptide đắt đỏ thường có giá trên 1 triệu, nay trọn gói phục hồi căng bóng chỉ 289k.",
+        "20-25s: Kêu gọi hành động dồn dập: Nhấp giỏ hàng góc trái nhận ngay ưu đãi 36% trước khi hết suất."
+      ],
+      "conversion_thesis": "Thức tỉnh nỗi đau da khuyết điểm và giải quyết triệt để bằng side-by-side logic cùng định giá cực kỳ hấp dẫn.",
+      "projected_retention_score": 8.9,
+      "projected_conversion_score": 9.3
+    }
+  ],
+  "winning_concept": {
+    "selected_angle_id": "angle_a_shock_interrupt",
+    "selection_rationale": "Góc quay Angle A xử lý triệt để 2 rào cản lớn nhất của người tiêu dùng đối với dòng serum này: 'Sợ Niacinamide 10% gây châm chít' và 'Sợ dưỡng ẩm 48h gây bết rít bít lỗ chân lông'. Màn test trực quan ngay 3s đầu tiên bằng giấy thấm dầu rơi tự do tạo ra hiệu ứng Pattern Interrupt cực mạnh, tối ưu hóa điểm giữ chân (Retention) trên nền tảng video ngắn và đẩy tỷ lệ chuyển đổi lên cao nhất.",
+    "confidence_score": 0.94,
+    "directorial_directives": {
+      "camera_pacing": "Tiết tấu cắt dựng nhanh kinetical trong 3s đầu (Fast whip pan), chuyển sang cú quay Macro giật nhẹ nhịp nhàng khi giải thích dưỡng chất, kết thúc bằng locked tripod cận cảnh da căng bóng.",
+      "lighting_mood": "Ánh sáng thương mại High-key trong trẻo, đánh rim light sắc nét vào gò má để tôn vinh hiệu ứng căng bóng Glass Skin thực tế.",
+      "key_visual_anchor": "Cú rơi tự do của toàn bộ xấp giấy thấm dầu trên má ngay sau khi thoa serum (Zero Sticky Test).",
+      "audio_mix_priority": "dialogue_first"
+    }
+  },
+  "metadata": {
+    "generator": "llm_gemini",
+    "research_grounded": true
+  }
+}

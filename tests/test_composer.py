@@ -9,7 +9,7 @@ from pipeline.schemas import (
     ScriptArtifact,
     ScriptBeat,
 )
-from pipeline.video_engine import generate_motion_clip_ffmpeg
+from tests.test_helpers import create_test_clip
 from pipeline.audio_lip_sync import align_lip_sync_clip, synthesize_tts_stem
 
 
@@ -20,7 +20,7 @@ def test_compose_master_commercial(tmp_path: Path):
     synced_clips = []
     for i in (1, 2):
         clip_p = tmp_path / f"raw_{i}.mp4"
-        generate_motion_clip_ffmpeg(src_img, clip_p, duration=1.5, width=540, height=960)
+        create_test_clip(src_img, clip_p, duration=1.5, width=540, height=960)
         stem_p = tmp_path / f"voice_{i}.wav"
         synthesize_tts_stem(f"Beat {i} test voice", stem_p)
         synced_p = tmp_path / f"synced_{i}.mp4"

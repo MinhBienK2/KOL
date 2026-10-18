@@ -7,7 +7,7 @@ from pipeline.audio_lip_sync import (
     probe_audio_duration,
     synthesize_tts_stem,
 )
-from pipeline.video_engine import generate_motion_clip_ffmpeg
+from tests.test_helpers import create_test_clip
 
 
 def test_synthesize_tts_and_align_lipsync(tmp_path: Path):
@@ -22,7 +22,7 @@ def test_synthesize_tts_and_align_lipsync(tmp_path: Path):
     # Create dummy raw video clip
     src_img = Path("assets/characters/kol_main/portrait.png")
     raw_video = tmp_path / "raw.mp4"
-    generate_motion_clip_ffmpeg(
+    create_test_clip(
         image_path=src_img,
         output_path=raw_video,
         duration=2.0,

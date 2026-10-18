@@ -1,0 +1,75 @@
+{
+  "campaign_id": "campaign_blazer_minhanh_master",
+  "render_runtime": "ffmpeg",
+  "target_aspect_ratio": "9:16",
+  "timeline_clips": [
+    "/home/minhbien/Documents/KOL/output/synced_clips/campaign_blazer_minhanh_master/shot_01.mp4",
+    "/home/minhbien/Documents/KOL/output/synced_clips/campaign_blazer_minhanh_master/shot_02.mp4",
+    "/home/minhbien/Documents/KOL/output/synced_clips/campaign_blazer_minhanh_master/shot_03.mp4",
+    "/home/minhbien/Documents/KOL/output/synced_clips/campaign_blazer_minhanh_master/shot_04.mp4",
+    "/home/minhbien/Documents/KOL/output/synced_clips/campaign_blazer_minhanh_master/shot_05.mp4",
+    "/home/minhbien/Documents/KOL/output/synced_clips/campaign_blazer_minhanh_master/shot_06.mp4"
+  ],
+  "audio_tracks": [
+    {
+      "track_id": "track_voiceover",
+      "type": "voiceover",
+      "file_path": "output/audio/voice_*.wav",
+      "target_lufs": -14.0,
+      "ducking_attenuation_db": null
+    },
+    {
+      "track_id": "track_bgm",
+      "type": "bgm",
+      "file_path": "/home/minhbien/Documents/KOL/assets/audio/music/commercial_bgm.mp3",
+      "target_lufs": null,
+      "ducking_attenuation_db": -24.0
+    },
+    {
+      "track_id": "track_sfx",
+      "type": "sfx",
+      "file_path": "/home/minhbien/Documents/KOL/assets/audio/sfx/pop.mp3",
+      "target_lufs": null,
+      "ducking_attenuation_db": null
+    }
+  ],
+  "transitions": [
+    {
+      "type": "cut",
+      "duration": 0.0
+    }
+  ],
+  "captions": [
+    {
+      "text": "MUST-HAVE ITEM • ÁO KHOÁC BLAZER NỮ FORM RỘNG PHONG CÁCH HÀN QUỐC VẢI TUYẾT MƯA",
+      "start": 0.0,
+      "end": 7.34
+    },
+    {
+      "text": "PERFECT SILHOUETTE • 360° FIT",
+      "start": 7.34,
+      "end": 11.67
+    },
+    {
+      "text": "PREMIUM FABRIC • WRINKLE-FREE",
+      "start": 11.67,
+      "end": 17.18
+    },
+    {
+      "text": "FLUID MOVEMENT • ALL DAY COMFORT",
+      "start": 17.18,
+      "end": 22.15
+    },
+    {
+      "text": "EASY MIX & MATCH • WORK TO STREET",
+      "start": 22.15,
+      "end": 28.05
+    },
+    {
+      "text": "ƯU ĐÃI ĐỘC QUYỀN 30% • NHẤP LINK BIO",
+      "start": 28.05,
+      "end": 33.53
+    }
+  ],
+  "output_master_path": "/home/minhbien/Documents/KOL/output/final_master_campaign_blazer_minhanh_master.mp4"
+}

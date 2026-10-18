@@ -1,0 +1,93 @@
+{
+  "campaign_id": "campaign_tech_cyberkey_02",
+  "product_name": "CyberKey Pro Wireless CNC Aluminum Mechanical Keyboard",
+  "concept_options": [
+    {
+      "angle_id": "angle_a_shock_interrupt",
+      "angle_archetype": "shock_pattern_interrupt",
+      "title": "Tra Tấn Khung Nhôm CNC Và Thử Thách Bẻ Đôi Bàn Phím",
+      "target_audience_segment": "Gamers, Tech Enthusiasts & Hardware Perfectionists",
+      "character_role": "presenter",
+      "audio_strategy": "on_camera_speech",
+      "hook_strategy": {
+        "spoken_hook": "Đừng bao giờ mua bàn phím nhựa nếu không muốn bị gãy đôi thế này!",
+        "visual_hook": "Presenter bẻ gãy đôi bàn phím nhựa giá rẻ qua đầu gối, sau đó thả tạ 5kg thẳng lên mặt CyberKey Pro không một vết móp.",
+        "on_screen_text": "THỬ THÁCH BẺ ĐÔI BÀN PHÍM KIM LOẠI?",
+        "retention_trigger": "Sự tò mò tột độ và hiệu ứng thị giác kiểm chứng độ bền cực hạn (Stress-Test)."
+      },
+      "narrative_arc": [
+        "0-3s: Presenter bẻ gãy bàn phím nhựa, thả tạ nặng lên CyberKey Pro nhôm nguyên khối đập xuống bàn cực gắt.",
+        "3-7s: Vấn đề bàn phím nhựa ọp ẹp, gõ rung rinh, phát ra tiếng ồn kim loại vang đanh cực kỳ khó chịu.",
+        "7-15s: Show cận cảnh vỏ CNC nhôm Anodized nguyên khối nặng đầm, gõ phím siêu êm nhờ foam tiêu âm chuyên dụng.",
+        "15-20s: Bật test độ trễ kết nối 2.4GHz song song với dây USB-C ở độ phân giải super slow-motion: 0ms độ trễ.",
+        "20-25s: Nhấn mạnh giá xả kho 1.890.000đ (giảm 24%), chèn CTA nhấp vào giỏ hàng săn voucher ngay."
+      ],
+      "conversion_thesis": "Đập tan lập tức nỗi lo bàn phím ọp ẹp hay trễ phím bằng bài test lực thực tế, tạo niềm tin tuyệt đối vào chất lượng vật liệu CNC.",
+      "projected_retention_score": 9.2,
+      "projected_conversion_score": 9.4
+    },
+    {
+      "angle_id": "angle_b_aesthetic_sensory",
+      "angle_archetype": "aesthetic_sensory_asmr",
+      "title": "Trải Nghiệm Đỉnh Cao Âm Thanh Thock Và Setup Tối Giản",
+      "target_audience_segment": "Minimalist Desk Setup Creators, WFH Professionals & Designers",
+      "character_role": "model",
+      "audio_strategy": "asmr_hybrid",
+      "hook_strategy": {
+        "spoken_hook": "Âm thanh gõ phím 'Thock' êm ái nhất bạn từng nghe.",
+        "visual_hook": "Góc quay Macro cinematic lướt qua dải đèn RGB 16.8 triệu màu tỏa sáng mượt mà trên nền nhôm xám mờ cao cấp.",
+        "on_screen_text": "TUYỆT TÁC CHUẨN ÂM THIẾT KẾ",
+        "retention_trigger": "Kích thích thị giác và thính giác (ASMR) tạo cảm giác thèm muốn sở hữu không gian làm việc cao cấp."
+      },
+      "narrative_arc": [
+        "0-3s: Thu âm cận cảnh tiếng gõ phím trầm đục, giòn tan 'Thock Thock' qua micro studio cao cấp.",
+        "3-7s: Khung cảnh làm việc đêm muộn: đo độ ồn ngay cạnh người đang ngủ, máy đo báo dưới 35dB cực yên tĩnh.",
+        "7-15s: Thao tác gạt nút chuyển đổi tức thì giữa MacBook, iPad và PC qua Bluetooth 5.2 không dùng cáp rườm rà.",
+        "15-20s: Show dung lượng pin 4000mAh hoạt động liên tục nhiều tuần dù bật RGB rực rỡ.",
+        "20-25s: Khung hình góc làm việc hoàn hảo hiện ưu đãi 1.890.000đ, kêu gọi bấm mua để nâng cấp góc làm việc."
+      ],
+      "conversion_thesis": "Đánh vào yếu tố cảm xúc, thẩm mỹ cao cấp và trải nghiệm âm thanh gõ phím gây nghiện để kích thích quyết định mua hàng ngay lập tức.",
+      "projected_retention_score": 8.8,
+      "projected_conversion_score": 8.6
+    },
+    {
+      "angle_id": "angle_c_problem_agitation",
+      "angle_archetype": "direct_problem_agitation",
+      "title": "3 Cơn Ác Mộng Bàn Phím Cơ Và Lời Giải Đáp CyberKey Pro",
+      "target_audience_segment": "Dân Văn Phòng, Lập Trình Viên & Người Gõ Phím Đêm Khuya",
+      "character_role": "presenter",
+      "audio_strategy": "on_camera_speech",
+      "hook_strategy": {
+        "spoken_hook": "Bàn phím cơ kêu như máy đánh chữ làm phiền cả phòng?",
+        "visual_hook": "Biểu cảm bất lực của đồng nghiệp/người chung nhà khi nghe tiếng gõ phím lạch cạch ồn ào đêm muộn.",
+        "on_screen_text": "3 LỖI KHIẾN BẠN HẤT CẢ BÀN PHÍM",
+        "retention_trigger": "Đánh trúng nỗi đau thực tế hàng ngày: tiếng ồn làm phiền người khác và dây rợ lộn xộn."
+      },
+      "narrative_arc": [
+        "0-3s: Presenter tái hiện nỗi ám ảnh: gõ phím ồn bị phàn nàn, dây rợ rối đống, đang chơi game thì delay hỏng trận.",
+        "3-7s: Phân tích nguyên nhân: Bàn phím vỏ nhựa rỗng gây vang đanh, kết nối chập chờn, pin kém phải cắm dây liên tục.",
+        "7-15s: Giải pháp CyberKey Pro: Nhôm nguyên khối dầm chắc, lót tiêu âm đúp, tri-mode không dây bấm mượt không trễ.",
+        "15-20s: Bảng so sánh trực diện: Bàn phím nhựa giá cao dễ hỏng VS CyberKey Pro nhôm CNC giá chỉ 1.890.000đ.",
+        "20-25s: Thúc giục hành động với deal giảm 24% độc quyền trên livestream/video."
+      ],
+      "conversion_thesis": "Khai thác trực tiếp các điểm gãy trong trải nghiệm sử dụng hàng ngày, sau đó đưa ra CyberKey Pro như một giải pháp cứu cánh toàn diện.",
+      "projected_retention_score": 8.6,
+      "projected_conversion_score": 9.3
+    }
+  ],
+  "winning_concept": {
+    "selected_angle_id": "angle_a_shock_interrupt",
+    "selection_rationale": "Trong ngành hàng thiết bị ngoại vi & bàn phím cơ, rào cản chuyển đổi lớn nhất của người dùng là nghi ngờ về độ bền, độ rỗng âm kim loại và độ trễ không dây. Góc quay Shock/Pattern Interrupt (Angle A) giải quyết trực diện mọi nghi ngờ này bằng hình ảnh thử thách va đập thực tế và đo độ trễ slow-mo. Điều này tạo niềm tin tức thì và thúc đẩy tỷ lệ chuyển đổi cao nhất.",
+    "confidence_score": 0.94,
+    "directorial_directives": {
+      "camera_pacing": "Chuyển cảnh nhanh nhịp độ cao (Kinetic whip-pans) ở 3 giây đầu, sau đó khóa góc quay Macro Push-in cực gắt vào chi tiết bề mặt kim loại.",
+      "lighting_mood": "High-contrast commercial rim lighting, tone màu tối hitech với đèn LED xanh cyan phản chiếu góc cạnh của khung nhôm CNC.",
+      "key_visual_anchor": "Cú va chạm đập phím kim loại xuống mặt bàn và góc quay siêu cận điểm tiếp xúc switch tiêu âm.",
+      "audio_mix_priority": "on_camera_speech"
+    }
+  },
+  "metadata": {
+    "generator": "llm_gemini",
+    "research_grounded": true
+  }
+}

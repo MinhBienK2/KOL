@@ -1,0 +1,116 @@
+{
+  "campaign_id": "campaign_fashion_dress_01",
+  "product_url": "https://www.tiktok.com/explore?_r=1",
+  "product_intel": {
+    "title": "High-End French Satin Silk Evening Gown with Elegant Side Slit",
+    "brand": "Haute Silk Atelier",
+    "category": "Women's Fashion > Evening Dresses & Formal Wear",
+    "product_archetype": "fashion_apparel",
+    "pricing": {
+      "current_price": 890000.0,
+      "original_price": 1250000.0,
+      "currency": "VND",
+      "discount_percent": 29,
+      "price_tier": "mid-range"
+    },
+    "features": [
+      "Premium French satin silk fabric with a smooth, radiant sheen",
+      "Tailored body-contouring silhouette designed to hug natural curves",
+      "Delicate high-thigh side slit for unrestricted movement and elegance",
+      "Double-lined high-density weave preventing sheer transparency or unwanted underwear lines"
+    ],
+    "dramatic_benefits": [
+      "Instantly sculpts an effortless hourglass silhouette without feeling tight or uncomfortable",
+      "Captures ambient party lighting to give your skin a natural, luminous glow in every photo",
+      "Commands the room with every step as the fluid silk skirt cascades dramatically around your legs"
+    ],
+    "target_personas": [
+      "Glamorous event guest attending high-end weddings, galas, or corporate year-end banquets",
+      "Modern confident woman seeking an unforgettable showstopper dress that masks minor body insecurities"
+    ],
+    "awareness_level": "Solution Aware",
+    "objection_matrix": [
+      {
+        "objection": "Satin silk clings to belly rolls and highlights body imperfections.",
+        "counter_evidence": "High-density double-layered French silk weave creates a smoothing spanx-like drape that glides over curves.",
+        "demonstration_technique": "Macro video pull test showing the heavy fabric instantly smoothing over a textured mannequin curve without clinging."
+      },
+      {
+        "objection": "The dress will crease and look messy after sitting down in a car or at dinner.",
+        "counter_evidence": "Wrinkle-recovery treated French satin weave flexes under pressure and restores shape upon release.",
+        "demonstration_technique": "Tightly crumpling the dress skirt in a tight fist for 5 seconds on camera, then releasing it to reveal a completely smooth surface."
+      },
+      {
+        "objection": "The side slit might rip at the seam when sitting or stepping high.",
+        "counter_evidence": "Reinforced cross-stitch bar-tacking at the top slit junction distributes tension across stress points.",
+        "demonstration_technique": "Extreme pull demonstration tugging forcefully sideways on the slit apex to prove seam integrity."
+      }
+    ],
+    "sensory_anchors": [
+      "Soft, heavy rustle sound of fluid silk sweeping across the floor with every step",
+      "Close-up visual glide of fingers trailing along butter-smooth liquid-shine satin",
+      "Warm camera lens flare glinting off the satin hip curve under banquet spotlights"
+    ]
+  },
+  "competitor_landscape": {
+    "saturated_angles": [
+      "Generic mirror selfie try-on videos with trendy background music",
+      "Basic luxury aesthetic slow-mo walks with no context or problem-solving",
+      "Simple 'get ready with me for a party' routines featuring cheap fast-fashion silk"
+    ],
+    "competitor_weaknesses": [
+      "Cheap single-layer satin clings to lower belly fat and exposes panty lines under party flash",
+      "Weak side-slit stitching rips easily when walking fast, sitting down, or stepping into cars",
+      "Fabric creases violently after 10 minutes of sitting down, making the wearer look disheveled"
+    ],
+    "whitespace_opportunities": [
+      "Aggressive stress-test content proving slit durability and zero-wrinkle resilience",
+      "Side-by-side flash photography comparison between cheap satin vs double-lined French silk glow",
+      "Hidden sculpting capability demonstrations targeting tummy-conscious partygoers"
+    ]
+  },
+  "viral_hook_library": [
+    {
+      "hook_type": "shock_interrupt",
+      "spoken_line": "Tưởng xé đứt xẻ tà váy lụa 3 triệu hả? Không đời nào!",
+      "visual_action": "Model in high heels aggressively yanks and pulls the high-thigh slit open while doing a deep squat.",
+      "on_screen_text": "THỬ ĐỘ BỀN XẺ TÀ ĐẦM LỤA PHÁP",
+      "retention_mechanism": "High physical tension and violent treatment of fine luxury silk creates immediate shock and curiosity about fabric strength.",
+      "projected_stop_ratio": 0.89
+    },
+    {
+      "hook_type": "contrarian_debunking",
+      "spoken_line": "Thà mặc đồ bộ còn hơn mặc đầm lụa giá rẻ đi tiệc!",
+      "visual_action": "Split screen comparing harsh camera flash: cheap satin reveals embarrassing underwear lines vs French silk showing flawless glass-skin reflection.",
+      "on_screen_text": "LÝ DO ĐẦM LỤA GIÁ RẺ LÀM BẠN QUÊ",
+      "retention_mechanism": "Exploits public embarrassment anxiety by exposing how cheap satin ruins formal appearances under flash lights.",
+      "projected_stop_ratio": 0.86
+    },
+    {
+      "hook_type": "sensory_asmr_aesthetic",
+      "spoken_line": "Cảm nhận độ mướt của lụa Pháp cao cấp nguyên bản.",
+      "visual_action": "Ultra-macro 4K lens gliding over the liquid-gold sheen of the satin, followed by a heavy, satisfying thud as the gown cascades onto marble.",
+      "on_screen_text": "TIẾNG LỤA PHÁP NGUYÊN BẢN 100%",
+      "retention_mechanism": "Triggers visceral aesthetic pleasure and visual hypnosis through fluid macro lighting and rich tactile audio.",
+      "projected_stop_ratio": 0.81
+    },
+    {
+      "hook_type": "problem_agitation",
+      "spoken_line": "Nỗi ác mộng lớn nhất khi mặc đầm lụa đi xe hơi!",
+      "visual_action": "Creator steps out of a car, standing up to reveal massive ugly stomach creases on a cheap dress, panicking before switching to double-lined silk.",
+      "on_screen_text": "BỊ NHĂN BỤNG KHI MẶC ĐẦM LỤA?",
+      "retention_mechanism": "Targeting a very real, hyper-specific fear of ruining an expensive evening look immediately after sitting down.",
+      "projected_stop_ratio": 0.84
+    },
+    {
+      "hook_type": "pov_story",
+      "spoken_line": "POV: Bạn mặc chiếc đầm khiến cả buổi tiệc quay lại nhìn.",
+      "visual_action": "First-person POV walking through dimmed cocktail bar doors; ambient lights reflect off the gown as three people turn their heads simultaneously.",
+      "on_screen_text": "POV: KHI BẠN CHỌN ĐÚNG ĐẦM LỤA",
+      "retention_mechanism": "Fulfills social status and beauty fantasy, pulling viewers directly into a high-empathy aspirational scenario.",
+      "projected_stop_ratio": 0.83
+    }
+  ],
+  "primary_persona": "Glamorous event guest attending high-end weddings, galas, or corporate year-end banquets",
+  "price_anchor_strategy": "Định giá 890,000 VND chiết khấu 29% so với giá gốc"
+}

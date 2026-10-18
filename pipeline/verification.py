@@ -22,6 +22,7 @@ from pipeline.schemas import (
     ScenePlanArtifact,
     ScriptArtifact,
 )
+from pipeline.slideshow_risk import score_slideshow_risk
 
 
 def verify_technical_gate(video_path: str | Path) -> GateVerificationResult:
@@ -151,12 +152,15 @@ def verify_character_consistency_gate(
     all_exist = True
     watermark_cleaned = True
     for kf in keyframes:
-        p = Path(kf.get("cleaned_image_path", ""))
+        cleaned_p_str = kf.get("cleaned_image_path")
+        if not cleaned_p_str:
+            # Product-only shot rendered via direct T2V diffusion (character portrait not applicable)
+            continue
+        p = Path(cleaned_p_str)
         if not p.exists() or p.stat().st_size == 0:
             all_exist = False
         if not kf.get("watermark_removed", False):
             watermark_cleaned = False
-
     details = {
         "character_name": char_data.get("name"),
         "character_tag": char_data.get("character_tag"),
@@ -195,6 +199,36 @@ def verify_continuity_gate(script_path: str | Path, manifest_path: str | Path) -
         passed=passed,
         details=details,
         error_message=None if passed else f"Mismatch: {beats_count} beats vs {len(synced_clips)} synced clips",
+    )
+
+def verify_slideshow_risk_gate(scene_plan_path: str | Path) -> GateVerificationResult:
+    """Verifies that the scene plan avoids static slideshow risk via OpenMontage 6-dimension scorer."""
+    path = Path(scene_plan_path)
+    if not path.exists():
+        return GateVerificationResult(
+            gate_name="slideshow_risk_gate",
+            passed=False,
+            details={},
+            error_message=f"Scene plan artifact not found at {path}",
+        )
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    report = score_slideshow_risk(data)
+
+    details = {
+        "average_score": report.average_score,
+        "verdict": report.verdict,
+        "dimensions": {k: {"score": v.score, "reason": v.reason} for k, v in report.dimensions.items()},
+        "hard_reject_reasons": report.hard_reject_reasons,
+        "recommendations": report.recommendations,
+    }
+
+    return GateVerificationResult(
+        gate_name="slideshow_risk_gate",
+        passed=report.passed,
+        details=details,
+        error_message=None if report.passed else "; ".join(report.hard_reject_reasons or [f"Slideshow risk score {report.average_score} exceeds threshold."]),
     )
 
 
@@ -236,13 +270,15 @@ def run_all_verification_gates(
     video_path = Path(master_video_path or (OUTPUT_DIR / "final_commercial_master.mp4"))
     script_path = target_artifacts_dir / "script.json"
     manifest_path = target_artifacts_dir / "asset_manifest.json"
+    scene_plan_path = target_artifacts_dir / "scene_plan.json"
 
-    # Run 3 independent verification gates
+    # Run 4 independent verification gates
     tech_gate = verify_technical_gate(video_path)
     char_gate = verify_character_consistency_gate(manifest_path)
     cont_gate = verify_continuity_gate(script_path, manifest_path)
+    slideshow_gate = verify_slideshow_risk_gate(scene_plan_path)
 
-    all_gates = [tech_gate, char_gate, cont_gate]
+    all_gates = [tech_gate, char_gate, cont_gate, slideshow_gate]
     overall_status = "PASSED" if all(g.passed for g in all_gates) else "FAILED"
 
     file_size = video_path.stat().st_size if video_path.exists() else 0
@@ -250,8 +286,19 @@ def run_all_verification_gates(
     width = tech_gate.details.get("width", 1080)
     height = tech_gate.details.get("height", 1920)
 
+    campaign_id = "campaign_default"
+    product_name = "Commercial Product"
+    if script_path.exists():
+        try:
+            with open(script_path, "r", encoding="utf-8") as f:
+                s_data = json.load(f)
+                campaign_id = s_data.get("campaign_id", campaign_id)
+                product_name = s_data.get("product_name", product_name)
+        except Exception:
+            pass
+
     report = RenderReportArtifact(
-        campaign_id="campaign_lumina_mug_01",
+        campaign_id=campaign_id,
         master_video_path=str(video_path),
         file_size_bytes=file_size,
         duration_seconds=duration,
@@ -269,18 +316,19 @@ def run_all_verification_gates(
         json.dump(report.model_dump(), f, ensure_ascii=False, indent=2)
 
     # Generate thumbnail and publish_log.json
-    thumb_path = OUTPUT_DIR / "thumbnail_master.jpg"
+    thumb_path = video_path.parent / f"thumbnail_{video_path.stem}.jpg"
     if video_path.exists():
         generate_commercial_thumbnail(video_path, thumb_path, timestamp=min(duration - 1.0, 18.0))
 
+    clean_tag = "".join(product_name.title().split())
     publish_log = PublishLogArtifact(
-        campaign_id="campaign_lumina_mug_01",
-        product_name="Ly Giữ Nhiệt Thông Minh Lumina Pro",
+        campaign_id=campaign_id,
+        product_name=product_name,
         master_video_path=str(video_path),
         thumbnail_path=str(thumb_path),
-        title="Bí quyết giữ nhiệt 24h của KOL Minh Anh: Ly thông minh Lumina Pro",
-        description="Đừng để cà phê nguội làm hỏng ngày làm việc của bạn! Ly giữ nhiệt Lumina Pro với màn hình cảm ứng LED đo nhiệt độ, giữ nóng 12h, lạnh 24h và chống tràn 360 độ.",
-        hashtags=["#LuminaPro", "#LyGiuNhietThongMinh", "#KOLMinhAnh", "#DoGiaDungThongMinh", "#TikTokShopVN", "#GocLamViec"],
+        title=f"Viral Commercial: {product_name}",
+        description=f"Khám phá siêu phẩm {product_name} với thiết kế chuẩn điện ảnh và hiệu năng vượt trội. Link đặt hàng độc quyền tại bio!",
+        hashtags=[f"#{clean_tag}", "#TikTokShopVN", "#AICommercial", "#Trending", "#ViralVideo"],
         published_at=datetime.datetime.utcnow().isoformat() + "Z",
     )
 

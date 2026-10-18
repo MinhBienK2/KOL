@@ -8,7 +8,22 @@ from typing import List, Optional
 
 from pipeline.config import ARTIFACTS_DIR, CHARACTER_PATH
 from pipeline.schemas import ScenePlanArtifact, ScriptArtifact, StoryboardShot
-
+from pipeline.archetypes import (
+    CharacterRole,
+    DynamicPromptBuilder,
+    ProductArchetype,
+    get_archetype_config,
+)
+from pipeline.slideshow_risk import score_slideshow_risk
+from pipeline.wardrobe import resolve_wardrobe_and_environment
+from pipeline.cinematography import (
+    CameraAngle,
+    CameraLens,
+    ShotScale,
+    build_framing_directive,
+    generate_storyboard_contact_sheet,
+)
+from pipeline.lip_sync_engine import determine_lip_sync_strategy
 
 def build_6part_prompt(
     aspect_ratio: str,
@@ -57,6 +72,116 @@ def generate_scene_plan(
     identity_lock = f"Same character, consistent facial structure, {face_prompt}"
     style_pos = "cinematic photorealistic, modern minimalist office, high-end commercial aesthetic, studio softbox lighting, 8k, tack sharp focus, clean background"
     style_neg = "watermark, text, logo overlay, deformed limbs, bad hands, blurry, lowres, oversaturated, 3d render, cartoon"
+
+    if script.campaign_id != "campaign_lumina_mug_01" or script.archetype != ProductArchetype.GENERAL_COMMERCIAL or len(script.beats) != 4:
+        persona = DynamicPromptBuilder.resolve_persona(script.archetype)
+        arch_config = get_archetype_config(script.archetype)
+        wardrobe, environment = resolve_wardrobe_and_environment(script.archetype)
+
+        # Dynamic Framing Scale cycle: Wide -> Cowboy -> Macro -> Medium -> Medium Close-Up -> Close-Up
+        scale_cycle = [
+            ShotScale.WS,
+            ShotScale.MWS,
+            ShotScale.ECU,
+            ShotScale.MS,
+            ShotScale.MCU,
+            ShotScale.CU,
+        ]
+
+        shots: List[StoryboardShot] = []
+        for idx, beat in enumerate(script.beats, start=1):
+            shot_id = f"shot_{idx:02d}"
+            is_prod_only = beat.character_role == CharacterRole.PRODUCT_ONLY
+            shot_scale = scale_cycle[(idx - 1) % len(scale_cycle)]
+            framing = build_framing_directive(scale=shot_scale, focal_point=script.product_name if is_prod_only else persona.name)
+            lip_decision = determine_lip_sync_strategy(
+                shot_id=shot_id,
+                character_role=beat.character_role,
+                audio_strategy=beat.audio_strategy,
+                spoken_text=beat.spoken_text,
+            )
+
+            # Build enriched multi-layer prompt combining Framing, Identity, WEAR, SET, Action, and Articulation
+            base_prompt = DynamicPromptBuilder.build_subject_and_action_prompt(
+                character_role=beat.character_role,
+                archetype=script.archetype,
+                product_name=script.product_name,
+                scene_action=beat.visual_cue,
+                persona=persona,
+                lighting=beat.lighting_contract,
+                camera=beat.camera_choreography,
+            )
+            prompt_parts = [
+                framing.prompt_optics_directive,
+                base_prompt,
+                environment.prompt_set_directive,
+            ]
+            if not is_prod_only:
+                prompt_parts.append(wardrobe.prompt_wear_directive)
+                if lip_decision.prompt_articulation_directive:
+                    prompt_parts.append(lip_decision.prompt_articulation_directive)
+
+            full_cinematic_prompt = " ".join(prompt_parts)
+
+            expr_path = None
+            if not is_prod_only:
+                expr_path = DynamicPromptBuilder.get_reference_expression_path(
+                    persona=persona,
+                    archetype=script.archetype,
+                    emotion_intent=beat.beat_type,
+                )
+
+            shots.append(
+                StoryboardShot(
+                    shot_id=shot_id,
+                    scene_id=beat.scene_id,
+                    shot_type=f"{shot_scale.value.upper()} • {beat.beat_type.capitalize()}",
+                    angle=framing.angle.value,
+                    camera_motion=beat.camera_choreography.value if beat.camera_choreography else "Smooth commercial track",
+                    lighting=beat.lighting_contract.value if beat.lighting_contract else arch_config.default_lighting.value,
+                    character_tag=None if is_prod_only else persona.character_tag,
+                    identity_lock_directive=None if is_prod_only else f"Same character {persona.character_tag}, {persona.base_face_prompt}",
+                    style_constraints=f"{arch_config.display_name} commercial aesthetic | Avoid: {style_neg}",
+                    scene_description=beat.visual_cue,
+                    prompt_6part=full_cinematic_prompt,
+                    estimated_duration=beat.estimated_duration,
+                    reference_expression=expr_path,
+                    character_role=beat.character_role,
+                    camera_choreography=beat.camera_choreography.value if beat.camera_choreography else None,
+                    lighting_contract=beat.lighting_contract.value if beat.lighting_contract else None,
+                    narrative_purpose=beat.narrative_purpose,
+                    color_temp_kelvin=environment.nominal_color_temp_kelvin,
+                    is_hero_moment=idx in (2, 3) or "solution" in beat.beat_type or "reveal" in beat.beat_type,
+                )
+            )
+
+        # Generate DramaClaw Storyboard Contact Sheet
+        contact_sheet_path = target_artifacts_dir / "storyboard_contact_sheet.jpg"
+        sheet_shot_dicts = []
+        for s in shots:
+            d = s.model_dump()
+            matching_beat = next((b for b in script.beats if b.scene_id == s.scene_id), None)
+            if matching_beat:
+                d["spoken_text"] = matching_beat.spoken_text
+                d["on_screen_text"] = matching_beat.on_screen_text
+            sheet_shot_dicts.append(d)
+
+        generate_storyboard_contact_sheet(
+            shots=sheet_shot_dicts,
+            output_path=contact_sheet_path,
+            campaign_title=f"{script.product_name} Storyboard",
+        )
+
+        scene_plan = ScenePlanArtifact(
+            campaign_id=script.campaign_id,
+            shots=shots,
+            slideshow_risk=score_slideshow_risk(shots).model_dump(),
+            storyboard_contact_sheet=str(contact_sheet_path),
+        )
+        out_file = target_artifacts_dir / "scene_plan.json"
+        with open(out_file, "w", encoding="utf-8") as f:
+            json.dump(scene_plan.model_dump(), f, ensure_ascii=False, indent=2)
+        return scene_plan
 
     shot_configs = [
         {
@@ -141,6 +266,7 @@ def generate_scene_plan(
     scene_plan = ScenePlanArtifact(
         campaign_id=script.campaign_id,
         shots=shots,
+        slideshow_risk=score_slideshow_risk(shots).model_dump(),
     )
 
     out_file = target_artifacts_dir / "scene_plan.json"

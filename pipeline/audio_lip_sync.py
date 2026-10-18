@@ -20,8 +20,9 @@ from pipeline.config import (
     RAW_CLIPS_DIR,
     SYNCED_CLIPS_DIR,
 )
+from pipeline.archetypes import AudioStrategy, CharacterRole
+from pipeline.lip_sync_engine import analyze_speech_energy, determine_lip_sync_strategy
 from pipeline.schemas import AssetManifestArtifact, ScriptArtifact
-
 
 def probe_audio_duration(file_path: str | Path) -> float:
     """Probes media duration using ffprobe."""
@@ -45,12 +46,33 @@ def synthesize_tts_stem(
     output_wav_path: str | Path,
     voice: str = "nova",
     model: str = "tts-1",
+    target_duration: float = 4.0,
 ) -> Tuple[str, float]:
-    """Generates broadcast-quality voiceover audio stem using Neural TTS."""
+    """Generates broadcast-quality voiceover audio stem using Neural TTS.
+    If text is empty (music/SFX only beats), generates clean 48kHz stereo silence.
+    """
     out_path = Path(output_wav_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    temp_mp3 = out_path.with_suffix(".temp.mp3")
 
+    if not text or not text.strip():
+        est_duration = max(3.0, target_duration)
+        cmd_silence = [
+            "ffmpeg",
+            "-y",
+            "-f",
+            "lavfi",
+            "-i",
+            f"anullsrc=r=48000:cl=stereo",
+            "-t",
+            str(est_duration),
+            "-ar",
+            "48000",
+            str(out_path),
+        ]
+        subprocess.check_call(cmd_silence, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return str(out_path), est_duration
+
+    temp_mp3 = out_path.with_suffix(".temp.mp3")
     url = f"{MINIMAX_BASE_URL}/v1/audio/speech"
     headers = {
         "Authorization": f"Bearer {MINIMAX_API_KEY}",
@@ -143,7 +165,7 @@ def align_lip_sync_clip(
         "-i",
         str(audio_p),
         "-filter_complex",
-        f"[0:v]setpts={pts_factor}*PTS[v]",
+        f"[0:v]setpts={pts_factor}*PTS,scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v]",
         "-map",
         "[v]",
         "-map",
@@ -199,13 +221,25 @@ def produce_all_audio_and_lip_sync(
         shot_id = f"shot_{idx + 1:02d}"
         stem_path = target_audio_dir / f"voice_{shot_id}.wav"
 
-        print(f"[AudioEngine] Synthesizing voiceover for {shot_id}: '{beat.spoken_text[:30]}...'")
+        lip_dec = determine_lip_sync_strategy(
+            shot_id=shot_id,
+            character_role=getattr(beat, "character_role", CharacterRole.MODEL),
+            audio_strategy=getattr(beat, "audio_strategy", AudioStrategy.OFF_CAMERA_VO),
+            spoken_text=beat.spoken_text,
+        )
+        print(f"[AudioEngine] [{shot_id}] Speech Mode: {lip_dec.voiceover_mix_mode} | Spoken text: '{beat.spoken_text[:30]}...'")
         synthesize_tts_stem(
             text=beat.spoken_text,
             output_wav_path=stem_path,
             voice="nova",
+            target_duration=beat.estimated_duration,
         )
         audio_stems.append(str(stem_path))
+        try:
+            energy_prof = analyze_speech_energy(stem_path)
+            print(f"[LipSync] [{shot_id}] Audio Profile: {energy_prof.duration_seconds}s | Speaking ratio: {energy_prof.speaking_duration_ratio*100:.0f}% | Bursts: {len(energy_prof.speech_bursts)}")
+        except Exception:
+            pass
 
         # Find matching raw video clip
         matching_raw = None

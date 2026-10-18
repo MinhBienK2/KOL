@@ -1,0 +1,27 @@
+{
+  "campaign_id": "campaign_fashion_blazer_minhanh_01",
+  "product_name": "Áo Khoác Blazer Nữ Form Rộng Phong Cách Hàn Quốc Vải Tuyết Mưa Cao Cấp",
+  "target_persona": "Nữ nhân viên công sở Gen Z & Millennial tìm kiếm phong cách thời trang thanh lịch, hiện đại nhưng không gò bó",
+  "pain_points": [
+    "Chất vải tuyết mưa cao cấp dệt mật độ cao, khả năng chống nhăn và chống xù lông tự nhiên",
+    "Form áo rộng dáng dài chuẩn Hàn Quốc giúp giấu triệt để khuyết điểm vòng 2 và bắp tay",
+    "Đệm vai sinh học mỏng 0.5cm định hình dáng vai vuông thanh thoát mà không gây thô cứng"
+  ],
+  "usps": [
+    "Biến hóa thần thái từ đồ mặc nhà xuề xòa thành quý cô công sở thanh lịch chỉ trong 3 giây khoác áo",
+    "Giữ vẻ ngoài chỉn chu, phẳng phiu suốt 8 tiếng ngồi máy lạnh hay di chuyển liên tục mà không cần là lượt",
+    "Tạo hiệu ứng thị giác vai thẳng, lưng thon, 'ăn gian' chiều cao và che gọn bắp tay to cho mọi dáng người"
+  ],
+  "visual_tone": "Thử Thách Vò Nát Blazer Tuyết Mưa 289K | Bright commercial high-key studio lighting with high color rendering to highlight fabric texture contrast and show zero wrinkles clearly.",
+  "aspect_ratio": "9:16",
+  "presenter": {
+    "name": "Linh Dan",
+    "character_tag": "[MODEL_LD]",
+    "role": "Lead Model",
+    "character_file": "assets/characters/kol_main/character.json"
+  },
+  "archetype": "fashion_apparel",
+  "category": "fashion_apparel",
+  "character_role": "model",
+  "target_audio_strategy": "music_and_sfx_only"
+}

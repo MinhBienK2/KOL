@@ -20,6 +20,42 @@
       "reference_sheet": "assets/characters/kol_main/identities/default.png",
       "turnaround_bust": "assets/characters/kol_main/identities/turnaround_bust_4panel.png",
       "turnaround_body": "assets/characters/kol_main/identities/turnaround_body_3panel.png"
+    },
+    {
+      "identity_id": "kol_main_fashion",
+      "identity_name": "Haute Couture Evening Gala",
+      "character_tag": "[KOL_MA_FASHION]",
+      "appearance_details": "Floor-length midnight noir French satin silk evening gown with asymmetrical high leg slit, cowl neckline, sleek chignon hair bun, platinum drop earrings, metallic stiletto heels",
+      "reference_sheet": "assets/characters/kol_main/full_body/01_standing_front_0deg.jpg",
+      "turnaround_bust": "assets/characters/kol_main/identities/turnaround_bust_4panel.png",
+      "turnaround_body": "assets/characters/kol_main/identities/turnaround_body_3panel.png"
+    },
+    {
+      "identity_id": "kol_main_techwear",
+      "identity_name": "Creative Techwear",
+      "character_tag": "[KOL_MA_TECH]",
+      "appearance_details": "Matte obsidian black architectural techwear hoodie over fitted charcoal base, titanium smartwatch, tailored technical jogger trousers",
+      "reference_sheet": "archive_raw/ref_10_speaking_hand_gesture.jpg",
+      "turnaround_bust": "assets/characters/kol_main/identities/turnaround_bust_4panel.png",
+      "turnaround_body": "assets/characters/kol_main/identities/turnaround_body_3panel.png"
+    },
+    {
+      "identity_id": "kol_main_spa",
+      "identity_name": "Minimalist Spa & Skincare",
+      "character_tag": "[KOL_MA_SPA]",
+      "appearance_details": "Pure pearl-white silk wrap kimono robe gently draped over dewy bare shoulders, hair swept in soft claw clip, radiant dewy bare glass skin",
+      "reference_sheet": "assets/characters/kol_main/expressions/02_smiling.jpg",
+      "turnaround_bust": "assets/characters/kol_main/identities/turnaround_bust_4panel.png",
+      "turnaround_body": "assets/characters/kol_main/identities/turnaround_body_3panel.png"
+    },
+    {
+      "identity_id": "kol_main_cozy",
+      "identity_name": "Scandinavian Cozy Knitwear",
+      "character_tag": "[KOL_MA_COZY]",
+      "appearance_details": "Oversized chunky ribbed oatmeal cashmere sweater, relaxed cream linen trousers, loose natural low hair bun, warm domestic aesthetic",
+      "reference_sheet": "archive_raw/ref_06_seated_pose.jpg",
+      "turnaround_bust": "assets/characters/kol_main/identities/turnaround_bust_4panel.png",
+      "turnaround_body": "assets/characters/kol_main/identities/turnaround_body_3panel.png"
     }
   ],
   "expressions": {
