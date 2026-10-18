@@ -91,3 +91,13 @@ _Avoid_: Floating camera, disjointed lighting cuts
 **OpenMontage Slideshow Risk Gate**:
 A 6-dimension automated evaluator scoring repetition, decorative visuals, weak motion, weak shot intent, typography overreliance, and unsupported cinematic claims to prevent static photo slideshow outputs.
 _Avoid_: Ken Burns slideshow, static image zoompan
+
+### Project & Workspace Architecture
+
+**Project Workspace**:
+A self-contained production directory encapsulating all canonical artifacts, keyframes, raw diffusion clips, synced audio, and master video files for a single film under its domain topic (`output/projects/{topic}/{project_id}/`).
+_Avoid_: Fragmented multi-tree output, global temp directory, flat campaign dumping
+
+**Topic Catalog**:
+The authoritative registry and queryable seam mapping domain archetypes and themes (Fashion Apparel, Tech Gadgets, Beauty Skincare, Home Lifestyle, General Commercial) to wardrobe profiles, photorealistic environments, and active projects.
+_Avoid_: Hardcoded category switch-cases, scattered global dictionaries

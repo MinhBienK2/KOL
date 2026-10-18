@@ -22,6 +22,7 @@ from pipeline.schemas import (
     ScenePlanArtifact,
     ScriptArtifact,
 )
+from pipeline.workspace import ProjectWorkspace
 from pipeline.slideshow_risk import score_slideshow_risk
 
 
@@ -262,12 +263,18 @@ def generate_commercial_thumbnail(
 def run_all_verification_gates(
     master_video_path: str | Path | None = None,
     artifacts_dir: Path | None = None,
+    workspace: Optional[ProjectWorkspace] = None,
 ) -> RenderReportArtifact:
     """Executes all quality gates and writes render_report.json and publish_log.json."""
-    target_artifacts_dir = artifacts_dir or ARTIFACTS_DIR
+    target_artifacts_dir = workspace.artifacts_dir if workspace is not None else (artifacts_dir or ARTIFACTS_DIR)
     target_artifacts_dir.mkdir(parents=True, exist_ok=True)
 
-    video_path = Path(master_video_path or (OUTPUT_DIR / "final_commercial_master.mp4"))
+    if master_video_path is not None:
+        video_path = Path(master_video_path)
+    elif workspace is not None:
+        video_path = workspace.master_video_path
+    else:
+        video_path = Path(OUTPUT_DIR / "final_commercial_master.mp4")
     script_path = target_artifacts_dir / "script.json"
     manifest_path = target_artifacts_dir / "asset_manifest.json"
     scene_plan_path = target_artifacts_dir / "scene_plan.json"
@@ -316,7 +323,10 @@ def run_all_verification_gates(
         json.dump(report.model_dump(), f, ensure_ascii=False, indent=2)
 
     # Generate thumbnail and publish_log.json
-    thumb_path = video_path.parent / f"thumbnail_{video_path.stem}.jpg"
+    if workspace is not None:
+        thumb_path = workspace.thumbnail_path
+    else:
+        thumb_path = video_path.parent / f"thumbnail_{video_path.stem}.jpg"
     if video_path.exists():
         generate_commercial_thumbnail(video_path, thumb_path, timestamp=min(duration - 1.0, 18.0))
 

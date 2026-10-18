@@ -1,0 +1,85 @@
+{
+  "campaign_id": "campaign_cherry_dress_01",
+  "product_url": "https://img.ltwebstatic.com/images3_pi/2025/02/21/be/1740105468a600378d8d263365c3072457b0520174_thumbnail_900x.webp",
+  "product_intel": {
+    "title": "Đầm Xòe Nơ Quả Cherry Vintage Kiểu Pháp",
+    "brand": "Parisian Coquette Atelier",
+    "category": "Fashion / Dresses",
+    "product_archetype": "fashion_apparel",
+    "pricing": {
+      "current_price": 389000.0,
+      "original_price": 550000.0,
+      "currency": "VND",
+      "discount_percent": 29,
+      "price_tier": "budget-to-mid"
+    },
+    "features": [
+      "Chất liệu cotton dệt dập nổi waffle cao cấp",
+      "Cúp ngực sweetheart dáng corset chiết eo thon",
+      "Dây ruy băng lụa đỏ thắt nơ vai điệu đà",
+      "Chân váy xòe chữ A xếp ly bay bổng"
+    ],
+    "dramatic_benefits": [
+      "Tôn trọn bờ vai thon và vòng eo con kiến ngay khi mặc",
+      "Lên hình sống ảo cực nổi bật với họa tiết cherry đỏ tươi vintage",
+      "Thoải mái tự tin dạo phố cả ngày mà không lo nhăn xù hay bí bách"
+    ],
+    "target_personas": [
+      "Gen Z & Millennials mê phong cách tiểu thư cổ điển Pháp",
+      "Nàng thơ thích chụp ảnh du lịch hè, picnic và cafe cuối tuần"
+    ],
+    "awareness_level": "Problem Aware",
+    "objection_matrix": [
+      {
+        "objection": "Vải có bị mỏng hay lộ nội y không?",
+        "counter_evidence": "Chất vải dập vân waffle 2 lớp dày dặn, có lớp lót kín đáo chuẩn form",
+        "demonstration_technique": "Góc quay macro thớ vải dày dặn và độ đàn hồi cao"
+      },
+      {
+        "objection": "Dây buộc nơ có dễ tuột không?",
+        "counter_evidence": "Dây ruy băng bản dệt kép chắc chắn, thắt nơ định hình chắc chắn suốt cả ngày",
+        "demonstration_technique": "Model thắt nơ nhẹ nhàng và xoay người sải bước tự tin"
+      }
+    ],
+    "sensory_anchors": [
+      "Vải mềm xốp dập vân waffle mát lạnh trên da",
+      "Sắc đỏ cherry chín mọng nổi bật trên nền kem ngà thanh lịch",
+      "Váy xòe bồng bềnh tung bay theo từng nhịp bước chân"
+    ]
+  },
+  "competitor_landscape": {
+    "saturated_angles": [
+      "Livestream xả kho gào thét giá rẻ",
+      "Video quay vội không đầu tư ánh sáng khiến váy trông nhạt nhòa"
+    ],
+    "competitor_weaknesses": [
+      "Hàng chợ mỏng dính, đường may cẩu thả, không có phom corset tôn dáng",
+      "Họa tiết in lem nhem, vải dễ xù nhăn"
+    ],
+    "whitespace_opportunities": [
+      "Quảng cáo chuẩn Lookbook Runway điện ảnh Parisian Chic",
+      "Trình diễn 360 độ phom corset chiết eo và chuyển động bay bổng của chân váy",
+      "Góc quay macro thớ vải waffle và họa tiết cherry đỏ cao cấp"
+    ]
+  },
+  "viral_hook_library": [
+    {
+      "hook_type": "aesthetic_sensory",
+      "spoken_line": "",
+      "visual_action": "Camera pedestal từ thấp lên cao, model bước sải chân tự tin trên phố Paris, tà váy xòe cherry tung bay trong nắng",
+      "on_screen_text": "PARISIAN COQUETTE DROP • CHIẾC VÁY GÂY BÃO MÙA HÈ",
+      "retention_mechanism": "Visual aesthetic shock halting the scroll within 1.5s",
+      "projected_stop_ratio": 0.92
+    },
+    {
+      "hook_type": "shock_interrupt",
+      "spoken_line": "",
+      "visual_action": "Model xoay người 360 độ phô diễn trọn vẹn vòng eo con kiến và bờ vai gợi cảm",
+      "on_screen_text": "HACK VÒNG EO CON KIẾN TRONG 1 NỐT NHẠC",
+      "retention_mechanism": "Instant transformation curiosity trigger",
+      "projected_stop_ratio": 0.88
+    }
+  ],
+  "primary_persona": "Nữ giới trẻ 18-28 tuổi mê phong cách Coquette Parisian",
+  "price_anchor_strategy": "Ưu đãi độc quyền ra mắt 389.000đ (giảm 29% từ 550.000đ)"
+}

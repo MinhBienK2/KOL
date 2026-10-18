@@ -20,6 +20,7 @@ from pipeline.schemas import (
     EditDecisionsArtifact,
     ScriptArtifact,
 )
+from pipeline.workspace import ProjectWorkspace
 
 
 def get_clip_duration(file_path: str | Path) -> float:
@@ -51,11 +52,18 @@ def compose_master_commercial(
     output_master_path: str | Path | None = None,
     artifacts_dir: Path | None = None,
     font_path: str = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+    include_captions: bool = True,
+    workspace: Optional[ProjectWorkspace] = None,
 ) -> EditDecisionsArtifact:
     """Assembles all synchronized shots, captions, and multi-track audio ducking into final master MP4."""
-    target_artifacts_dir = artifacts_dir or ARTIFACTS_DIR
+    target_artifacts_dir = workspace.artifacts_dir if workspace is not None else (artifacts_dir or ARTIFACTS_DIR)
     target_artifacts_dir.mkdir(parents=True, exist_ok=True)
-    out_master = Path(output_master_path or (OUTPUT_DIR / "final_commercial_master.mp4"))
+    if output_master_path is not None:
+        out_master = Path(output_master_path)
+    elif workspace is not None:
+        out_master = workspace.master_video_path
+    else:
+        out_master = Path(OUTPUT_DIR / "final_commercial_master.mp4")
     out_master.parent.mkdir(parents=True, exist_ok=True)
 
     if script is None:
@@ -93,23 +101,26 @@ def compose_master_commercial(
     # Step C: Build dynamic caption filters
     caption_filters: List[str] = []
     captions_manifest: List[dict] = []
-    for idx, (start_t, end_t) in enumerate(timecodes):
-        if idx < len(script.beats):
-            caption_text = script.beats[idx].on_screen_text
-            esc_text = escape_drawtext(caption_text)
-            
-            # Draw banner box with high-contrast text
-            f_box = (
-                f"drawtext=fontfile='{font_path}':text='{esc_text}':"
-                f"fontcolor=white:fontsize=48:box=1:boxcolor=black@0.70:boxborderw=20:"
-                f"x=(w-text_w)/2:y=h-450:enable='between(t,{start_t:.2f},{end_t:.2f})'"
-            )
-            caption_filters.append(f_box)
-            captions_manifest.append({
-                "text": caption_text,
-                "start": round(start_t, 2),
-                "end": round(end_t, 2),
-            })
+    if include_captions:
+        for idx, (start_t, end_t) in enumerate(timecodes):
+            if idx < len(script.beats):
+                caption_text = script.beats[idx].on_screen_text
+                if not caption_text:
+                    continue
+                esc_text = escape_drawtext(caption_text)
+                
+                # Draw banner box with high-contrast text
+                f_box = (
+                    f"drawtext=fontfile='{font_path}':text='{esc_text}':"
+                    f"fontcolor=white:fontsize=48:box=1:boxcolor=black@0.70:boxborderw=20:"
+                    f"x=(w-text_w)/2:y=h-450:enable='between(t,{start_t:.2f},{end_t:.2f})'"
+                )
+                caption_filters.append(f_box)
+                captions_manifest.append({
+                    "text": caption_text,
+                    "start": round(start_t, 2),
+                    "end": round(end_t, 2),
+                })
 
     # Combined video filter: captions overlay
     combined_vf = ",".join(caption_filters) if caption_filters else "null"

@@ -8,6 +8,7 @@ from typing import List, Optional
 
 from pipeline.config import ARTIFACTS_DIR
 from pipeline.schemas import BriefArtifact, ScriptArtifact, ScriptBeat
+from pipeline.workspace import ProjectWorkspace
 from pipeline.archetypes import (
     AudioStrategy,
     CameraChoreography,
@@ -33,25 +34,26 @@ def _build_archetype_beats(brief: BriefArtifact, archetype: ProductArchetype) ->
 
         # Build contextual spoken and on-screen copy per archetype
         if archetype == ProductArchetype.FASHION_APPAREL:
+            is_dress = "đầm" in product.lower() or "dress" in product.lower() or "váy" in product.lower() or "cherry" in product.lower()
             if tpl.beat_type == "hook":
                 spoken = f"Bạn có tin một chiếc {product} có thể nâng tầm toàn bộ outfit của bạn?"
-                on_screen = f"MUST-HAVE ITEM • {product.upper()}"
+                on_screen = f"PARISIAN CHIC • {product.upper()}" if is_dress else f"MUST-HAVE ITEM • {product.upper()}"
                 visual = f"Góc máy {tpl.camera_choreography.value} từ thấp lên cao, {character_tag} bước sải chân tự tin với phong thái cuốn hút"
             elif tpl.beat_type == "reveal":
-                spoken = f"Form dáng suông chuẩn Hàn Quốc, độn vai nhẹ tôn dáng và che trọn khuyết điểm."
-                on_screen = "PERFECT SILHOUETTE • 360° FIT"
+                spoken = usps[0] if len(usps) > 0 and brief.usps else "Form dáng suông chuẩn Hàn Quốc, độn vai nhẹ tôn dáng và che trọn khuyết điểm."
+                on_screen = "CORSET FIT • 360° SILHOUETTE" if is_dress else "PERFECT SILHOUETTE • 360° FIT"
                 visual = f"Camera {tpl.camera_choreography.value} xoay 360 quanh {character_tag}, khoe trọn phom dáng thanh lịch của {product}"
             elif tpl.beat_type == "fabric_macro":
-                spoken = "Chất vải tuyết mưa cao cấp chống nhăn tuyệt đối, vò mạnh thả ra vẫn phẳng lì đứng phom."
-                on_screen = "PREMIUM FABRIC • WRINKLE-FREE"
+                spoken = usps[1] if len(usps) > 1 and brief.usps else "Chất vải tuyết mưa cao cấp chống nhăn tuyệt đối, vò mạnh thả ra vẫn phẳng lì đứng phom."
+                on_screen = "WAFFLE JACQUARD • CHERRY PRINT" if is_dress else "PREMIUM FABRIC • WRINKLE-FREE"
                 visual = f"Góc cận cảnh macro {tpl.camera_choreography.value}, bắt trọn từng thớ vải mịn màng đung đưa chuyển động mềm mại"
             elif tpl.beat_type == "movement_flow":
-                spoken = "Vạt áo bay nhẹ nhàng tự nhiên, thoải mái vận động cả ngày dài không hề gò bó."
-                on_screen = "FLUID MOVEMENT • ALL DAY COMFORT"
+                spoken = usps[2] if len(usps) > 2 and brief.usps else "Vạt áo bay nhẹ nhàng tự nhiên, thoải mái vận động cả ngày dài không hề gò bó."
+                on_screen = "FLUID MOVEMENT • PARIS STREET" if is_dress else "FLUID MOVEMENT • ALL DAY COMFORT"
                 visual = f"Camera {tpl.camera_choreography.value} tracking song song khi {character_tag} rảo bước năng động"
             elif tpl.beat_type == "styling_versatility":
-                spoken = "Dễ dàng mix ngoài áo sơ mi trắng đi làm công sở, hay khoác hờ dạo phố cà phê đều cực sang."
-                on_screen = "EASY MIX & MATCH • WORK TO STREET"
+                spoken = "Dễ dàng phối cùng túi cói mini cho buổi dạo phố, hay thêm phụ kiện đỏ cho bữa tối hẹn hò lãng mạn." if is_dress else "Dễ dàng mix ngoài áo sơ mi trắng đi làm công sở, hay khoác hờ dạo phố cà phê đều cực sang."
+                on_screen = "PARISIAN PICNIC • SUMMER VIBES" if is_dress else "EASY MIX & MATCH • WORK TO STREET"
                 visual = f"Cắt nhanh {tpl.camera_choreography.value} đổi phong cách phối đồ linh hoạt cùng phụ kiện"
             else:  # cta
                 spoken = f"Đang có ưu đãi độc quyền 30% hôm nay! Nhấp ngay vào link giỏ hàng bên dưới để sở hữu nhé!"
@@ -187,10 +189,14 @@ def generate_commercial_script(
     brief_path: Path | None = None,
     output_dir: Path | None = None,
     archetype: ProductArchetype | str | None = None,
+    workspace: Optional[ProjectWorkspace] = None,
 ) -> ScriptArtifact:
     """Generates high-conversion TVC script based on brief.json and directorial archetype."""
-    target_artifacts_dir = output_dir or ARTIFACTS_DIR
+    target_artifacts_dir = workspace.artifacts_dir if workspace is not None else (output_dir or ARTIFACTS_DIR)
     target_artifacts_dir.mkdir(parents=True, exist_ok=True)
+
+    if archetype is None and workspace is not None and getattr(workspace, "topic", None):
+        archetype = workspace.topic
 
     if brief is None:
         source_path = brief_path or (target_artifacts_dir / "brief.json")

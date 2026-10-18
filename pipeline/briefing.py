@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from pipeline.config import ARTIFACTS_DIR
 from pipeline.schemas import BriefArtifact, PresenterInfo
+from pipeline.workspace import ProjectWorkspace
 from pipeline.archetypes import (
     AudioStrategy,
     CharacterRole,
@@ -29,6 +30,7 @@ def create_product_brief(
     target_audio_strategy: AudioStrategy | str | None = None,
     presenter: PresenterInfo | None = None,
     output_dir: Path | None = None,
+    workspace: Optional[ProjectWorkspace] = None,
 ) -> BriefArtifact:
     """Generates and persists the canonical brief.json artifact."""
     if isinstance(archetype, str):
@@ -77,8 +79,16 @@ def create_product_brief(
             "Thiết kế công sở thanh lịch tối giản với nắp chống tràn 360° và đế silicone chống trượt",
         ]
 
+    effective_campaign_id = campaign_id
+    if workspace is not None:
+        target_dir = workspace.artifacts_dir
+        if campaign_id == "campaign_lumina_mug_01" and workspace.project_id:
+            effective_campaign_id = workspace.project_id
+    else:
+        target_dir = output_dir or ARTIFACTS_DIR
+
     brief = BriefArtifact(
-        campaign_id=campaign_id,
+        campaign_id=effective_campaign_id,
         product_name=product_name,
         target_persona=target_persona,
         pain_points=pain_points,
@@ -92,7 +102,6 @@ def create_product_brief(
         target_audio_strategy=target_audio_strategy,
     )
 
-    target_dir = output_dir or ARTIFACTS_DIR
     target_dir.mkdir(parents=True, exist_ok=True)
     out_file = target_dir / "brief.json"
 
@@ -106,6 +115,7 @@ def create_product_brief_from_concept(
     creative_concept: Any,
     research: Any,
     output_dir: Path | None = None,
+    workspace: Optional[ProjectWorkspace] = None,
 ) -> BriefArtifact:
     """Bridges winning CreativeConceptArtifact & CompetitorResearchArtifact into canonical BriefArtifact."""
     winning_id = creative_concept.winning_concept.selected_angle_id
@@ -133,4 +143,5 @@ def create_product_brief_from_concept(
         character_role=winning_angle.character_role,
         target_audio_strategy=winning_angle.audio_strategy,
         output_dir=output_dir,
+        workspace=workspace,
     )

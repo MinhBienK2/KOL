@@ -8,6 +8,7 @@ from typing import List, Optional
 
 from pipeline.config import ARTIFACTS_DIR, CHARACTER_PATH
 from pipeline.schemas import ScenePlanArtifact, ScriptArtifact, StoryboardShot
+from pipeline.workspace import ProjectWorkspace
 from pipeline.archetypes import (
     CharacterRole,
     DynamicPromptBuilder,
@@ -51,9 +52,10 @@ def generate_scene_plan(
     script_path: Path | None = None,
     character_path: Path | None = None,
     output_dir: Path | None = None,
+    workspace: Optional[ProjectWorkspace] = None,
 ) -> ScenePlanArtifact:
     """Generates the cinematic scene plan artifact."""
-    target_artifacts_dir = output_dir or ARTIFACTS_DIR
+    target_artifacts_dir = workspace.artifacts_dir if workspace is not None else (output_dir or ARTIFACTS_DIR)
     target_artifacts_dir.mkdir(parents=True, exist_ok=True)
 
     if script is None:
@@ -76,7 +78,9 @@ def generate_scene_plan(
     if script.campaign_id != "campaign_lumina_mug_01" or script.archetype != ProductArchetype.GENERAL_COMMERCIAL or len(script.beats) != 4:
         persona = DynamicPromptBuilder.resolve_persona(script.archetype)
         arch_config = get_archetype_config(script.archetype)
-        wardrobe, environment = resolve_wardrobe_and_environment(script.archetype)
+        custom_costume = "costume_french_cherry_dress" if "cherry" in script.product_name.lower() or "đầm xòe" in script.product_name.lower() else None
+        custom_env = "env_paris_cafe_terrace" if "cherry" in script.product_name.lower() or "đầm xòe" in script.product_name.lower() else None
+        wardrobe, environment = resolve_wardrobe_and_environment(script.archetype, custom_costume, custom_env)
 
         # Dynamic Framing Scale cycle: Wide -> Cowboy -> Macro -> Medium -> Medium Close-Up -> Close-Up
         scale_cycle = [

@@ -23,6 +23,7 @@ from pipeline.config import (
 from pipeline.archetypes import AudioStrategy, CharacterRole
 from pipeline.lip_sync_engine import analyze_speech_energy, determine_lip_sync_strategy
 from pipeline.schemas import AssetManifestArtifact, ScriptArtifact
+from pipeline.workspace import ProjectWorkspace
 
 def probe_audio_duration(file_path: str | Path) -> float:
     """Probes media duration using ffprobe."""
@@ -195,12 +196,13 @@ def produce_all_audio_and_lip_sync(
     artifacts_dir: Path | None = None,
     audio_dir: Path | None = None,
     synced_clips_dir: Path | None = None,
+    workspace: Optional[ProjectWorkspace] = None,
 ) -> Tuple[List[str], List[str]]:
     """Generates all audio stems and synchronizes each shot's video with its speech."""
-    target_artifacts_dir = artifacts_dir or ARTIFACTS_DIR
-    target_audio_dir = audio_dir or AUDIO_DIR
+    target_artifacts_dir = workspace.artifacts_dir if workspace is not None else (artifacts_dir or ARTIFACTS_DIR)
+    target_audio_dir = workspace.audio_dir if workspace is not None else (audio_dir or AUDIO_DIR)
     target_audio_dir.mkdir(parents=True, exist_ok=True)
-    target_synced_dir = synced_clips_dir or SYNCED_CLIPS_DIR
+    target_synced_dir = workspace.synced_clips_dir if workspace is not None else (synced_clips_dir or SYNCED_CLIPS_DIR)
     target_synced_dir.mkdir(parents=True, exist_ok=True)
 
     if script is None:

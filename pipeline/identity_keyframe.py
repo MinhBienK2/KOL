@@ -13,6 +13,7 @@ from pipeline.config import ARTIFACTS_DIR, BASE_DIR, CHARACTER_PATH, KEYFRAMES_D
 from pipeline.archetypes import CharacterRole, ProductArchetype
 from pipeline.wardrobe import resolve_wardrobe_and_environment
 from pipeline.schemas import AssetManifestArtifact, KeyframeAsset, ScenePlanArtifact
+from pipeline.workspace import ProjectWorkspace
 from tools.dramaclaw_shot_builder import clean_watermark_inpaint
 
 
@@ -76,11 +77,12 @@ def generate_clean_keyframes(
     scene_plan_path: Path | None = None,
     output_dir: Path | None = None,
     keyframes_dir: Path | None = None,
+    workspace: Optional[ProjectWorkspace] = None,
 ) -> AssetManifestArtifact:
     """Generates identity-locked, watermark-cleaned keyframes for all storyboard shots."""
-    target_artifacts_dir = output_dir or ARTIFACTS_DIR
+    target_artifacts_dir = workspace.artifacts_dir if workspace is not None else (output_dir or ARTIFACTS_DIR)
     target_artifacts_dir.mkdir(parents=True, exist_ok=True)
-    target_keyframes_dir = keyframes_dir or KEYFRAMES_DIR
+    target_keyframes_dir = workspace.keyframes_dir if workspace is not None else (keyframes_dir or KEYFRAMES_DIR)
     target_keyframes_dir.mkdir(parents=True, exist_ok=True)
 
     if scene_plan is None:
@@ -97,15 +99,21 @@ def generate_clean_keyframes(
     # Resolve active wardrobe and staging profile from script.json
     script_file = target_artifacts_dir / "script.json"
     archetype_val = ProductArchetype.GENERAL_COMMERCIAL
+    custom_costume = None
+    custom_env = None
     if script_file.exists():
         try:
             with open(script_file, "r", encoding="utf-8") as f:
                 s_data = json.load(f)
                 archetype_val = ProductArchetype(s_data.get("archetype", "general_commercial"))
+                p_name = s_data.get("product_name", "").lower()
+                if "cherry" in p_name or "đầm xòe" in p_name:
+                    custom_costume = "costume_french_cherry_dress"
+                    custom_env = "env_paris_cafe_terrace"
         except Exception:
             pass
 
-    wardrobe, environment = resolve_wardrobe_and_environment(archetype_val)
+    wardrobe, environment = resolve_wardrobe_and_environment(archetype_val, custom_costume, custom_env)
 
     keyframe_assets: List[KeyframeAsset] = []
 
@@ -127,7 +135,13 @@ def generate_clean_keyframes(
             "shot_06": char_base / "expressions" / "02_smiling.jpg",
         }
 
-        if shot.reference_expression:
+        if getattr(wardrobe, "shot_references", None) and shot.shot_id in wardrobe.shot_references:
+            custom_ref = BASE_DIR / wardrobe.shot_references[shot.shot_id]
+            if custom_ref.exists():
+                ref_path = custom_ref
+            else:
+                ref_path = kol_beat_map.get(shot.shot_id, default_portrait)
+        elif shot.reference_expression:
             custom_ref = BASE_DIR / shot.reference_expression
             if custom_ref.exists():
                 ref_path = custom_ref

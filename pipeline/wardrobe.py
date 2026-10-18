@@ -91,6 +91,35 @@ WARDROBE_CATALOG: Dict[str, WardrobeItem] = {
             "shot_06": "assets/wardrobe/fashion_french_dress/06_cta_closer.jpg",
         },
     ),
+    # 1b. Fashion / Apparel: French Vintage Cherry Dress
+    "costume_french_cherry_dress": WardrobeItem(
+        costume_id="costume_french_cherry_dress",
+        name="Đầm Xòe Nơ Quả Cherry Vintage Kiểu Pháp",
+        archetype=ProductArchetype.FASHION_APPAREL,
+        style=CostumeStyle.SMART_CASUAL,
+        color_palette=["Ivory Cream", "Cherry Scarlet Red", "Emerald Leaf Green"],
+        fabric_materials=["Textured embossed waffle cotton-jacquard, silk satin ribbon ties"],
+        garment_description=(
+            "French vintage coquette A-line sundress in textured cream fabric with charming ripe red cherry print, "
+            "corseted sweetheart bustier neckline, cinched waist, flowing flare pleated skirt, and delicate scarlet red ribbon shoulder ties."
+        ),
+        hair_styling="Soft romantic French wavy curls with delicate red ribbon bow",
+        accessories=["Dainty pearl cherry necklace", "Mini woven straw picnic basket bag", "Red mary jane heels"],
+        prompt_wear_directive=(
+            "WEAR: Wearing French vintage coquette A-line sundress in textured cream waffle fabric with charming red cherry print, "
+            "corseted sweetheart bustier neckline, cinched waist, flowing flare pleated skirt, and delicate scarlet red ribbon tie shoulder straps, "
+            "romantic French soft wavy hair, delicate pearl-cherry accessories, Parisian summer picnic chic."
+        ),
+        reference_image_path="assets/wardrobe/fashion_cherry_dress/01_hero_cherry_dress.jpg",
+        shot_references={
+            "shot_01": "assets/wardrobe/fashion_cherry_dress/01_wide_runway.jpg",
+            "shot_02": "assets/wardrobe/fashion_cherry_dress/02_cowboy_reveal.jpg",
+            "shot_03": "assets/wardrobe/fashion_cherry_dress/03_fabric_macro.jpg",
+            "shot_04": "assets/wardrobe/fashion_cherry_dress/04_movement_walk.jpg",
+            "shot_05": "assets/wardrobe/fashion_cherry_dress/05_styling_versatility.jpg",
+            "shot_06": "assets/wardrobe/fashion_cherry_dress/06_cta_closer.jpg",
+        },
+    ),
 
     # 2. Tech / Gadgets: Cyberpunk & Creative Studio
     "costume_techwear_minimalist": WardrobeItem(
@@ -198,6 +227,22 @@ ENVIRONMENT_CATALOG: Dict[str, EnvironmentSetting] = {
             "SET: Grand Parisian luxury palace ballroom at twilight, glossy black marble floor reflecting warm amber "
             "crystal chandeliers, soaring Corinthian columns, grand arched French windows overlooking city twilight, "
             "editorial fashion event staging with crisp 5000K rim lighting."
+        ),
+    ),
+    # 1b. Parisian Cafe Terrace & Haussmann Street
+    "env_paris_cafe_terrace": EnvironmentSetting(
+        env_id="env_paris_cafe_terrace",
+        name="Góc Quán Cà Phê & Ban Công Paris Buổi Sáng",
+        archetype=ProductArchetype.FASHION_APPAREL,
+        location_type="exterior",
+        nominal_color_temp_kelvin=5200,
+        lighting_contract=LightingContract.GOLDEN_HOUR,
+        foreground_elements=["Sunlit cobblestone street, wrought-iron bistro chair with fresh basket of cherries"],
+        midground_elements=["Parisian cafe terrace with striped awning, limestone Haussmann building facade"],
+        background_elements=["Classic Parisian architecture, soft morning sunlight filtering through summer plane trees"],
+        prompt_set_directive=(
+            "SET: Sun-drenched Parisian cafe terrace on cobblestone street, warm natural golden morning sunlight (5200K), "
+            "wrought-iron bistro table with fresh cherries, soft cinematic bokeh, romantic French summer street ambiance."
         ),
     ),
 

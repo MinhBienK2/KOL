@@ -25,6 +25,7 @@ from pipeline.config import (
     MINIMAX_BASE_URL,
     RAW_CLIPS_DIR,
 )
+from pipeline.workspace import ProjectWorkspace
 from pipeline.schemas import AssetManifestArtifact, ScenePlanArtifact, StoryboardShot
 from pipeline.slideshow_risk import score_slideshow_risk
 from tools.generate_video import poll_and_download_video, submit_video_job, upload_first_frame
@@ -168,13 +169,14 @@ def render_all_video_clips(
     initial_retry_delay: float = 5.0,
     poll_timeout_seconds: int = 300,
     max_concurrency: int = 3,
+    workspace: Optional[ProjectWorkspace] = None,
 ) -> List[str]:
     """Renders 100% genuine video diffusion clips for all storyboard shots concurrently.
 
     Each shot is rendered through MiniMax Hailuo-2.3 with zero tolerance for static images.
     """
-    target_artifacts_dir = artifacts_dir or ARTIFACTS_DIR
-    target_clips_dir = raw_clips_dir or RAW_CLIPS_DIR
+    target_artifacts_dir = workspace.artifacts_dir if workspace is not None else (artifacts_dir or ARTIFACTS_DIR)
+    target_clips_dir = workspace.raw_clips_dir if workspace is not None else (raw_clips_dir or RAW_CLIPS_DIR)
     target_clips_dir.mkdir(parents=True, exist_ok=True)
 
     if scene_plan is None:

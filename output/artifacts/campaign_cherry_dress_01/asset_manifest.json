@@ -1,0 +1,77 @@
+{
+  "campaign_id": "campaign_cherry_dress_01",
+  "keyframes": [
+    {
+      "shot_id": "shot_01",
+      "image_path": "/home/minhbien/Documents/KOL/assets/wardrobe/fashion_cherry_dress/01_wide_runway.jpg",
+      "cleaned_image_path": "output/keyframes/campaign_cherry_dress_01/shot_01_clean.jpg",
+      "watermark_removed": true,
+      "width": 1080,
+      "height": 1920
+    },
+    {
+      "shot_id": "shot_02",
+      "image_path": "/home/minhbien/Documents/KOL/assets/wardrobe/fashion_cherry_dress/02_cowboy_reveal.jpg",
+      "cleaned_image_path": "output/keyframes/campaign_cherry_dress_01/shot_02_clean.jpg",
+      "watermark_removed": true,
+      "width": 1080,
+      "height": 1920
+    },
+    {
+      "shot_id": "shot_03",
+      "image_path": "/home/minhbien/Documents/KOL/assets/wardrobe/fashion_cherry_dress/03_fabric_macro.jpg",
+      "cleaned_image_path": "output/keyframes/campaign_cherry_dress_01/shot_03_clean.jpg",
+      "watermark_removed": true,
+      "width": 1080,
+      "height": 1920
+    },
+    {
+      "shot_id": "shot_04",
+      "image_path": "/home/minhbien/Documents/KOL/assets/wardrobe/fashion_cherry_dress/04_movement_walk.jpg",
+      "cleaned_image_path": "output/keyframes/campaign_cherry_dress_01/shot_04_clean.jpg",
+      "watermark_removed": true,
+      "width": 1080,
+      "height": 1920
+    },
+    {
+      "shot_id": "shot_05",
+      "image_path": "/home/minhbien/Documents/KOL/assets/wardrobe/fashion_cherry_dress/05_styling_versatility.jpg",
+      "cleaned_image_path": "output/keyframes/campaign_cherry_dress_01/shot_05_clean.jpg",
+      "watermark_removed": true,
+      "width": 1080,
+      "height": 1920
+    },
+    {
+      "shot_id": "shot_06",
+      "image_path": "/home/minhbien/Documents/KOL/assets/wardrobe/fashion_cherry_dress/06_cta_closer.jpg",
+      "cleaned_image_path": "output/keyframes/campaign_cherry_dress_01/shot_06_clean.jpg",
+      "watermark_removed": true,
+      "width": 1080,
+      "height": 1920
+    }
+  ],
+  "audio_stems": [
+    "output/audio/campaign_cherry_dress_01/voice_shot_01.wav",
+    "output/audio/campaign_cherry_dress_01/voice_shot_02.wav",
+    "output/audio/campaign_cherry_dress_01/voice_shot_03.wav",
+    "output/audio/campaign_cherry_dress_01/voice_shot_04.wav",
+    "output/audio/campaign_cherry_dress_01/voice_shot_05.wav",
+    "output/audio/campaign_cherry_dress_01/voice_shot_06.wav"
+  ],
+  "raw_video_clips": [
+    "output/raw_clips/campaign_cherry_dress_01/shot_01.mp4",
+    "/home/minhbien/Documents/KOL/output/raw_clips/campaign_cherry_dress_01/shot_02.mp4",
+    "/home/minhbien/Documents/KOL/output/raw_clips/campaign_cherry_dress_01/shot_03.mp4",
+    "/home/minhbien/Documents/KOL/output/raw_clips/campaign_cherry_dress_01/shot_04.mp4",
+    "/home/minhbien/Documents/KOL/output/raw_clips/campaign_cherry_dress_01/shot_05.mp4",
+    "/home/minhbien/Documents/KOL/output/raw_clips/campaign_cherry_dress_01/shot_06.mp4"
+  ],
+  "synced_video_clips": [
+    "output/synced_clips/campaign_cherry_dress_01/shot_01.mp4",
+    "output/synced_clips/campaign_cherry_dress_01/shot_02.mp4",
+    "output/synced_clips/campaign_cherry_dress_01/shot_03.mp4",
+    "output/synced_clips/campaign_cherry_dress_01/shot_04.mp4",
+    "output/synced_clips/campaign_cherry_dress_01/shot_05.mp4",
+    "output/synced_clips/campaign_cherry_dress_01/shot_06.mp4"
+  ]
+}

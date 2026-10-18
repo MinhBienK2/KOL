@@ -13,3 +13,14 @@ output/*.png
 output/*.jpg
 output/*.jpeg
 !output/artifacts/
+
+# Projects directory media binaries
+output/projects/**/media/
+output/projects/**/keyframes/
+output/projects/**/*.mp4
+output/projects/**/*.wav
+output/projects/**/*.mp3
+output/projects/**/*.jpg
+output/projects/**/*.jpeg
+output/projects/**/*.png
+!output/projects/**/artifacts/

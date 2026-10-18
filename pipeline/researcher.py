@@ -23,6 +23,7 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
 from pipeline.archetypes import AudioStrategy, CharacterRole, ProductArchetype
+from pipeline.workspace import ProjectWorkspace
 from pipeline.config import ARTIFACTS_DIR
 
 
@@ -696,12 +697,18 @@ def run_research_pipeline(
     archetype: ProductArchetype = ProductArchetype.GENERAL_COMMERCIAL,
     output_dir: Optional[Path] = None,
     use_llm: bool = True,
+    workspace: Optional[ProjectWorkspace] = None,
 ) -> tuple[CompetitorResearchArtifact, CreativeConceptArtifact]:
     """Autonomous entry point: analyzes affiliate link or raw product text,
 
     discovers competitor landscape, synthesizes hooks, and outputs both artifacts.
     """
-    target_dir = output_dir or ARTIFACTS_DIR
+    if workspace is not None:
+        target_dir = workspace.artifacts_dir
+        if campaign_id == "campaign_auto_01" and workspace.project_id:
+            campaign_id = workspace.project_id
+    else:
+        target_dir = output_dir or ARTIFACTS_DIR
     target_dir.mkdir(parents=True, exist_ok=True)
 
     product_url = None
