@@ -16,15 +16,20 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 import urllib.parse
 import urllib.request
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
+from pipeline import telemetry
 from pipeline.archetypes import AudioStrategy, CharacterRole, ProductArchetype
 from pipeline.workspace import ProjectWorkspace
 from pipeline.config import ARTIFACTS_DIR
+
+STAGE_RESEARCH = telemetry.stage_number("research_briefing")
+RESEARCH_PHASES = ("ingest_product_input", "product_intelligence", "competitor_hooks", "creative_concepts")
 
 
 # ==============================================================================
@@ -233,8 +238,16 @@ def call_llm(system_prompt: str, user_prompt: str, model: str = DEFAULT_RESEARCH
             "Content-Type": "application/json",
         },
     )
+    request_meta = {
+        "model": model,
+        "system_prompt_chars": len(system_prompt),
+        "user_prompt_chars": len(user_prompt),
+        "timeout_seconds": timeout,
+    }
+    started = time.monotonic()
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
+            status_code = getattr(resp, "status", None)
             res = json.loads(resp.read().decode("utf-8"))
             content = res["choices"][0]["message"]["content"].strip()
             # Clean markdown codeblocks
@@ -242,10 +255,37 @@ def call_llm(system_prompt: str, user_prompt: str, model: str = DEFAULT_RESEARCH
                 content = content.split("\n", 1)[1]
             if content.endswith("```"):
                 content = content.rsplit("\n", 1)[0]
-            return content.strip()
+            content = content.strip()
+            telemetry.record_api_call(
+                "router.chat_completion",
+                endpoint=ROUTER_URL,
+                request=request_meta,
+                response={"content_chars": len(content)},
+                status=status_code,
+                ok=True,
+                duration_seconds=time.monotonic() - started,
+                stage=STAGE_RESEARCH,
+            )
+            return content
     except Exception as e:
+        telemetry.record_api_call(
+            "router.chat_completion",
+            endpoint=ROUTER_URL,
+            request=request_meta,
+            response={"error": str(e)},
+            status="error",
+            ok=False,
+            duration_seconds=time.monotonic() - started,
+            stage=STAGE_RESEARCH,
+        )
         # Fallback to secondary fast model if primary times out or fails
         if model != "gemini/gemini-2.5-flash":
+            telemetry.note(
+                f"Router model '{model}' failed ({e}); retrying with fallback model 'gemini/gemini-2.5-flash'",
+                model=model,
+                fallback_model="gemini/gemini-2.5-flash",
+                error=str(e),
+            )
             try:
                 return call_llm(system_prompt, user_prompt, model="gemini/gemini-2.5-flash", timeout=25)
             except Exception:
@@ -312,6 +352,11 @@ Output JSON schema:
                 return ProductIntel.model_validate(parsed)
             except Exception:
                 pass
+        telemetry.note(
+            "Deterministic fallback replaced LLM output for product intelligence extraction",
+            phase="product_intelligence",
+            fallback="heuristic_product_intel",
+        )
 
     # Heuristic / deterministic fallback if LLM is offline
     title = "Sản Phẩm Cao Cấp"
@@ -412,6 +457,11 @@ Output JSON schema:
                     return landscape, hooks
             except Exception:
                 pass
+        telemetry.note(
+            "Deterministic fallback replaced LLM output for competitor landscape and viral hooks",
+            phase="competitor_hooks",
+            fallback="deterministic_hook_library",
+        )
 
     # Deterministic fallback
     landscape = CompetitorLandscape(
@@ -591,6 +641,11 @@ Output JSON schema:
                     )
             except Exception:
                 pass
+        telemetry.note(
+            "Deterministic fallback replaced LLM output for the 3-angle creative concept selection",
+            phase="creative_concepts",
+            fallback="deterministic_creative_concepts",
+        )
 
     # High-quality deterministic fallback
     opt_a = CreativeAngle(
@@ -719,6 +774,21 @@ def run_research_pipeline(
     first_token = parts[0]
     accompanying_text = parts[1] if len(parts) > 1 else ""
 
+    telemetry.stage_progress(
+        STAGE_RESEARCH,
+        1,
+        len(RESEARCH_PHASES),
+        unit="phases",
+        label="Ingesting product input",
+        item={
+            "id": RESEARCH_PHASES[0],
+            "status": "running",
+            "product_url": first_token if first_token.startswith("http") else None,
+            "input_chars": len(product_input),
+            "has_accompanying_text": bool(accompanying_text),
+        },
+    )
+
     if first_token.startswith("http://") or first_token.startswith("https://"):
         product_url = first_token
         try:
@@ -740,6 +810,19 @@ def run_research_pipeline(
         except Exception:
             # Network blocked, offline, or mock URL -> prioritize accompanying product text
             raw_content = accompanying_text if accompanying_text else f"Product URL: {product_url}"
+        telemetry.stage_progress(
+            STAGE_RESEARCH,
+            1,
+            len(RESEARCH_PHASES),
+            unit="phases",
+            label="Product page ingested",
+            item={
+                "id": RESEARCH_PHASES[0],
+                "status": "done",
+                "product_url": product_url,
+                "scraped_chars": len(raw_content),
+            },
+        )
     # Step 1: Product Intel Extraction
     product_intel = extract_product_intel(
         raw_content=raw_content,
@@ -747,9 +830,36 @@ def run_research_pipeline(
         product_archetype=archetype,
         use_llm=use_llm,
     )
+    telemetry.stage_progress(
+        STAGE_RESEARCH,
+        2,
+        len(RESEARCH_PHASES),
+        unit="phases",
+        label="Product intelligence",
+        item={
+            "id": RESEARCH_PHASES[1],
+            "status": "extracted",
+            "title": product_intel.title,
+            "features": len(product_intel.features),
+            "objections": len(product_intel.objection_matrix),
+        },
+    )
 
     # Step 2: Competitor Angles & Viral Hooks
     landscape, hooks = synthesize_competitor_and_hooks(product_intel, use_llm=use_llm)
+    telemetry.stage_progress(
+        STAGE_RESEARCH,
+        3,
+        len(RESEARCH_PHASES),
+        unit="phases",
+        label="Competitor landscape & viral hooks",
+        item={
+            "id": RESEARCH_PHASES[2],
+            "status": "synthesized",
+            "hooks": len(hooks),
+            "whitespace_opportunities": len(landscape.whitespace_opportunities),
+        },
+    )
 
     # Build CompetitorResearchArtifact
     research_artifact = CompetitorResearchArtifact(
@@ -764,6 +874,20 @@ def run_research_pipeline(
 
     # Step 3: 3-Angle Creative Concepts & Winning Angle Selection
     creative_concept_artifact = generate_creative_concepts(research_artifact, use_llm=use_llm)
+    telemetry.stage_progress(
+        STAGE_RESEARCH,
+        4,
+        len(RESEARCH_PHASES),
+        unit="phases",
+        label="Creative concepts & winning angle",
+        item={
+            "id": RESEARCH_PHASES[3],
+            "status": "selected",
+            "options": len(creative_concept_artifact.concept_options),
+            "winning_angle": creative_concept_artifact.winning_concept.selected_angle_id,
+            "generator": (creative_concept_artifact.metadata or {}).get("generator"),
+        },
+    )
 
     # Persist artifacts to disk
     research_file = target_dir / "competitor_research.json"

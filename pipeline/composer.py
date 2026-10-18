@@ -7,6 +7,7 @@ import subprocess
 from pathlib import Path
 from typing import List, Optional
 
+from pipeline import telemetry
 from pipeline.config import (
     ARTIFACTS_DIR,
     BASE_DIR,
@@ -21,6 +22,12 @@ from pipeline.schemas import (
     ScriptArtifact,
 )
 from pipeline.workspace import ProjectWorkspace
+
+STAGE_COMPOSITION = telemetry.stage_number("composition")
+
+#: Single source of truth for the multi-track mix targets (mirrored in the FFmpeg filter).
+BGM_DUCKING_ATTENUATION_DB = -24.0
+TARGET_LUFS = -14.0
 
 
 def get_clip_duration(file_path: str | Path) -> float:
@@ -153,6 +160,11 @@ def compose_master_commercial(
         str(temp_stitched),
     ]
     print("[Composer] Stitching video timeline with dynamic on-screen typography...")
+    telemetry.log(
+        f"Stitching {len(synced_clips)} clips into a {total_timeline_duration:.2f}s master timeline "
+        f"with {len(caption_filters)} caption overlays",
+        stage=STAGE_COMPOSITION,
+    )
     subprocess.check_call(cmd_stitch, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     # Step E: Multi-Track Audio Mixing with Automatic Audio Ducking (-24dB during speech)
@@ -194,7 +206,22 @@ def compose_master_commercial(
         str(out_master),
     ]
     print("[Composer] Mixing multi-track audio with automatic BGM sidechain ducking & -14 LUFS loudness...")
+    telemetry.log(
+        f"Sidechain ducking BGM by {BGM_DUCKING_ATTENUATION_DB:.0f}dB during speech, "
+        f"mixing voice + BGM, normalising to {TARGET_LUFS:.0f} LUFS",
+        stage=STAGE_COMPOSITION,
+    )
+    telemetry.note(
+        f"Audio mix: BGM ducking {BGM_DUCKING_ATTENUATION_DB:.0f}dB, target {TARGET_LUFS:.0f} LUFS, "
+        f"{len(captions_manifest)} captions over {len(synced_clips)} clips",
+        ducking_attenuation_db=BGM_DUCKING_ATTENUATION_DB,
+        target_lufs=TARGET_LUFS,
+        caption_count=len(captions_manifest),
+        timeline_clips=len(synced_clips),
+        total_duration_seconds=round(total_timeline_duration, 2),
+    )
     subprocess.check_call(cmd_master, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    telemetry.register_artifact(out_master, stage=STAGE_COMPOSITION, label="Final commercial master")
 
     # Clean temporary files
     temp_stitched.unlink(missing_ok=True)
@@ -211,13 +238,13 @@ def compose_master_commercial(
                 track_id="track_voiceover",
                 type="voiceover",
                 file_path="output/audio/voice_*.wav",
-                target_lufs=-14.0,
+                target_lufs=TARGET_LUFS,
             ),
             AudioTrackConfig(
                 track_id="track_bgm",
                 type="bgm",
                 file_path=str(bgm),
-                ducking_attenuation_db=-24.0,
+                ducking_attenuation_db=BGM_DUCKING_ATTENUATION_DB,
             ),
             AudioTrackConfig(
                 track_id="track_sfx",
@@ -233,6 +260,7 @@ def compose_master_commercial(
     out_file = target_artifacts_dir / "edit_decisions.json"
     with open(out_file, "w", encoding="utf-8") as f:
         json.dump(edit_decisions.model_dump(), f, ensure_ascii=False, indent=2)
+    telemetry.register_artifact(out_file, stage=STAGE_COMPOSITION, label="Edit decisions")
 
     print(f"[Composer] SUCCESS: Final Commercial Master rendered to {out_master}")
     return edit_decisions

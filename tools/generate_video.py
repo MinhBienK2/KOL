@@ -14,8 +14,16 @@ import sys
 import time
 import urllib.request
 from pathlib import Path
+from typing import Optional
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Allow standalone execution (`python tools/generate_video.py`) to import the pipeline.
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
+
+from pipeline import telemetry  # noqa: E402  (import after the sys.path bootstrap)
+
 API_BASE_URL = os.environ.get("MINIMAX_BASE_URL", "https://aiapi.2tocom.space")
 API_KEY = os.environ.get("MINIMAX_API_KEY", "sk-cu-hr7Y6QZPkzksXlfn74J4yeF_xmL9Rlubf_tAhD4Sgfw")
 
@@ -50,9 +58,29 @@ def upload_first_frame(image_path: str | Path) -> str:
         },
     )
 
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        res = json.loads(resp.read().decode("utf-8"))
-        return res["data"]["file_url"]
+    started = time.monotonic()
+    file_url: Optional[str] = None
+    status_code: Optional[int] = None
+    error: Optional[str] = None
+    try:
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            status_code = getattr(resp, "status", None)
+            res = json.loads(resp.read().decode("utf-8"))
+            file_url = res["data"]["file_url"]
+    except Exception as exc:
+        error = str(exc)
+        raise
+    finally:
+        telemetry.record_api_call(
+            "minimax.upload_first_frame",
+            endpoint=url,
+            request={"file": path.name, "size_bytes": len(file_bytes)},
+            response={"file_url": file_url} if error is None else None,
+            status=status_code if error is None else "error",
+            ok=error is None,
+            duration_seconds=time.monotonic() - started,
+        )
+    return str(file_url)
 
 
 def submit_video_job(
@@ -82,9 +110,36 @@ def submit_video_job(
         },
     )
 
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        res = json.loads(resp.read().decode("utf-8"))
-        return res["task_id"]
+    started = time.monotonic()
+    status_code: Optional[int] = None
+    error: Optional[str] = None
+    task_id: Optional[str] = None
+    try:
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            status_code = getattr(resp, "status", None)
+            res = json.loads(resp.read().decode("utf-8"))
+            task_id = res["task_id"]
+    except Exception as exc:
+        error = str(exc)
+        raise
+    finally:
+        telemetry.record_api_call(
+            "minimax.submit_video",
+            endpoint=url,
+            # Prompt text itself is the prompt ledger's job; only its size is echoed here.
+            request={
+                "model": payload["model"],
+                "aspect_ratio": payload["aspect_ratio"],
+                "duration": payload["duration"],
+                "input_image": payload.get("input_image"),
+                "prompt_chars": len(payload["prompt"]),
+            },
+            response={"task_id": task_id} if error is None else None,
+            status=status_code if error is None else "error",
+            ok=error is None,
+            duration_seconds=time.monotonic() - started,
+        )
+    return str(task_id)
 
 
 def poll_and_download_video(task_id: str, output_path: str | Path, timeout_seconds: int = 300) -> str:
@@ -98,27 +153,100 @@ def poll_and_download_video(task_id: str, output_path: str | Path, timeout_secon
 
     start = time.time()
     print(f"[VideoGen] Polling video task {task_id} (timeout {timeout_seconds}s)...")
+    polls = 0
+    last_status: Optional[str] = None
+    poll_request = {"task_id": task_id, "timeout_seconds": timeout_seconds}
     while time.time() - start < timeout_seconds:
-        req = urllib.request.Request(poll_url, headers=headers)
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            res = json.loads(resp.read().decode("utf-8"))
-            status = res.get("status")
-            elapsed = int(time.time() - start)
-            print(f"[{elapsed:3d}s] Task status: {status}")
+        status_code: Optional[int] = None
+        try:
+            req = urllib.request.Request(poll_url, headers=headers)
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                status_code = getattr(resp, "status", None)
+                res = json.loads(resp.read().decode("utf-8"))
+        except Exception as exc:
+            telemetry.record_api_call(
+                "minimax.poll_video",
+                endpoint=poll_url,
+                method="GET",
+                request=poll_request,
+                response={"error": str(exc)},
+                status="error",
+                ok=False,
+                duration_seconds=time.monotonic() - start,
+            )
+            raise
 
-            if status == "Success":
-                video_url = res.get("video_url") or res.get("url")
-                if not video_url:
-                    raise RuntimeError(f"Success status received but no video URL found in: {res}")
-                print(f"[VideoGen] Video rendered! Downloading to {output_path}...")
+        status = res.get("status")
+        elapsed = int(time.time() - start)
+        polls += 1
+        last_status = status
+        telemetry.log(f"[{task_id}] poll {elapsed}s status={status}")
+        print(f"[{elapsed:3d}s] Task status: {status}")
+
+        if status == "Success":
+            video_url = res.get("video_url") or res.get("url")
+            if not video_url:
+                raise RuntimeError(f"Success status received but no video URL found in: {res}")
+            print(f"[VideoGen] Video rendered! Downloading to {output_path}...")
+            download_started = time.monotonic()
+            download_error: Optional[str] = None
+            try:
                 urllib.request.urlretrieve(video_url, output_path)
-                print(f"[VideoGen] DONE! Video saved: {output_path} ({output_path.stat().st_size // 1024} KB)")
-                return str(output_path)
-            elif status in ("Fail", "Failed"):
-                raise RuntimeError(f"Video generation failed: {res}")
+            except Exception as exc:
+                download_error = str(exc)
+                raise
+            finally:
+                telemetry.record_api_call(
+                    "minimax.download_video",
+                    endpoint=video_url,
+                    method="GET",
+                    request={"task_id": task_id},
+                    response={
+                        "output_path": str(output_path),
+                        "size_bytes": output_path.stat().st_size if output_path.exists() else None,
+                    },
+                    status="error" if download_error else "ok",
+                    ok=download_error is None,
+                    duration_seconds=time.monotonic() - download_started,
+                )
+            print(f"[VideoGen] DONE! Video saved: {output_path} ({output_path.stat().st_size // 1024} KB)")
+            telemetry.record_api_call(
+                "minimax.poll_video",
+                endpoint=poll_url,
+                method="GET",
+                request=poll_request,
+                response={"status": status, "polls": polls},
+                status=status_code,
+                ok=True,
+                duration_seconds=time.monotonic() - start,
+            )
+            return str(output_path)
+
+        if status in ("Fail", "Failed"):
+            telemetry.record_api_call(
+                "minimax.poll_video",
+                endpoint=poll_url,
+                method="GET",
+                request=poll_request,
+                response={"status": status, "polls": polls},
+                status=status_code,
+                ok=False,
+                duration_seconds=time.monotonic() - start,
+            )
+            raise RuntimeError(f"Video generation failed: {res}")
 
         time.sleep(10)
 
+    telemetry.record_api_call(
+        "minimax.poll_video",
+        endpoint=poll_url,
+        method="GET",
+        request=poll_request,
+        response={"status": last_status, "polls": polls},
+        status="timeout",
+        ok=False,
+        duration_seconds=time.monotonic() - start,
+    )
     raise TimeoutError(f"Video generation timed out after {timeout_seconds} seconds.")
 
 

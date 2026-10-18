@@ -9,12 +9,23 @@ import cv2
 import numpy as np
 from PIL import Image
 
+from pipeline import telemetry
 from pipeline.config import ARTIFACTS_DIR, BASE_DIR, CHARACTER_PATH, KEYFRAMES_DIR
 from pipeline.archetypes import CharacterRole, ProductArchetype
 from pipeline.wardrobe import resolve_wardrobe_and_environment
 from pipeline.schemas import AssetManifestArtifact, KeyframeAsset, ScenePlanArtifact
 from pipeline.workspace import ProjectWorkspace
 from tools.dramaclaw_shot_builder import clean_watermark_inpaint
+
+STAGE_IDENTITY_KEYFRAMES = telemetry.stage_number("identity_keyframes")
+
+
+def _repo_rel(path: str | Path) -> str:
+    """Path relative to the repo root (identity anchors live outside the run root)."""
+    try:
+        return str(Path(path).resolve().relative_to(BASE_DIR))
+    except Exception:
+        return str(path)
 
 
 def prepare_9_16_frame(
@@ -116,8 +127,10 @@ def generate_clean_keyframes(
     wardrobe, environment = resolve_wardrobe_and_environment(archetype_val, custom_costume, custom_env)
 
     keyframe_assets: List[KeyframeAsset] = []
+    telea_inpainted = 0
+    fallback_references = 0
 
-    for shot in scene_plan.shots:
+    for idx, shot in enumerate(scene_plan.shots, start=1):
         is_prod_only = getattr(shot, "character_role", None) == CharacterRole.PRODUCT_ONLY or (
             hasattr(shot.character_role, "value") and shot.character_role.value == "product_only"
         )
@@ -135,16 +148,19 @@ def generate_clean_keyframes(
             "shot_06": char_base / "expressions" / "02_smiling.jpg",
         }
 
+        reference_is_fallback = True
         if getattr(wardrobe, "shot_references", None) and shot.shot_id in wardrobe.shot_references:
             custom_ref = BASE_DIR / wardrobe.shot_references[shot.shot_id]
             if custom_ref.exists():
                 ref_path = custom_ref
+                reference_is_fallback = False
             else:
                 ref_path = kol_beat_map.get(shot.shot_id, default_portrait)
         elif shot.reference_expression:
             custom_ref = BASE_DIR / shot.reference_expression
             if custom_ref.exists():
                 ref_path = custom_ref
+                reference_is_fallback = False
             else:
                 ref_path = kol_beat_map.get(shot.shot_id, default_portrait)
         else:
@@ -152,10 +168,44 @@ def generate_clean_keyframes(
 
         if not ref_path or not ref_path.exists():
             ref_path = default_portrait
+            reference_is_fallback = True
         clean_keyframe_path = target_keyframes_dir / f"{shot.shot_id}_clean.jpg"
 
         # Format and fit into 9:16 target with Telea Inpainting
+        # (prepare_9_16_frame always ends with clean_watermark_inpaint, or raises).
         w, h = prepare_9_16_frame(ref_path, clean_keyframe_path, target_width=1080, target_height=1920)
+        telea_inpainted += 1
+        if reference_is_fallback:
+            fallback_references += 1
+
+        recorder = telemetry.current()
+        keyframe_record = (
+            recorder.register_artifact(
+                clean_keyframe_path,
+                stage=STAGE_IDENTITY_KEYFRAMES,
+                label=f"{shot.shot_id} clean 9:16 keyframe",
+            )
+            if recorder is not None
+            else None
+        )
+        telemetry.stage_progress(
+            STAGE_IDENTITY_KEYFRAMES,
+            idx,
+            len(scene_plan.shots),
+            unit="shots",
+            label=f"Keyframe {shot.shot_id}",
+            item={
+                "id": shot.shot_id,
+                "status": "keyframe_ready",
+                "source_image": _repo_rel(ref_path),
+                "cleaned_image": (keyframe_record or {}).get("rel_path") or str(clean_keyframe_path),
+                "watermark_removed": True,
+                "telea_inpaint": True,
+                "width": w,
+                "height": h,
+                "fallback_reference": reference_is_fallback,
+            },
+        )
 
         keyframe_assets.append(
             KeyframeAsset(
@@ -167,6 +217,14 @@ def generate_clean_keyframes(
                 height=h,
             )
         )
+    total_shots = len(scene_plan.shots)
+    telemetry.note(
+        f"Telea watermark inpaint applied to {telea_inpainted}/{total_shots} keyframes "
+        f"({fallback_references} identity anchors resolved from fallback references)",
+        telea_inpaint_applied=telea_inpainted,
+        total_keyframes=total_shots,
+        fallback_references=fallback_references,
+    )
     manifest = AssetManifestArtifact(
         campaign_id=scene_plan.campaign_id,
         keyframes=keyframe_assets,

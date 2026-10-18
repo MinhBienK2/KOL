@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KOL Pipeline Supervisor</title>
+<link rel="stylesheet" href="/static/style.css">
+<script src="/static/app.js" defer></script>
+</head>
+<body data-api-base="/api/runs" data-api-events="/events" data-api-stream="/stream">
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="sidebar-head">
+      <div class="brand">KOL Pipeline Supervisor</div>
+      <div class="muted small" id="health-line">connecting&hellip;</div>
+      <div class="sidebar-actions">
+        <input id="run-filter" class="input" type="search" placeholder="filter runs" autocomplete="off" spellcheck="false">
+        <button id="btn-refresh-runs" class="btn small" type="button">Refresh</button>
+      </div>
+    </div>
+    <div id="run-list" class="run-list">
+      <div class="muted pad">Loading runs&hellip;</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="header" id="header">
+      <div class="hdr-row">
+        <div class="hdr-identity">
+          <div class="hdr-product" id="hdr-product">No run selected</div>
+          <div class="hdr-meta" id="hdr-meta">Select a run from the sidebar, or open <span class="mono">/?run=&lt;run_id&gt;</span></div>
+        </div>
+        <div class="hdr-actions">
+          <button id="btn-feed-toggle" class="btn small" type="button">Activity feed</button>
+          <button id="btn-reload-view" class="btn small" type="button">Reload</button>
+        </div>
+      </div>
+      <div id="banner" class="banner hidden"></div>
+      <div class="hdr-stats" id="hdr-stats"></div>
+      <div id="hdr-progress"></div>
+      <div class="live" id="live"></div>
+    </header>
+
+    <div class="content">
+      <div class="content-main" id="content-main">
+        <section id="stepper" class="stepper"></section>
+        <section class="panel">
+          <nav id="tabs" class="tabs"></nav>
+          <div id="detail-panel" class="detail-panel">
+            <div class="muted pad">Select a run to inspect its stages.</div>
+          </div>
+        </section>
+      </div>
+
+      <aside class="feed" id="feed">
+        <div class="feed-head">
+          <div class="feed-title">Live activity <span id="feed-conn" class="conn conn-idle">idle</span></div>
+          <div class="feed-controls">
+            <select id="feed-level" class="input small" title="level filter">
+              <option value="all">level: all</option>
+              <option value="info">info</option>
+              <option value="warning">warning</option>
+              <option value="error">error</option>
+            </select>
+            <button id="btn-autoscroll" class="btn small active" type="button">autoscroll: on</button>
+            <button id="btn-copy-feed" class="btn small" type="button">copy feed</button>
+            <button id="btn-clear-feed" class="btn small" type="button">clear</button>
+          </div>
+        </div>
+        <div id="feed-rows" class="feed-rows">
+          <div class="muted pad">No events yet.</div>
+        </div>
+      </aside>
+    </div>
+  </main>
+</div>
+
+<div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span id="modal-title" class="modal-title">Prompt</span>
+      <span class="modal-actions">
+        <button id="btn-modal-copy" class="btn small" type="button">copy</button>
+        <button id="modal-close" class="btn small" type="button">close</button>
+      </span>
+    </div>
+    <pre id="modal-body" class="prompt"></pre>
+  </div>
+</div>
+</body>
+</html>

@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from typing import List, Optional
 
+from pipeline import telemetry
 from pipeline.config import ARTIFACTS_DIR
 from pipeline.schemas import BriefArtifact, ScriptArtifact, ScriptBeat
 from pipeline.workspace import ProjectWorkspace
@@ -17,6 +18,8 @@ from pipeline.archetypes import (
     ProductArchetype,
     get_archetype_config,
 )
+
+STAGE_SCRIPTWRITING = telemetry.stage_number("scriptwriting")
 
 
 def _build_archetype_beats(brief: BriefArtifact, archetype: ProductArchetype) -> List[ScriptBeat]:
@@ -282,6 +285,30 @@ def generate_commercial_script(
         beats = _build_archetype_beats(brief, selected_archetype)
 
     total_duration = sum(b.estimated_duration for b in beats)
+
+    for index, beat in enumerate(beats, start=1):
+        telemetry.stage_progress(
+            STAGE_SCRIPTWRITING,
+            index,
+            len(beats),
+            unit="beats",
+            label=f"Beat {index} {beat.beat_type}",
+            item={
+                "id": beat.scene_id,
+                "status": "written",
+                "beat_type": beat.beat_type,
+                "duration_seconds": beat.estimated_duration,
+                "has_speech": bool(beat.spoken_text and beat.spoken_text.strip()),
+            },
+        )
+    telemetry.note(
+        f"Script rendered deterministically from {len(beats)} {selected_archetype.value} beat templates "
+        f"(no LLM call), total {total_duration:.1f}s",
+        archetype=selected_archetype.value,
+        beats=len(beats),
+        total_duration_seconds=round(total_duration, 2),
+        generator="deterministic_beat_templates",
+    )
 
     script = ScriptArtifact(
         campaign_id=brief.campaign_id,

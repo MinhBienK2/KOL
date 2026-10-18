@@ -8,6 +8,7 @@ import subprocess
 from pathlib import Path
 from typing import Any, List, Optional
 
+from pipeline import telemetry
 from pipeline.config import (
     ARTIFACTS_DIR,
     BASE_DIR,
@@ -24,6 +25,16 @@ from pipeline.schemas import (
 )
 from pipeline.workspace import ProjectWorkspace
 from pipeline.slideshow_risk import score_slideshow_risk
+
+STAGE_VERIFICATION = telemetry.stage_number("verification_publish")
+
+
+def _ensure_stage_started(total: int) -> None:
+    """Open the verification stage with its gate total, unless the director already did."""
+    recorder = telemetry.current()
+    if recorder is not None and recorder.snapshot().get("current_stage") == STAGE_VERIFICATION:
+        return
+    telemetry.start_stage(STAGE_VERIFICATION, total=total)
 
 
 def verify_technical_gate(video_path: str | Path) -> GateVerificationResult:
@@ -280,13 +291,33 @@ def run_all_verification_gates(
     scene_plan_path = target_artifacts_dir / "scene_plan.json"
 
     # Run 4 independent verification gates
-    tech_gate = verify_technical_gate(video_path)
-    char_gate = verify_character_consistency_gate(manifest_path)
-    cont_gate = verify_continuity_gate(script_path, manifest_path)
-    slideshow_gate = verify_slideshow_risk_gate(scene_plan_path)
+    gate_runners = (
+        lambda: verify_technical_gate(video_path),
+        lambda: verify_character_consistency_gate(manifest_path),
+        lambda: verify_continuity_gate(script_path, manifest_path),
+        lambda: verify_slideshow_risk_gate(scene_plan_path),
+    )
+    _ensure_stage_started(len(gate_runners))
 
-    all_gates = [tech_gate, char_gate, cont_gate, slideshow_gate]
+    all_gates: List[GateVerificationResult] = []
+    for index, run_gate in enumerate(gate_runners, start=1):
+        gate = run_gate()
+        all_gates.append(gate)
+        telemetry.stage_progress(
+            STAGE_VERIFICATION,
+            index,
+            len(gate_runners),
+            unit="gates",
+            label=gate.gate_name,
+            item={
+                "id": gate.gate_name,
+                "status": "passed" if gate.passed else "failed",
+                "error": gate.error_message,
+                "details": gate.details,
+            },
+        )
     overall_status = "PASSED" if all(g.passed for g in all_gates) else "FAILED"
+    tech_gate = all_gates[0]
 
     file_size = video_path.stat().st_size if video_path.exists() else 0
     duration = tech_gate.details.get("duration_seconds", 0.0)
@@ -321,6 +352,7 @@ def run_all_verification_gates(
     report_file = target_artifacts_dir / "render_report.json"
     with open(report_file, "w", encoding="utf-8") as f:
         json.dump(report.model_dump(), f, ensure_ascii=False, indent=2)
+    telemetry.register_artifact(report_file, stage=STAGE_VERIFICATION, label="Render report")
 
     # Generate thumbnail and publish_log.json
     if workspace is not None:
@@ -329,6 +361,7 @@ def run_all_verification_gates(
         thumb_path = video_path.parent / f"thumbnail_{video_path.stem}.jpg"
     if video_path.exists():
         generate_commercial_thumbnail(video_path, thumb_path, timestamp=min(duration - 1.0, 18.0))
+        telemetry.register_artifact(thumb_path, stage=STAGE_VERIFICATION, label="Publish thumbnail")
 
     clean_tag = "".join(product_name.title().split())
     publish_log = PublishLogArtifact(
@@ -345,5 +378,14 @@ def run_all_verification_gates(
     publish_file = target_artifacts_dir / "publish_log.json"
     with open(publish_file, "w", encoding="utf-8") as f:
         json.dump(publish_log.model_dump(), f, ensure_ascii=False, indent=2)
+    telemetry.register_artifact(publish_file, stage=STAGE_VERIFICATION, label="Publish log")
+
+    if overall_status == "PASSED":
+        telemetry.complete_stage(STAGE_VERIFICATION, message=f"Overall: {report.overall_status}")
+    else:
+        failed_gates = "; ".join(
+            f"{gate.gate_name}: {gate.error_message or 'failed'}" for gate in all_gates if not gate.passed
+        )
+        telemetry.fail_stage(STAGE_VERIFICATION, f"Overall: {report.overall_status} ({failed_gates})")
 
     return report

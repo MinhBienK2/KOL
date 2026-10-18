@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from typing import List, Optional
 
+from pipeline import telemetry
 from pipeline.config import ARTIFACTS_DIR, CHARACTER_PATH
 from pipeline.schemas import ScenePlanArtifact, ScriptArtifact, StoryboardShot
 from pipeline.workspace import ProjectWorkspace
@@ -97,6 +98,15 @@ def generate_scene_plan(
             shot_id = f"shot_{idx:02d}"
             is_prod_only = beat.character_role == CharacterRole.PRODUCT_ONLY
             shot_scale = scale_cycle[(idx - 1) % len(scale_cycle)]
+            shot_type_label = f"{shot_scale.value.upper()} • {beat.beat_type.capitalize()}"
+            telemetry.stage_progress(
+                3,
+                idx,
+                len(script.beats),
+                unit="shots",
+                label=f"Planning {shot_id}",
+                item={"id": shot_id, "label": shot_type_label, "status": "planned", "beat_type": beat.beat_type},
+            )
             framing = build_framing_directive(scale=shot_scale, focal_point=script.product_name if is_prod_only else persona.name)
             lip_decision = determine_lip_sync_strategy(
                 shot_id=shot_id,
@@ -127,6 +137,31 @@ def generate_scene_plan(
 
             full_cinematic_prompt = " ".join(prompt_parts)
 
+            # Prompt ledger: the supervisor must see the exact cinematic prompt before rendering.
+            telemetry.record_prompt(
+                shot_id,
+                full_cinematic_prompt,
+                stage=3,
+                source="scene_plan",
+                mode="T2V" if is_prod_only else "I2V",
+                shot_type=shot_type_label,
+                angle=framing.angle.value,
+                camera_motion=beat.camera_choreography.value if beat.camera_choreography else "Smooth commercial track",
+                lighting=beat.lighting_contract.value if beat.lighting_contract else arch_config.default_lighting.value,
+                estimated_duration=beat.estimated_duration,
+                segments=[
+                    {"label": "Framing & optics", "text": framing.prompt_optics_directive},
+                    {"label": "Subject & action", "text": base_prompt},
+                    {"label": "Set & environment", "text": environment.prompt_set_directive},
+                    *([{"label": "Wardrobe", "text": wardrobe.prompt_wear_directive}] if not is_prod_only else []),
+                    *(
+                        [{"label": "Articulation", "text": lip_decision.prompt_articulation_directive}]
+                        if not is_prod_only and lip_decision.prompt_articulation_directive
+                        else []
+                    ),
+                ],
+            )
+
             expr_path = None
             if not is_prod_only:
                 expr_path = DynamicPromptBuilder.get_reference_expression_path(
@@ -139,7 +174,7 @@ def generate_scene_plan(
                 StoryboardShot(
                     shot_id=shot_id,
                     scene_id=beat.scene_id,
-                    shot_type=f"{shot_scale.value.upper()} • {beat.beat_type.capitalize()}",
+                    shot_type=shot_type_label,
                     angle=framing.angle.value,
                     camera_motion=beat.camera_choreography.value if beat.camera_choreography else "Smooth commercial track",
                     lighting=beat.lighting_contract.value if beat.lighting_contract else arch_config.default_lighting.value,
@@ -176,10 +211,20 @@ def generate_scene_plan(
             campaign_title=f"{script.product_name} Storyboard",
         )
 
+        telemetry.register_artifact(contact_sheet_path, stage=3, label="Storyboard contact sheet")
+
+        risk_report = score_slideshow_risk(shots)
+        telemetry.note(
+            f"Storyboard slideshow risk: score {risk_report.average_score} ({risk_report.verdict})",
+            average_score=risk_report.average_score,
+            verdict=risk_report.verdict,
+            passed=risk_report.passed,
+            hard_reject_reasons=risk_report.hard_reject_reasons,
+        )
         scene_plan = ScenePlanArtifact(
             campaign_id=script.campaign_id,
             shots=shots,
-            slideshow_risk=score_slideshow_risk(shots).model_dump(),
+            slideshow_risk=risk_report.model_dump(),
             storyboard_contact_sheet=str(contact_sheet_path),
         )
         out_file = target_artifacts_dir / "scene_plan.json"
@@ -239,7 +284,15 @@ def generate_scene_plan(
     ]
 
     shots: List[StoryboardShot] = []
-    for cfg in shot_configs:
+    for idx, cfg in enumerate(shot_configs, start=1):
+        telemetry.stage_progress(
+            3,
+            idx,
+            len(shot_configs),
+            unit="shots",
+            label=f"Planning {cfg['shot_id']}",
+            item={"id": cfg["shot_id"], "label": cfg["shot_type"], "status": "planned"},
+        )
         prompt_6 = build_6part_prompt(
             aspect_ratio="9:16",
             character_tag=char_tag,
@@ -248,6 +301,19 @@ def generate_scene_plan(
             style_negative=style_neg,
             scene_action=cfg["scene_action"],
             camera_choreography=cfg["camera_choreography"],
+        )
+        telemetry.record_prompt(
+            cfg["shot_id"],
+            prompt_6,
+            stage=3,
+            source="scene_plan",
+            mode="I2V",
+            shot_type=cfg["shot_type"],
+            angle=cfg["angle"],
+            camera_motion=cfg["camera_motion"],
+            lighting=cfg["lighting"],
+            estimated_duration=cfg["duration"],
+            segments=[{"label": "6-part cinematic prompt", "text": prompt_6}],
         )
         shots.append(
             StoryboardShot(
@@ -267,10 +333,18 @@ def generate_scene_plan(
             )
         )
 
+    legacy_risk_report = score_slideshow_risk(shots)
+    telemetry.note(
+        f"Storyboard slideshow risk: score {legacy_risk_report.average_score} ({legacy_risk_report.verdict})",
+        average_score=legacy_risk_report.average_score,
+        verdict=legacy_risk_report.verdict,
+        passed=legacy_risk_report.passed,
+        hard_reject_reasons=legacy_risk_report.hard_reject_reasons,
+    )
     scene_plan = ScenePlanArtifact(
         campaign_id=script.campaign_id,
         shots=shots,
-        slideshow_risk=score_slideshow_risk(shots).model_dump(),
+        slideshow_risk=legacy_risk_report.model_dump(),
     )
 
     out_file = target_artifacts_dir / "scene_plan.json"

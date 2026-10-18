@@ -92,6 +92,36 @@ _Avoid_: Floating camera, disjointed lighting cuts
 A 6-dimension automated evaluator scoring repetition, decorative visuals, weak motion, weak shot intent, typography overreliance, and unsupported cinematic claims to prevent static photo slideshow outputs.
 _Avoid_: Ken Burns slideshow, static image zoompan
 
+### Observability & Supervision
+
+**Run Telemetry**:
+The durable per-run record of pipeline execution: stage status, timing, progress, produced artifacts, generation prompts, and external API calls, written by the pipeline itself.
+_Avoid_: Debug prints, terminal scrollback
+
+**Run State Snapshot**:
+The atomically rewritten `state.json` describing the current state of a run (stage statuses, progress, artifact index, prompt ledger), read by the supervisor dashboard.
+_Avoid_: Status file, progress bar state
+
+**Activity Feed**:
+The append-only `events.jsonl` stream of structured pipeline events (stage transitions, progress, artifacts, prompts, API calls, console lines) pushed live to the dashboard over SSE.
+_Avoid_: Log file, stdout
+
+**Prompt Ledger**:
+The per-shot record of the exact generation prompt sent to the video/keyframe model together with its parameters (mode I2V/T2V, model, aspect ratio, requested duration, first frame, task id, attempts, output file).
+_Avoid_: Prompt history, chat log
+
+**Stage Status Derivation**:
+Reconstructing each stage's status from the presence of its canonical artifacts, used for runs recorded before Run Telemetry existed.
+_Avoid_: Fake telemetry, default status
+
+**Supervisor Dashboard**:
+The browser UI that reads a run's telemetry and canonical artifacts to show live stage progress, artifacts, prompts, verification gates, and playback of all produced media.
+_Avoid_: Admin panel, monitoring app
+
+**Path Escape**:
+A file request that resolves outside the run workspace (and its declared asset roots) and is therefore refused by the dashboard API.
+_Avoid_: Directory traversal, unsafe path
+
 ### Project & Workspace Architecture
 
 **Project Workspace**:
