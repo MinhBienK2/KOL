@@ -40,6 +40,18 @@ _Avoid_: Face swap, character consistency hack
 A composite visual sheet combining portrait, turnaround panels, and expression grids used as an identity anchor.
 _Avoid_: Single reference photo, style guide
 
+**Character Sheet**:
+A multi-panel turnaround image capturing a character's physical proportions, hairstyle, and wardrobe across multiple viewing angles with empty hands.
+_Avoid_: Model sheet, mood board, all-in-one style guide
+
+**Face Anchor**:
+An isolated high-resolution close-up portrait used to preserve fine facial geometry and identity fidelity.
+_Avoid_: Profile pic, headshot hack, avatar
+
+**R2V**:
+Video generation driven by a prompt guided by subject reference images without constraining the initial frame.
+_Avoid_: Reference video, S2V, prompt video
+
 **I2V**:
 Image-to-Video generation using a locked First Frame and motion prompt to produce short cinematic video clips.
 _Avoid_: Text-to-Video, T2V, video diffusion
@@ -79,6 +91,10 @@ _Avoid_: One-size-fits-all script, hardcoded template
 **Character Role Matrix**:
 Distinction between Presenter (direct talking-head with lip-sync), Model (visual acting, movement flow, off-camera VO/music only), and Product-Only (macro cinematography with suppressed character references).
 _Avoid_: Talking-head obsession, forced face in macro shots
+
+**Directorial Dispatch**:
+The automated routing mechanism mapping each shot's Character Role to its optimal generation mode (Presenter to I2V with First Frame, Model to R2V with Character Sheet and Face Anchor, and Product-Only to Product Hero Reference).
+_Avoid_: Hardcoded video mode, manual shot toggling
 
 **Audio Strategy Routing**:
 Dynamic stem selection between On-Camera Speech, Off-Camera Voiceover, Pure Music + SFX Beat-Sync, and ASMR Foley Hybrid.
@@ -144,3 +160,7 @@ _Avoid_: Facial contamination on macro shots, character injection into product b
 **Campaign Costume Consistency**:
 Uniformly binding character shots within a campaign to the script's canonical styling and costume directive to prevent wardrobe hopping between disparate outfits across scenes without requiring static wardrobe asset catalogs.
 _Avoid_: Random costume mixing, hardcoded wardrobe folders
+
+**Expression Neutrality**:
+The principle requiring all character visual anchors to remain emotionally neutral, delegating all dynamic acting and facial expressions exclusively to kinetic prompt descriptions.
+_Avoid_: Expression sheets, baked-in smiles, emotion swapping
