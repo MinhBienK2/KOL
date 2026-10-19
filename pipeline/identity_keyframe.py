@@ -44,6 +44,41 @@ def resolve_canonical_identity_reference(
     return default_portrait
 
 
+def resolve_canonical_character_sheet(
+    archetype: ProductArchetype,
+    char_data: dict,
+    default_sheet: Path | None = None,
+) -> Path:
+    """Resolves the canonical 6-panel character sheet for the active identity."""
+    identities = {ident["identity_id"]: ident for ident in char_data.get("identities", [])}
+    ident_id = ARCHETYPE_IDENTITY_MAP.get(archetype, "kol_main_office")
+    ident = identities.get(ident_id, {})
+    sheet_rel = ident.get("character_sheet") or ident.get("reference_sheet") or char_data.get("character_sheet")
+    if sheet_rel:
+        sheet_path = BASE_DIR / sheet_rel
+        if sheet_path.exists():
+            return sheet_path
+    if default_sheet and default_sheet.exists():
+        return default_sheet
+    default_sheet_path = BASE_DIR / "assets" / "characters" / "kol_main" / "character_sheet_default.png"
+    if default_sheet_path.exists():
+        return default_sheet_path
+    return BASE_DIR / char_data.get("portrait_image", "assets/characters/kol_main/portrait.png")
+
+
+def resolve_canonical_face_anchor(
+    char_data: dict,
+    default_portrait: Path,
+) -> Path:
+    """Resolves the canonical neutral face anchor portrait."""
+    face_rel = char_data.get("face_anchor") or char_data.get("portrait_image")
+    if face_rel:
+        p = BASE_DIR / face_rel
+        if p.exists():
+            return p
+    return default_portrait
+
+
 def resolve_product_hero_reference(
     wardrobe: Optional[Any] = None,
     workspace: Optional[ProjectWorkspace] = None,
@@ -166,8 +201,9 @@ def generate_clean_keyframes(
 
     wardrobe, environment = resolve_wardrobe_and_environment(archetype_val, custom_costume, custom_env)
     canonical_identity_ref = resolve_canonical_identity_reference(archetype_val, char_data, default_portrait)
+    canonical_char_sheet = resolve_canonical_character_sheet(archetype_val, char_data)
+    canonical_face_anchor = resolve_canonical_face_anchor(char_data, default_portrait)
     product_hero_ref = resolve_product_hero_reference(wardrobe, workspace=workspace)
-
     keyframe_assets: List[KeyframeAsset] = []
     telea_inpainted = 0
     fallback_references = 0
@@ -176,9 +212,13 @@ def generate_clean_keyframes(
         is_prod_only = getattr(shot, "character_role", None) == CharacterRole.PRODUCT_ONLY or (
             hasattr(shot.character_role, "value") and shot.character_role.value == "product_only"
         )
+        is_model_role = getattr(shot, "character_role", None) == CharacterRole.MODEL or (
+            hasattr(shot.character_role, "value") and shot.character_role.value == "model"
+        )
         reference_is_fallback = True
 
         if is_prod_only:
+            gen_mode = "product_hero"
             # Product isolation: strictly avoid character face injection in product macro shots
             if getattr(wardrobe, "shot_references", None) and shot.shot_id in wardrobe.shot_references:
                 custom_ref = BASE_DIR / wardrobe.shot_references[shot.shot_id]
@@ -189,8 +229,16 @@ def generate_clean_keyframes(
                     ref_path = product_hero_ref
             else:
                 ref_path = product_hero_ref
+            ref_assets = [_repo_rel(ref_path)]
+        elif is_model_role or getattr(shot, "generation_mode", None) == "r2v":
+            # Model role / kinetic action: Directorial Dispatch routes to R2V with Dual-Anchor
+            gen_mode = "r2v"
+            ref_path = canonical_char_sheet
+            reference_is_fallback = False
+            ref_assets = [_repo_rel(canonical_char_sheet), _repo_rel(canonical_face_anchor)]
         else:
-            # Character shot: enforce campaign-wide wardrobe & identity anchor coherence
+            # Presenter role (or direct speech): Directorial Dispatch routes to I2V with First Frame
+            gen_mode = "i2v"
             if getattr(wardrobe, "shot_references", None) and shot.shot_id in wardrobe.shot_references:
                 custom_ref = BASE_DIR / wardrobe.shot_references[shot.shot_id]
                 if custom_ref.exists():
@@ -207,7 +255,7 @@ def generate_clean_keyframes(
                     ref_path = canonical_identity_ref
             else:
                 ref_path = canonical_identity_ref
-
+            ref_assets = [_repo_rel(ref_path)]
         if not ref_path or not ref_path.exists():
             ref_path = default_portrait
             reference_is_fallback = True
@@ -246,6 +294,8 @@ def generate_clean_keyframes(
                 "width": w,
                 "height": h,
                 "fallback_reference": reference_is_fallback,
+                "generation_mode": gen_mode,
+                "reference_assets": ref_assets,
             },
         )
 
@@ -257,6 +307,8 @@ def generate_clean_keyframes(
                 watermark_removed=True,
                 width=w,
                 height=h,
+                generation_mode=gen_mode,
+                reference_assets=ref_assets,
             )
         )
     total_shots = len(scene_plan.shots)

@@ -1,0 +1,62 @@
+{
+  "name": "Minh Anh",
+  "character_tag": "[KOL_MINHANH]",
+  "role": "Secondary Presenter / Minh Anh",
+  "is_main": false,
+  "gender": "female",
+  "age_group": "youth",
+  "ethnicity": "Vietnamese",
+  "body_type": "Slim, well-proportioned, 165cm, natural posture",
+  "description": "Professional Vietnamese female KOL / presenter. Clean, modern, trustworthy aesthetic.",
+  "face_prompt": "Vietnamese young woman, early 20s, refined oval face shape, natural straight black collarbone-length bob hair, neat center-part, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin, calm intelligent and approachable expression, studio portrait lighting, 8k",
+  "appearance_details": "Crisp tailored white button-down collared dress shirt, long sleeves neatly fitted, dark navy blue tailored slim-fit trousers, polished dark brown loafers",
+  "portrait_image": "assets/characters/kol_minhanh/portrait.png",
+  "face_anchor": "assets/characters/kol_minhanh/portrait.png",
+  "identities": [
+    {
+      "identity_id": "kol_minhanh_office",
+      "identity_name": "Office Professional",
+      "character_tag": "[KOL_MA_OFFICE]",
+      "appearance_details": "Crisp tailored white button-down collared dress shirt, dark navy blue tailored slim-fit trousers, polished dark brown loafers",
+      "face_anchor": "assets/characters/kol_minhanh/portrait.png",
+      "character_sheet": "assets/characters/kol_minhanh/identities/default.png",
+      "reference_sheet": "assets/characters/kol_minhanh/identities/default.png"
+    },
+    {
+      "identity_id": "kol_minhanh_fashion",
+      "identity_name": "Haute Couture Evening Gala",
+      "character_tag": "[KOL_MA_FASHION]",
+      "appearance_details": "Floor-length midnight noir French satin silk evening gown with asymmetrical high leg slit, cowl neckline, sleek chignon hair bun, platinum drop earrings, metallic stiletto heels",
+      "face_anchor": "assets/characters/kol_minhanh/portrait.png",
+      "character_sheet": "assets/characters/kol_minhanh/full_body/01_standing_front_0deg.jpg",
+      "reference_sheet": "assets/characters/kol_minhanh/full_body/01_standing_front_0deg.jpg"
+    },
+    {
+      "identity_id": "kol_minhanh_techwear",
+      "identity_name": "Creative Techwear",
+      "character_tag": "[KOL_MA_TECH]",
+      "appearance_details": "Matte obsidian black architectural techwear hoodie over fitted charcoal base, titanium smartwatch, tailored technical jogger trousers",
+      "face_anchor": "assets/characters/kol_minhanh/portrait.png",
+      "character_sheet": "archive_raw/ref_10_speaking_hand_gesture.jpg",
+      "reference_sheet": "archive_raw/ref_10_speaking_hand_gesture.jpg"
+    },
+    {
+      "identity_id": "kol_minhanh_spa",
+      "identity_name": "Minimalist Spa & Skincare",
+      "character_tag": "[KOL_MA_SPA]",
+      "appearance_details": "Pure pearl-white silk wrap kimono robe gently draped over dewy bare shoulders, hair swept in soft claw clip, radiant dewy bare glass skin",
+      "face_anchor": "assets/characters/kol_minhanh/portrait.png",
+      "character_sheet": "assets/characters/kol_minhanh/expressions/02_smiling.jpg",
+      "reference_sheet": "assets/characters/kol_minhanh/expressions/02_smiling.jpg"
+    },
+    {
+      "identity_id": "kol_minhanh_cozy",
+      "identity_name": "Scandinavian Cozy Knitwear",
+      "character_tag": "[KOL_MA_COZY]",
+      "appearance_details": "Oversized chunky ribbed oatmeal cashmere sweater, relaxed cream linen trousers, loose natural low hair bun, warm domestic aesthetic",
+      "face_anchor": "assets/characters/kol_minhanh/portrait.png",
+      "character_sheet": "archive_raw/ref_06_seated_pose.jpg",
+      "reference_sheet": "archive_raw/ref_06_seated_pose.jpg"
+    }
+  ]
+}

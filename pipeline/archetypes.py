@@ -705,8 +705,30 @@ class CharacterPersona(BaseModel):
 PERSONA_CATALOG: Dict[str, CharacterPersona] = {
     "kol_main": CharacterPersona(
         persona_id="kol_main",
+        name="Mai Ly",
+        character_tag="[KOL_MAIN]",
+        gender="female",
+        ethnicity="Vietnamese",
+        age_group="young adult 20-25",
+        body_type="Slim, well-proportioned, 166cm, natural posture",
+        base_face_prompt=(
+            "Vietnamese young woman, early 20s, refined oval face shape, natural chin-length black "
+            "bob hairstyle, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, "
+            "natural soft lips, smooth warm fair skin, calm intelligent and approachable expression, 8k"
+        ),
+        character_file="assets/characters/kol_main/character.json",
+        supported_archetypes=[
+            ProductArchetype.TECH_GADGETS,
+            ProductArchetype.HOME_LIFESTYLE,
+            ProductArchetype.GENERAL_COMMERCIAL,
+            ProductArchetype.BEAUTY_SKINCARE,
+            ProductArchetype.FASHION_APPAREL,
+        ],
+    ),
+    "kol_minhanh": CharacterPersona(
+        persona_id="kol_minhanh",
         name="Minh Anh",
-        character_tag="[KOL_MA]",
+        character_tag="[KOL_MINHANH]",
         gender="female",
         ethnicity="Vietnamese",
         age_group="young adult 22-26",
@@ -716,7 +738,7 @@ PERSONA_CATALOG: Dict[str, CharacterPersona] = {
             "collarbone-length bob hair, neat center-part, soft double eyelids, gentle dark brown "
             "almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin"
         ),
-        character_file="assets/characters/kol_main/character.json",
+        character_file="assets/characters/kol_minhanh/character.json",
         supported_archetypes=[
             ProductArchetype.TECH_GADGETS,
             ProductArchetype.HOME_LIFESTYLE,

@@ -75,6 +75,8 @@ class StoryboardShot(BaseModel):
     shot_intent: Optional[str] = None
     kinetic_action: Optional[str] = None
     is_hero_moment: Optional[bool] = False
+    generation_mode: Optional[str] = None  # "i2v", "r2v", "product_hero"
+    reference_assets: Optional[List[str]] = None
 
 class ScenePlanArtifact(BaseModel):
     campaign_id: str
@@ -89,6 +91,8 @@ class KeyframeAsset(BaseModel):
     watermark_removed: bool = False
     width: int = 1080
     height: int = 1920
+    generation_mode: Optional[str] = None
+    reference_assets: Optional[List[str]] = None
 class AssetManifestArtifact(BaseModel):
     campaign_id: str
     keyframes: List[KeyframeAsset]

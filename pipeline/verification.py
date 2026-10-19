@@ -8,6 +8,7 @@ import subprocess
 from pathlib import Path
 from typing import Any, List, Optional
 
+from PIL import Image
 from pipeline import telemetry
 from pipeline.config import (
     ARTIFACTS_DIR,
@@ -139,13 +140,95 @@ def verify_technical_gate(video_path: str | Path) -> GateVerificationResult:
         error_message="; ".join(errors) if errors else None,
     )
 
+def verify_character_sheet_integrity_gate(
+    character_file: str | Path = CHARACTER_PATH,
+    min_resolution: int = 512,
+) -> GateVerificationResult:
+    """Tier-1 Pre-flight Gate: Verifies that Character Sheet and Face Anchor meet quality and resolution standards."""
+    char_path = Path(character_file)
+    if not char_path.is_absolute():
+        char_path = BASE_DIR / char_path
+    if not char_path.exists():
+        return GateVerificationResult(
+            gate_name="character_sheet_integrity_gate",
+            passed=False,
+            details={},
+            error_message=f"Character profile not found at {char_path}",
+        )
+
+    with open(char_path, "r", encoding="utf-8") as f:
+        char_data = json.load(f)
+
+    face_ref = char_data.get("face_anchor") or char_data.get("portrait_image")
+    face_path = BASE_DIR / face_ref if face_ref else None
+    errors: List[str] = []
+    details: dict[str, Any] = {
+        "character_name": char_data.get("name"),
+        "character_tag": char_data.get("character_tag"),
+        "has_face_anchor": False,
+        "identities_verified": 0,
+        "total_identities": len(char_data.get("identities", [])),
+    }
+
+    if not face_path or not face_path.exists():
+        errors.append(f"Face anchor image missing: {face_ref}")
+    else:
+        try:
+            with Image.open(face_path) as img:
+                fw, fh = img.size
+                details["face_anchor_resolution"] = f"{fw}x{fh}"
+                details["has_face_anchor"] = True
+                if fw < min_resolution or fh < min_resolution:
+                    errors.append(f"Face anchor resolution ({fw}x{fh}) below required minimum {min_resolution}px")
+        except Exception as exc:
+            errors.append(f"Failed to read face anchor image: {exc}")
+
+    verified_identities = 0
+    for ident in char_data.get("identities", []):
+        sheet_rel = ident.get("character_sheet") or ident.get("reference_sheet") or char_data.get("character_sheet")
+        sheet_p = BASE_DIR / sheet_rel if sheet_rel else None
+        if not sheet_p or not sheet_p.exists():
+            errors.append(f"Identity '{ident.get('identity_id')}' missing character sheet: {sheet_rel}")
+            continue
+        try:
+            with Image.open(sheet_p) as img:
+                sw, sh = img.size
+                if max(sw, sh) < min_resolution:
+                    errors.append(f"Character sheet for '{ident.get('identity_id')}' resolution ({sw}x{sh}) below required {min_resolution}px")
+                else:
+                    verified_identities += 1
+        except Exception as exc:
+            errors.append(f"Invalid character sheet image for '{ident.get('identity_id')}': {exc}")
+
+    details["identities_verified"] = verified_identities
+    passed = len(errors) == 0 and verified_identities > 0
+
+    return GateVerificationResult(
+        gate_name="character_sheet_integrity_gate",
+        passed=passed,
+        details=details,
+        error_message="; ".join(errors) if errors else None,
+    )
+
 
 def verify_character_consistency_gate(
     manifest_path: str | Path,
     character_file: str | Path = CHARACTER_PATH,
 ) -> GateVerificationResult:
-    """Verifies that generated keyframes strictly preserve character identity anchors."""
+    """Verifies that generated keyframes strictly preserve character identity anchors (Tier-2 Post-flight Audit)."""
+    # Tier-1 Character Sheet Integrity Pre-flight check
+    tier1 = verify_character_sheet_integrity_gate(character_file)
+    if not tier1.passed:
+        return GateVerificationResult(
+            gate_name="character_consistency_gate",
+            passed=False,
+            details={"tier1_preflight": tier1.details},
+            error_message=f"Pre-flight Character Sheet Integrity Gate FAILED: {tier1.error_message}",
+        )
+
     char_path = Path(character_file)
+    if not char_path.is_absolute():
+        char_path = BASE_DIR / char_path
     with open(char_path, "r", encoding="utf-8") as f:
         char_data = json.load(f)
 
@@ -157,12 +240,13 @@ def verify_character_consistency_gate(
         return GateVerificationResult(
             gate_name="character_consistency_gate",
             passed=False,
-            details={},
+            details={"tier1_preflight": tier1.details},
             error_message="No keyframes found in manifest",
         )
 
     all_exist = True
     watermark_cleaned = True
+    generation_modes: dict[str, int] = {}
     for kf in keyframes:
         cleaned_p_str = kf.get("cleaned_image_path")
         if not cleaned_p_str:
@@ -173,12 +257,17 @@ def verify_character_consistency_gate(
             all_exist = False
         if not kf.get("watermark_removed", False):
             watermark_cleaned = False
+        mode = kf.get("generation_mode", "i2v")
+        generation_modes[mode] = generation_modes.get(mode, 0) + 1
+
     details = {
         "character_name": char_data.get("name"),
         "character_tag": char_data.get("character_tag"),
         "total_keyframes": len(keyframes),
         "all_files_exist": all_exist,
         "watermark_cleaned": watermark_cleaned,
+        "generation_modes": generation_modes,
+        "character_sheet_integrity": tier1.details,
     }
 
     passed = all_exist and watermark_cleaned
@@ -290,14 +379,14 @@ def run_all_verification_gates(
     manifest_path = target_artifacts_dir / "asset_manifest.json"
     scene_plan_path = target_artifacts_dir / "scene_plan.json"
 
-    # Run 4 independent verification gates
+    # Run 5 independent verification gates (including Two-Tier Character Sheet Integrity)
     gate_runners = (
         lambda: verify_technical_gate(video_path),
+        lambda: verify_character_sheet_integrity_gate(),
         lambda: verify_character_consistency_gate(manifest_path),
         lambda: verify_continuity_gate(script_path, manifest_path),
         lambda: verify_slideshow_risk_gate(scene_plan_path),
     )
-    _ensure_stage_started(len(gate_runners))
 
     all_gates: List[GateVerificationResult] = []
     for index, run_gate in enumerate(gate_runners, start=1):

@@ -34,7 +34,7 @@ def test_generate_scene_plan(tmp_path: Path):
     assert plan.campaign_id == script.campaign_id
     assert len(plan.shots) == 4
     for shot in plan.shots:
-        assert shot.character_tag == "[KOL_MA]"
+        assert shot.character_tag in ("[KOL_MAIN]", "[KOL_MA]")
         assert shot.prompt_6part.startswith("Generate a [9:16]")
         assert shot.estimated_duration > 0
 

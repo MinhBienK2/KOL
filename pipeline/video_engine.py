@@ -129,6 +129,8 @@ def render_single_video_clip(
     max_retries: int = 3,
     initial_retry_delay: float = 5.0,
     poll_timeout_seconds: int = 300,
+    generation_mode: Optional[str] = None,
+    reference_assets: Optional[List[str]] = None,
 ) -> str:
     """Renders a single shot clip using genuine MiniMax Hailuo-2.3 video diffusion.
 
@@ -157,16 +159,17 @@ def render_single_video_clip(
 
     for attempt in range(1, max_retries + 1):
         try:
+            effective_mode = "R2V" if (generation_mode == "r2v" or (reference_assets and len(reference_assets) > 1)) else ("I2V" if resolved_img_path else "T2V")
             print(
                 f"[VideoEngine] [{shot_id}] Generating genuine diffusion clip (Attempt {attempt}/{max_retries}) | "
-                f"Mode: {'I2V (First Frame)' if resolved_img_path else 'T2V (Direct Prompt)'} | Model: {model}..."
+                f"Mode: {effective_mode} | Model: {model}..."
             )
             # Prompt ledger: the exact prompt, model and first frame per attempt.
             telemetry.record_prompt(
                 shot_id,
                 prompt,
                 stage=5,
-                mode="I2V" if resolved_img_path else "T2V",
+                mode=effective_mode,
                 model=model,
                 aspect_ratio=aspect_ratio,
                 duration_requested=gen_duration,
@@ -375,6 +378,8 @@ def render_all_video_clips(
             return shot.shot_id, str(out_clip_path)
         kf = keyframes_by_shot.get(shot.shot_id)
         kf_image_path = kf.cleaned_image_path if kf else None
+        kf_mode = getattr(kf, "generation_mode", None)
+        kf_refs = getattr(kf, "reference_assets", None)
         clip_path = render_single_video_clip(
             shot_id=shot.shot_id,
             prompt=shot.prompt_6part,
@@ -386,6 +391,8 @@ def render_all_video_clips(
             max_retries=max_retries,
             initial_retry_delay=initial_retry_delay,
             poll_timeout_seconds=poll_timeout_seconds,
+            generation_mode=kf_mode,
+            reference_assets=kf_refs,
         )
         _stage5_progress(
             {

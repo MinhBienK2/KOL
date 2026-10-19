@@ -73,5 +73,7 @@ def test_product_isolation_and_wardrobe_consistency(tmp_path: Path):
             assert "portrait.png" not in kf.image_path
             assert "ref_10" not in kf.image_path
         else:
-            # Character shot: bound to canonical fashion identity reference or expression asset
-            assert any(k in kf.image_path for k in ("01_standing_front_0deg.jpg", "portrait.png", "expressions"))
+            # Character shot: bound to canonical fashion identity reference, character sheet, or expression asset
+            assert any(k in kf.image_path for k in ("character_sheet", "01_standing_front_0deg.jpg", "portrait.png", "expressions"))
+            assert kf.generation_mode in ("i2v", "r2v")
+            assert kf.reference_assets is not None

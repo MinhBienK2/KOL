@@ -3,6 +3,7 @@ import json
 
 from pipeline.verification import (
     verify_technical_gate,
+    verify_character_sheet_integrity_gate,
     verify_character_consistency_gate,
     verify_continuity_gate,
     verify_slideshow_risk_gate,
@@ -35,6 +36,13 @@ def test_verify_character_consistency_gate():
         assert gate.passed is True
         assert gate.details["watermark_cleaned"] is True
 
+
+
+def test_verify_character_sheet_integrity_gate():
+    gate = verify_character_sheet_integrity_gate()
+    assert gate.passed is True
+    assert gate.details["has_face_anchor"] is True
+    assert gate.details["identities_verified"] > 0
 
 def test_verify_continuity_gate():
     script_p = Path("output/artifacts/script.json")
