@@ -26,9 +26,8 @@ from pipeline.workspace import ProjectWorkspace
 STAGE_COMPOSITION = telemetry.stage_number("composition")
 
 #: Single source of truth for the multi-track mix targets (mirrored in the FFmpeg filter).
-BGM_DUCKING_ATTENUATION_DB = -24.0
+BGM_DUCKING_ATTENUATION_DB = -14.0
 TARGET_LUFS = -14.0
-
 
 def get_clip_duration(file_path: str | Path) -> float:
     cmd = [
@@ -116,11 +115,11 @@ def compose_master_commercial(
                     continue
                 esc_text = escape_drawtext(caption_text)
                 
-                # Draw banner box with high-contrast text
+                # Draw banner box with high-contrast text in mobile safe zone
                 f_box = (
                     f"drawtext=fontfile='{font_path}':text='{esc_text}':"
-                    f"fontcolor=white:fontsize=48:box=1:boxcolor=black@0.70:boxborderw=20:"
-                    f"x=(w-text_w)/2:y=h-450:enable='between(t,{start_t:.2f},{end_t:.2f})'"
+                    f"fontcolor=white:fontsize=44:box=1:boxcolor=black@0.65:boxborderw=16:"
+                    f"x=(w-text_w)/2:y=h-480:enable='between(t,{start_t:.2f},{end_t:.2f})'"
                 )
                 caption_filters.append(f_box)
                 captions_manifest.append({
@@ -172,10 +171,10 @@ def compose_master_commercial(
     # Input 1: BGM audio
     # Sidechain compression ducks BGM whenever speech exceeds threshold
     filter_complex = (
-        "[1:a]volume=0.35[bgm_base];"
+        "[1:a]volume=0.25[bgm_base];"
         "[bgm_base][0:a]sidechaincompress="
-        "threshold=0.015:ratio=10:attack=150:release=450:level_sc=1:mix=0.92[ducked_bgm];"
-        "[0:a][ducked_bgm]amix=inputs=2:duration=first:weights=1.0 0.4[mixed_audio];"
+        "threshold=0.03:ratio=4:attack=200:release=600:level_sc=1:mix=0.75[ducked_bgm];"
+        "[0:a][ducked_bgm]amix=inputs=2:duration=first:weights=1.0 0.35[mixed_audio];"
         "[mixed_audio]loudnorm=I=-14:LRA=11:TP=-1.5[out_audio]"
     )
 

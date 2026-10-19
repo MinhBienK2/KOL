@@ -1,0 +1,9 @@
+exp_id	consistency_loss	wardrobe_mismatch	product_leakage	status	description
+exp00_baseline	0.2917	0.0000	0.8333	keep	Baseline: disparate archive photos & ignored is_prod_only
+exp01_prod_iso	0.2250	0.5000	0.0000	keep	Product isolation: zero character face leakage in product shots
+exp02_wardrobe	0.3500	0.0000	1.0000	keep	Archetype wardrobe binding: uniform costume per campaign
+exp03_integrated	0.0000	0.0000	0.0000	keep	Integrated: product isolation + archetype wardrobe binding
+exp00_baseline	0.0000	0.0000	0.0000	keep	Baseline: disparate archive photos & ignored is_prod_only
+exp01_prod_iso	0.2250	0.5000	0.0000	keep	Product isolation: zero character face leakage in product shots
+exp02_wardrobe	0.3500	0.0000	1.0000	keep	Archetype wardrobe binding: uniform costume per campaign
+exp03_integrated	0.0000	0.0000	0.0000	discard	Integrated: product isolation + archetype wardrobe binding

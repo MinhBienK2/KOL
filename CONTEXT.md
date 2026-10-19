@@ -125,9 +125,22 @@ _Avoid_: Directory traversal, unsafe path
 ### Project & Workspace Architecture
 
 **Project Workspace**:
-A self-contained production directory encapsulating all canonical artifacts, keyframes, raw diffusion clips, synced audio, and master video files for a single film under its domain topic (`output/projects/{topic}/{project_id}/`).
+A self-contained production directory encapsulating all canonical artifacts, keyframes, raw diffusion clips, synced audio, and master video files for a single commercial film campaign under its domain topic (`projects/{topic}/{project_id}/`).
 _Avoid_: Fragmented multi-tree output, global temp directory, flat campaign dumping
 
+**Project Iteration (Run Version)**:
+A discrete, immutable execution record (`runs/v1/`, `runs/v2/`) within a Project Workspace containing the exact prompt flow, stage artifacts, and media rendered for that specific creative revision.
+_Avoid_: In-place overwriting of previous master renders, unversioned media soup
 **Topic Catalog**:
 The authoritative registry and queryable seam mapping domain archetypes and themes (Fashion Apparel, Tech Gadgets, Beauty Skincare, Home Lifestyle, General Commercial) to wardrobe profiles, photorealistic environments, and active projects.
 _Avoid_: Hardcoded category switch-cases, scattered global dictionaries
+
+### Character Consistency & Staging Isolation
+
+**Product Isolation**:
+The architectural rule ensuring shots designated as `product_only` strictly exclude human character facial anchors, routing purely to product hero visual references.
+_Avoid_: Facial contamination on macro shots, character injection into product b-roll
+
+**Archetype Wardrobe Binding**:
+Uniformly binding character shots within a campaign to the archetype's canonical wardrobe profile (`character.json` identity sheets) to prevent wardrobe hopping between disparate outfits across scenes.
+_Avoid_: Random costume mixing, unanchored archive photo beat maps

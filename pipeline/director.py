@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -77,6 +78,10 @@ def run_pipeline(
     out_master_video = workspace.master_video_path
 
     # Telemetry: one recorder per run, persisted under {workspace.root}/telemetry/.
+    # Update project metadata with product title
+    workspace.update_project_meta(title=product_name, archetype=selected_archetype.value)
+
+    # Telemetry: one recorder per run, persisted under {workspace.root}/telemetry/.
     run_meta = {
         "campaign_id": campaign_id,
         "product_name": product_name,
@@ -86,10 +91,12 @@ def run_pipeline(
         "resume_from_stage": resume_from_stage,
         "project_id": workspace.project_id,
         "topic": workspace.topic,
+        "version": workspace.version,
         "workspace_root": str(workspace.root),
         "artifacts_dir": str(target_artifacts_dir),
         "master_video_path": str(out_master_video),
         "thumbnail_path": str(workspace.thumbnail_path),
+        "prompt_ledger_path": str(workspace.prompt_ledger_path),
     }
     recorder = telemetry.RunTelemetry(
         workspace.project_id,
@@ -345,6 +352,23 @@ def run_pipeline(
             print(f"Master Video:      {out_master_video}")
             print(f"Artifacts:         {target_artifacts_dir}")
             print("=" * 80)
+            # Persist prompt_ledger.json and create master.mp4/thumbnail.jpg aliases
+            prompts = recorder.snapshot().get("prompts") or {}
+            if prompts:
+                workspace.write_prompt_ledger(prompts)
+                telemetry.register_artifact(workspace.prompt_ledger_path, stage=5, kind="json", label="Prompt Ledger")
+            if out_master_video.exists() and not workspace.master_video_short_path.exists():
+                try:
+                    os.link(out_master_video, workspace.master_video_short_path)
+                except OSError:
+                    pass
+            if workspace.thumbnail_path.exists() and not workspace.thumbnail_short_path.exists():
+                try:
+                    os.link(workspace.thumbnail_path, workspace.thumbnail_short_path)
+                except OSError:
+                    pass
+            workspace.update_project_meta(last_status="completed")
+
             recorder.finish_run(
                 True,
                 summary=f"Commercial master published in {elapsed}s: {out_master_video.name}",

@@ -27,20 +27,22 @@ def test_workspace_initialization_defaults(tmp_path: Path):
     expected_root = tmp_path / "projects" / "fashion_apparel" / "camp_123"
     assert ws.topic == "fashion_apparel"
     assert ws.project_id == "camp_123"
-    assert ws.root == expected_root
-    assert ws.artifacts_dir == expected_root / "artifacts"
-    assert ws.keyframes_dir == expected_root / "keyframes"
-    assert ws.raw_clips_dir == expected_root / "media" / "raw_clips"
-    assert ws.synced_clips_dir == expected_root / "media" / "synced_clips"
-    assert ws.audio_dir == expected_root / "media" / "audio"
-    assert ws.master_video_path == expected_root / "final_master_camp_123.mp4"
-    assert ws.thumbnail_path == expected_root / "thumbnail_camp_123.jpg"
+    assert ws.project_root == expected_root
+    assert ws.root == expected_root / "runs" / "v1"
+    assert ws.artifacts_dir == expected_root / "runs" / "v1" / "artifacts"
+    assert ws.keyframes_dir == expected_root / "runs" / "v1" / "keyframes"
+    assert ws.raw_clips_dir == expected_root / "runs" / "v1" / "media" / "raw_clips"
+    assert ws.synced_clips_dir == expected_root / "runs" / "v1" / "media" / "synced_clips"
+    assert ws.audio_dir == expected_root / "runs" / "v1" / "media" / "audio"
+    assert ws.master_video_path == expected_root / "runs" / "v1" / "final_master_camp_123.mp4"
+    assert ws.thumbnail_path == expected_root / "runs" / "v1" / "thumbnail_camp_123.jpg"
 
 
 def test_workspace_string_topic_and_empty_id(tmp_path: Path):
     ws = ProjectWorkspace(topic="tech_gadgets", project_id="camp_999", base_dir=tmp_path)
     assert ws.topic == "tech_gadgets"
-    assert ws.root == tmp_path / "projects" / "tech_gadgets" / "camp_999"
+    assert ws.project_root == tmp_path / "projects" / "tech_gadgets" / "camp_999"
+    assert ws.root == tmp_path / "projects" / "tech_gadgets" / "camp_999" / "runs" / "v1"
 
     # Empty topic falls back to general_commercial
     ws_empty_topic = ProjectWorkspace(topic="", project_id="camp_888", base_dir=tmp_path)
@@ -114,7 +116,8 @@ def test_from_campaign_id_explicit_topic(tmp_path: Path):
     ws = ProjectWorkspace.from_campaign_id("camp_exp", topic=ProductArchetype.TECH_GADGETS, base_dir=tmp_path)
     assert ws.topic == "tech_gadgets"
     assert ws.project_id == "camp_exp"
-    assert ws.root == tmp_path / "projects" / "tech_gadgets" / "camp_exp"
+    assert ws.project_root == tmp_path / "projects" / "tech_gadgets" / "camp_exp"
+    assert ws.root == tmp_path / "projects" / "tech_gadgets" / "camp_exp" / "runs" / "v1"
 
 
 def test_from_campaign_id_inferred_topic(tmp_path: Path):

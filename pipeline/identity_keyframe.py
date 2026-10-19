@@ -19,6 +19,46 @@ from tools.dramaclaw_shot_builder import clean_watermark_inpaint
 
 STAGE_IDENTITY_KEYFRAMES = telemetry.stage_number("identity_keyframes")
 
+ARCHETYPE_IDENTITY_MAP = {
+    ProductArchetype.FASHION_APPAREL: "kol_main_fashion",
+    ProductArchetype.TECH_GADGETS: "kol_main_techwear",
+    ProductArchetype.BEAUTY_SKINCARE: "kol_main_spa",
+    ProductArchetype.HOME_LIFESTYLE: "kol_main_cozy",
+    ProductArchetype.GENERAL_COMMERCIAL: "kol_main_office",
+}
+
+
+def resolve_canonical_identity_reference(
+    archetype: ProductArchetype,
+    char_data: dict,
+    default_portrait: Path,
+) -> Path:
+    """Binds character shots uniformly to the campaign's archetype identity sheet."""
+    identities = {ident["identity_id"]: ident for ident in char_data.get("identities", [])}
+    ident_id = ARCHETYPE_IDENTITY_MAP.get(archetype, "kol_main_office")
+    ident = identities.get(ident_id)
+    if ident and ident.get("reference_sheet"):
+        sheet_path = BASE_DIR / ident["reference_sheet"]
+        if sheet_path.exists():
+            return sheet_path
+    return default_portrait
+
+
+def resolve_product_hero_reference(wardrobe: Optional[Any] = None) -> Path:
+    """Resolves a pure product visual reference free of character facial features."""
+    if wardrobe is not None:
+        if getattr(wardrobe, "reference_image_path", None):
+            custom_prod = BASE_DIR / wardrobe.reference_image_path
+            if custom_prod.exists():
+                return custom_prod
+    default_prod = BASE_DIR / "assets" / "wardrobe" / "default_product.jpg"
+    if default_prod.exists():
+        return default_prod
+    cherry_hero = BASE_DIR / "assets" / "wardrobe" / "fashion_cherry_dress" / "hero_product.jpg"
+    if cherry_hero.exists():
+        return cherry_hero
+    return BASE_DIR / "assets" / "characters" / "kol_main" / "portrait.png"
+
 
 def _repo_rel(path: str | Path) -> str:
     """Path relative to the repo root (identity anchors live outside the run root)."""
@@ -125,6 +165,8 @@ def generate_clean_keyframes(
             pass
 
     wardrobe, environment = resolve_wardrobe_and_environment(archetype_val, custom_costume, custom_env)
+    canonical_identity_ref = resolve_canonical_identity_reference(archetype_val, char_data, default_portrait)
+    product_hero_ref = resolve_product_hero_reference(wardrobe)
 
     keyframe_assets: List[KeyframeAsset] = []
     telea_inpainted = 0
@@ -134,37 +176,37 @@ def generate_clean_keyframes(
         is_prod_only = getattr(shot, "character_role", None) == CharacterRole.PRODUCT_ONLY or (
             hasattr(shot.character_role, "value") and shot.character_role.value == "product_only"
         )
-        # Authoritative reference selection: 100% locked to canonical KOL Minh Anh
-        char_base = BASE_DIR / "assets" / "characters" / "kol_main"
-        archive_base = BASE_DIR / "archive_raw"
-
-        # Map shot narrative beat to Minh Anh's canonical visual anchors:
-        kol_beat_map = {
-            "shot_01": archive_base / "ref_10_speaking_hand_gesture.jpg",
-            "shot_02": char_base / "full_body" / "01_standing_front_0deg.jpg",
-            "shot_03": archive_base / "ref_10_speaking_hand_gesture.jpg",
-            "shot_04": char_base / "expressions" / "04_looking_down.jpg",
-            "shot_05": archive_base / "ref_09_three_quarter_left_45deg.jpg",
-            "shot_06": char_base / "expressions" / "02_smiling.jpg",
-        }
-
         reference_is_fallback = True
-        if getattr(wardrobe, "shot_references", None) and shot.shot_id in wardrobe.shot_references:
-            custom_ref = BASE_DIR / wardrobe.shot_references[shot.shot_id]
-            if custom_ref.exists():
-                ref_path = custom_ref
-                reference_is_fallback = False
+
+        if is_prod_only:
+            # Product isolation: strictly avoid character face injection in product macro shots
+            if getattr(wardrobe, "shot_references", None) and shot.shot_id in wardrobe.shot_references:
+                custom_ref = BASE_DIR / wardrobe.shot_references[shot.shot_id]
+                if custom_ref.exists():
+                    ref_path = custom_ref
+                    reference_is_fallback = False
+                else:
+                    ref_path = product_hero_ref
             else:
-                ref_path = kol_beat_map.get(shot.shot_id, default_portrait)
-        elif shot.reference_expression:
-            custom_ref = BASE_DIR / shot.reference_expression
-            if custom_ref.exists():
-                ref_path = custom_ref
-                reference_is_fallback = False
-            else:
-                ref_path = kol_beat_map.get(shot.shot_id, default_portrait)
+                ref_path = product_hero_ref
         else:
-            ref_path = kol_beat_map.get(shot.shot_id, default_portrait)
+            # Character shot: enforce campaign-wide wardrobe & identity anchor coherence
+            if getattr(wardrobe, "shot_references", None) and shot.shot_id in wardrobe.shot_references:
+                custom_ref = BASE_DIR / wardrobe.shot_references[shot.shot_id]
+                if custom_ref.exists():
+                    ref_path = custom_ref
+                    reference_is_fallback = False
+                else:
+                    ref_path = canonical_identity_ref
+            elif shot.reference_expression:
+                custom_ref = BASE_DIR / shot.reference_expression
+                if custom_ref.exists():
+                    ref_path = custom_ref
+                    reference_is_fallback = False
+                else:
+                    ref_path = canonical_identity_ref
+            else:
+                ref_path = canonical_identity_ref
 
         if not ref_path or not ref_path.exists():
             ref_path = default_portrait

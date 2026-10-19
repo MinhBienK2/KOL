@@ -64,6 +64,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="Resume from stage (1-8)",
     )
     parser.add_argument(
+        "--version",
+        default=None,
+        help="Run version (e.g. v1, v2; defaults to active version or v1)",
+    )
+    parser.add_argument(
+        "--new-version",
+        action="store_true",
+        help="Branch a new incremental run version (e.g. v2) inheriting assets via hardlinks",
+    )
+    parser.add_argument(
         "--out-dir",
         default=None,
         help="Output directory root",
@@ -77,18 +87,20 @@ def main(argv: list[str] | None = None) -> int:
 
     project_id = args.project_id or args.campaign
     topic = args.topic or args.archetype
-
     base_dir = Path(args.out_dir) if args.out_dir else None
     workspace = ProjectWorkspace.from_campaign_id(
         campaign_id=project_id,
         topic=topic,
+        version=args.version,
         base_dir=base_dir,
     )
+    if args.new_version:
+        workspace = workspace.create_next_version()
     workspace.ensure_dirs()
 
-    # Print clean project path output: output/projects/{topic}/{project_id}/
-    print(f"output/projects/{workspace.topic}/{workspace.project_id}/")
-
+    # Print clean project path output: projects/{topic}/{project_id}/
+    print(f"projects/{workspace.topic}/{workspace.project_id}/runs/{workspace.version}/")
+    print(f"projects/{workspace.topic}/{workspace.project_id}/")
     ok = run_pipeline(
         campaign_id=project_id,
         project_id=project_id,

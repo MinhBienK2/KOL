@@ -166,9 +166,13 @@ def align_lip_sync_clip(
     v_dur = probe_audio_duration(raw_p)
     a_dur = probe_audio_duration(audio_p)
 
-    # Retime video stream to match audio duration perfectly
-    # PTS factor = a_dur / v_dur
-    pts_factor = a_dur / max(0.1, v_dur)
+    # Natural cinematic 1.0x playback speed (never distort motion with extreme setpts acceleration)
+    target_dur = a_dur
+    if v_dur < target_dur:
+        pad_needed = target_dur - v_dur + 0.1
+        vf = f"[0:v]scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30,tpad=stop_mode=clone:stop_duration={pad_needed:.2f}[v]"
+    else:
+        vf = f"[0:v]scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v]"
 
     cmd = [
         "ffmpeg",
@@ -178,11 +182,13 @@ def align_lip_sync_clip(
         "-i",
         str(audio_p),
         "-filter_complex",
-        f"[0:v]setpts={pts_factor}*PTS,scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v]",
+        vf,
         "-map",
         "[v]",
         "-map",
         "1:a",
+        "-t",
+        f"{target_dur:.2f}",
         "-c:v",
         "libx264",
         "-c:a",
@@ -191,7 +197,6 @@ def align_lip_sync_clip(
         "192k",
         "-ar",
         "48000",
-        "-shortest",
         str(out_p),
     ]
 

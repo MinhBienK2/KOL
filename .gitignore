@@ -2,25 +2,22 @@
 __pycache__/
 *.pyc
 .pytest_cache/
-output/raw_clips/
-output/synced_clips/
-output/audio/
-output/keyframes/
-output/*.mp4
-output/*.wav
-output/*.mp3
-output/*.png
-output/*.jpg
-output/*.jpeg
-!output/artifacts/
+# Legacy output directory
+output/
 
 # Projects directory media binaries
-output/projects/**/media/
-output/projects/**/keyframes/
-output/projects/**/*.mp4
-output/projects/**/*.wav
-output/projects/**/*.mp3
-output/projects/**/*.jpg
-output/projects/**/*.jpeg
-output/projects/**/*.png
-!output/projects/**/artifacts/
+projects/**/media/
+projects/**/keyframes/
+projects/**/input/
+projects/**/*.mp4
+projects/**/*.wav
+projects/**/*.mp3
+projects/**/*.jpg
+projects/**/*.jpeg
+projects/**/*.png
+
+# Retain canonical metadata and prompt ledgers in projects
+!projects/**/project.json
+!projects/**/prompt_ledger.json
+!projects/**/artifacts/
+!projects/**/telemetry/

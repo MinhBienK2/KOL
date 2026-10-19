@@ -101,7 +101,8 @@ def test_run_pipeline_auto_constructs_workspace(tmp_path: Path):
         assert isinstance(passed_ws, ProjectWorkspace)
         assert passed_ws.topic == target_topic.value
         assert passed_ws.project_id == camp_id
-        assert passed_ws.root == tmp_path / "projects" / target_topic.value / camp_id
+        assert passed_ws.project_root == tmp_path / "projects" / target_topic.value / camp_id
+        assert passed_ws.root == tmp_path / "projects" / target_topic.value / camp_id / "runs" / "v1"
 
         # Check other stage calls received the same workspace
         assert p_script.call_args.kwargs.get("workspace") is passed_ws
@@ -143,7 +144,7 @@ def test_run_pipeline_with_explicit_workspace(tmp_path: Path):
 
 
 def test_tools_director_cli_prints_project_path(tmp_path: Path, capsys: pytest.CaptureFixture):
-    """Verify tools/director.py prints the clean output/projects/{topic}/{project_id}/ path."""
+    """Verify tools/director.py prints the clean projects/{topic}/{project_id}/ path."""
     with patch("tools.director.run_pipeline", return_value=True) as mock_run:
         exit_code = tools_director_main([
             "--topic", "fashion_apparel",
@@ -158,8 +159,7 @@ def test_tools_director_cli_prints_project_path(tmp_path: Path, capsys: pytest.C
         assert called_ws.project_id == "test_fashion_cli"
 
         captured = capsys.readouterr()
-        assert "output/projects/fashion_apparel/test_fashion_cli/" in captured.out
-
+        assert "projects/fashion_apparel/test_fashion_cli/" in captured.out
 
 def test_tools_director_cli_archetype_option(tmp_path: Path, capsys: pytest.CaptureFixture):
     """Verify tools/director.py handles --archetype and --project-id options."""
@@ -176,4 +176,4 @@ def test_tools_director_cli_archetype_option(tmp_path: Path, capsys: pytest.Capt
         assert called_ws.project_id == "test_tech_cli"
 
         captured = capsys.readouterr()
-        assert "output/projects/tech_gadgets/test_tech_cli/" in captured.out
+        assert "projects/tech_gadgets/test_tech_cli/" in captured.out

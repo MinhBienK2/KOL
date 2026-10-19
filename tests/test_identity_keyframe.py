@@ -45,3 +45,33 @@ def test_generate_clean_keyframes(tmp_path: Path):
         data = json.load(f)
     loaded = AssetManifestArtifact.model_validate(data)
     assert len(loaded.keyframes) == 4
+
+
+def test_product_isolation_and_wardrobe_consistency(tmp_path: Path):
+    from pipeline.archetypes import CharacterRole, ProductArchetype
+
+    brief = create_product_brief(
+        campaign_id="campaign_fashion_test",
+        product_name="Áo Khoác Blazer Nữ",
+        archetype=ProductArchetype.FASHION_APPAREL,
+        output_dir=tmp_path,
+    )
+    script = generate_commercial_script(brief=brief, output_dir=tmp_path)
+    plan = generate_scene_plan(script=script, output_dir=tmp_path)
+
+    manifest = generate_clean_keyframes(
+        scene_plan=plan,
+        output_dir=tmp_path,
+        keyframes_dir=tmp_path / "keyframes",
+    )
+
+    kf_map = {kf.shot_id: kf for kf in manifest.keyframes}
+    for shot in plan.shots:
+        kf = kf_map[shot.shot_id]
+        if shot.character_role == CharacterRole.PRODUCT_ONLY or getattr(shot.character_role, "value", None) == "product_only":
+            # Product isolation: no character face reference
+            assert "portrait.png" not in kf.image_path
+            assert "ref_10" not in kf.image_path
+        else:
+            # Character shot: bound to campaign wardrobe or canonical fashion identity reference
+            assert any(k in kf.image_path for k in ("fashion_french_dress", "01_standing_front_0deg.jpg", "expressions"))

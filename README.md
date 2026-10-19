@@ -71,7 +71,7 @@ Mỗi lần chạy pipeline ghi lại **toàn bộ** diễn biến để ngườ
 | Event Log | `{workspace}/telemetry/events.jsonl` | Dòng sự kiện append-only, `seq` tăng đơn điệu: `run_start`, `stage_start`, `stage_progress`, `stage_message`, `stage_complete`, `stage_failed`, `stage_skipped`, `artifact`, `prompt`, `api_call`, `note`, `log` |
 | Supervisor Dashboard | `dashboard/` + `tools/dashboard.py` | Web UI đọc 2 lớp trên (và artifact JSON) để hiển thị realtime |
 
-Workspace = `output/projects/{topic}/{campaign_id}/` (run mới) hoặc `output/artifacts/{campaign_id}/` (campaign cũ). Run cũ không có telemetry vẫn giám sát được: dashboard **suy trạng thái từng bước từ artifact chuẩn** (brief → script → scene_plan → manifest/keyframes → raw clips → audio/synced → edit_decisions + master → render_report + publish_log).
+Workspace = `projects/{topic}/{project_id}/runs/{version}/` (ADR 0007). Mỗi lần chạy hoặc chỉnh sửa sáng tạo là một phiên bản (`v1`, `v2`) khép kín độc lập, kế thừa tài nguyên không đổi qua cơ chế hardlink và lưu đầy đủ **Prompt Ledger** (`prompt_ledger.json`).
 
 ### 4.2. Khởi động Dashboard
 
@@ -136,10 +136,23 @@ Với mỗi shot, ledger lưu: nội dung prompt đầy đủ (đúng chuỗi đ
 
 ```
 KOL/
-├── CONTEXT.md                       # Thuật ngữ chuyên ngành (TVC, Hook, I2V, Telea Inpainting, Ducking)
-├── docs/adr/                        # Hồ sơ quyết định kiến trúc (ADR 0001 - 0004)
+├── CONTEXT.md                       # Thuật ngữ chuyên ngành (TVC, Hook, I2V, Project Workspace)
+├── docs/adr/                        # Hồ sơ quyết định kiến trúc (ADR 0001 - 0007)
+├── projects/                        # Không gian dự án sản xuất (ADR 0007)
+│   └── {topic}/                     # Ngành hàng: fashion_apparel, tech_gadgets, beauty_skincare...
+│       └── {project_id}/            # ID dự án: lumina_mug_pro, cherry_dress_01...
+│           ├── project.json         # Metadata dự án (active_version, versions)
+│           ├── input/               # Tư liệu đầu vào do user cung cấp
+│           └── runs/                # Các phiên bản sản xuất (v1, v2...)
+│               └── v1/
+│                   ├── master.mp4             # Video commercial hoàn chỉnh (1080x1920)
+│                   ├── thumbnail.jpg          # Poster bìa
+│                   ├── prompt_ledger.json     # Sổ cái toàn bộ API calls & model prompts
+│                   ├── artifacts/             # 7 JSON chuẩn (brief, script, scene_plan...)
+│                   ├── keyframes/             # Ảnh First Frame 9:16 sạch đã khử watermark
+│                   ├── media/                 # raw_clips/, synced_clips/, audio/
+│                   └── telemetry/             # state.json & events.jsonl
 ├── assets/characters/kol_main/      # Hồ sơ và mỏ neo danh tính KOL Minh Anh ([KOL_MA])
-│   ├── character.json
 │   ├── portrait.png
 │   ├── identities/
 │   └── expressions/

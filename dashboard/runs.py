@@ -58,6 +58,7 @@ CANONICAL_ARTIFACTS: Tuple[str, ...] = (
     "render_report.json",
     "publish_log.json",
     "storyboard_contact_sheet.jpg",
+    "prompt_ledger.json",
 )
 
 #: Which stage owns each canonical artifact (used for labelling scanned files).
@@ -72,6 +73,7 @@ ARTIFACT_STAGE: Dict[str, int] = {
     "edit_decisions.json": 7,
     "render_report.json": 8,
     "publish_log.json": 8,
+    "prompt_ledger.json": 5,
 }
 
 #: Legacy runs keep their media in run-named sub-directories of the shared output tree.
@@ -301,8 +303,10 @@ class RunRef:
 
 
 def resolve_base_dir(base_dir: Optional[Union[str, Path]] = None) -> Path:
-    """Resolve the dashboard output root (``OUTPUT_DIR`` by default)."""
+    """Resolve the dashboard output root (``BASE_DIR`` / ``OUTPUT_DIR``)."""
     if base_dir is None:
+        if (BASE_DIR / PROJECTS_DIRNAME).is_dir():
+            return Path(BASE_DIR).resolve()
         return Path(OUTPUT_DIR).resolve()
     return Path(base_dir).resolve()
 
@@ -326,17 +330,52 @@ def _pick_telemetry(dirs: Sequence[Path], project_id: str) -> Tuple[Path, bool]:
     return dirs[0], False
 
 
-def _workspace_ref(base: Path, topic: str, project_id: str) -> RunRef:
-    root = (base / PROJECTS_DIRNAME / topic / project_id).resolve()
+def _workspace_ref(
+    base: Path,
+    topic: str,
+    project_id: str,
+    version: Optional[str] = None,
+) -> RunRef:
+    projects_dir = base if base.name == PROJECTS_DIRNAME else (base / PROJECTS_DIRNAME)
+    project_root = (projects_dir / topic / project_id).resolve()
+
+    runs_dir = project_root / "runs"
+    if version:
+        root = (runs_dir / version).resolve()
+        run_id = f"{topic}/{project_id}/{version}"
+    elif runs_dir.is_dir():
+        p_json = project_root / "project.json"
+        active_ver = "v1"
+        if p_json.exists():
+            try:
+                with open(p_json, "r", encoding="utf-8") as f:
+                    meta = json.load(f)
+                active_ver = meta.get("active_version") or "v1"
+            except Exception:
+                pass
+        active_run = runs_dir / active_ver
+        if active_run.is_dir():
+            root = active_run.resolve()
+        else:
+            v_dirs = sorted(child.name for child in runs_dir.iterdir() if child.is_dir())
+            root = (runs_dir / v_dirs[-1]).resolve() if v_dirs else project_root
+        run_id = f"{topic}/{project_id}"
+    else:
+        root = project_root
+        run_id = f"{topic}/{project_id}"
+
     artifacts_dir = root / ARTIFACTS_DIRNAME
-    telemetry_dir, has_telemetry = _pick_telemetry((root / TELEMETRY_DIRNAME,), project_id)
+    telemetry_dir, has_telemetry = _pick_telemetry(
+        ((root / TELEMETRY_DIRNAME), (project_root / TELEMETRY_DIRNAME)), project_id
+    )
     allowed_roots = (
         root,
+        project_root,
         *_shared_media_roots(base, project_id),
         *_input_roots(BASE_DIR),
     )
     ref = RunRef(
-        run_id=f"{topic}/{project_id}",
+        run_id=run_id,
         project_id=project_id,
         topic=topic,
         layout=LAYOUT_WORKSPACE,
@@ -420,7 +459,7 @@ def _workspace_has_content(directory: Path) -> bool:
 
 
 def _discover_workspace_refs(base: Path) -> List[RunRef]:
-    projects_dir = base / PROJECTS_DIRNAME
+    projects_dir = base if base.name == PROJECTS_DIRNAME else (base / PROJECTS_DIRNAME)
     if not projects_dir.is_dir():
         return []
     refs: List[RunRef] = []
@@ -434,7 +473,16 @@ def _discover_workspace_refs(base: Path) -> List[RunRef]:
         except OSError:
             continue
         for project_dir in project_dirs:
-            if _workspace_has_content(project_dir):
+            runs_dir = project_dir / "runs"
+            if runs_dir.is_dir():
+                found_version = False
+                for v_dir in sorted(child for child in runs_dir.iterdir() if child.is_dir()):
+                    if _workspace_has_content(v_dir):
+                        refs.append(_workspace_ref(base, topic_dir.name, project_dir.name, version=v_dir.name))
+                        found_version = True
+                if not found_version and _workspace_has_content(project_dir):
+                    refs.append(_workspace_ref(base, topic_dir.name, project_dir.name))
+            elif _workspace_has_content(project_dir):
                 refs.append(_workspace_ref(base, topic_dir.name, project_dir.name))
     return refs
 
@@ -455,8 +503,8 @@ def _discover_legacy_refs(base: Path) -> List[RunRef]:
 
 
 def resolve_run(run_id: str, base_dir: Optional[Union[str, Path]] = None) -> RunRef:
-    """Resolve ``run_id`` (``topic/project_id`` or bare legacy ``project_id``) to a :class:`RunRef`."""
     base = resolve_base_dir(base_dir)
+    projects_dir = base if base.name == PROJECTS_DIRNAME else (base / PROJECTS_DIRNAME)
     raw = str(run_id or "").strip().strip("/")
     if not raw:
         raise RunNotFound(run_id)
@@ -464,13 +512,21 @@ def resolve_run(run_id: str, base_dir: Optional[Union[str, Path]] = None) -> Run
     if not parts or any(part == ".." for part in parts):
         raise RunNotFound(run_id)
 
+    if len(parts) == 3:
+        topic, project_id, version = parts
+        root = projects_dir / topic / project_id / "runs" / version
+        if not root.is_dir():
+            raise RunNotFound(run_id)
+        return _workspace_ref(base, topic, project_id, version=version)
+
     if len(parts) == 2:
         topic, project_id = parts
-        root = base / PROJECTS_DIRNAME / topic / project_id
+        root = projects_dir / topic / project_id
         if not root.is_dir():
             raise RunNotFound(run_id)
         return _workspace_ref(base, topic, project_id)
-    if len(parts) > 2:
+
+    if len(parts) > 3:
         raise RunNotFound(run_id)
 
     project_id = parts[0]
@@ -1396,7 +1452,10 @@ def _prompts(ctx: RunContext) -> List[Dict[str, Any]]:
     run_ref = ctx.run_ref
     state = ctx.state or {}
     state_prompts = _as_dict(state.get("prompts")) or {}
-
+    if not state_prompts:
+        ledger_file = ctx.run_ref.root / "prompt_ledger.json"
+        if ledger_file.is_file():
+            state_prompts = _as_dict(_load_json(ledger_file)) or {}
     records: Dict[str, Dict[str, Any]] = {}
     for shot_id, raw in state_prompts.items():
         data = _as_dict(raw)
