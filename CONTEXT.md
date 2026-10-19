@@ -164,3 +164,7 @@ _Avoid_: Random costume mixing, hardcoded wardrobe folders
 **Expression Neutrality**:
 The principle requiring all character visual anchors to remain emotionally neutral, delegating all dynamic acting and facial expressions exclusively to kinetic prompt descriptions.
 _Avoid_: Expression sheets, baked-in smiles, emotion swapping
+
+**Character Sheet Integrity Gate**:
+A two-tier verification gate enforcing strict pre-flight asset validation (minimum 2K/4K resolution, dual-anchor completeness) and post-flight telemetry lineage auditing across all character shots.
+_Avoid_: Asset checklist, image sanity check, manual inspection
