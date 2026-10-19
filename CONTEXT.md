@@ -141,6 +141,6 @@ _Avoid_: Hardcoded category switch-cases, scattered global dictionaries
 The architectural rule ensuring shots designated as `product_only` strictly exclude human character facial anchors, routing purely to product hero visual references.
 _Avoid_: Facial contamination on macro shots, character injection into product b-roll
 
-**Archetype Wardrobe Binding**:
-Uniformly binding character shots within a campaign to the archetype's canonical wardrobe profile (`character.json` identity sheets) to prevent wardrobe hopping between disparate outfits across scenes.
-_Avoid_: Random costume mixing, unanchored archive photo beat maps
+**Campaign Costume Consistency**:
+Uniformly binding character shots within a campaign to the script's canonical styling and costume directive to prevent wardrobe hopping between disparate outfits across scenes without requiring static wardrobe asset catalogs.
+_Avoid_: Random costume mixing, hardcoded wardrobe folders

@@ -44,19 +44,19 @@ def resolve_canonical_identity_reference(
     return default_portrait
 
 
-def resolve_product_hero_reference(wardrobe: Optional[Any] = None) -> Path:
+def resolve_product_hero_reference(
+    wardrobe: Optional[Any] = None,
+    workspace: Optional[ProjectWorkspace] = None,
+) -> Path:
     """Resolves a pure product visual reference free of character facial features."""
-    if wardrobe is not None:
-        if getattr(wardrobe, "reference_image_path", None):
-            custom_prod = BASE_DIR / wardrobe.reference_image_path
-            if custom_prod.exists():
-                return custom_prod
-    default_prod = BASE_DIR / "assets" / "wardrobe" / "default_product.jpg"
+    if workspace and hasattr(workspace, "input_dir") and workspace.input_dir.exists():
+        for ext in ("*.jpg", "*.jpeg", "*.png", "*.webp"):
+            found = sorted(workspace.input_dir.glob(ext))
+            if found:
+                return found[0]
+    default_prod = BASE_DIR / "assets" / "products" / "default_product.jpg"
     if default_prod.exists():
         return default_prod
-    cherry_hero = BASE_DIR / "assets" / "wardrobe" / "fashion_cherry_dress" / "hero_product.jpg"
-    if cherry_hero.exists():
-        return cherry_hero
     return BASE_DIR / "assets" / "characters" / "kol_main" / "portrait.png"
 
 
@@ -166,7 +166,7 @@ def generate_clean_keyframes(
 
     wardrobe, environment = resolve_wardrobe_and_environment(archetype_val, custom_costume, custom_env)
     canonical_identity_ref = resolve_canonical_identity_reference(archetype_val, char_data, default_portrait)
-    product_hero_ref = resolve_product_hero_reference(wardrobe)
+    product_hero_ref = resolve_product_hero_reference(wardrobe, workspace=workspace)
 
     keyframe_assets: List[KeyframeAsset] = []
     telea_inpainted = 0

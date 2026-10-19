@@ -36,7 +36,7 @@ def experiment_a_product_isolation(plan: ScenePlanArtifact, out_dir: Path) -> As
     default_portrait = BASE_DIR / char_data.get("portrait_image", "assets/characters/kol_main/portrait.png")
 
     # Fallback product hero placeholder image
-    product_hero = BASE_DIR / "assets" / "wardrobe" / "fashion_cherry_dress" / "hero_product.jpg"
+    product_hero = BASE_DIR / "assets" / "products" / "default_product.jpg"
 
     kf_dir = out_dir / "keyframes"
     kf_dir.mkdir(parents=True, exist_ok=True)
@@ -137,7 +137,7 @@ def experiment_c_full_integrated(plan: ScenePlanArtifact, out_dir: Path) -> Asse
         "general_commercial": "kol_main_office",
     }
 
-    product_hero = BASE_DIR / "assets" / "wardrobe" / "fashion_cherry_dress" / "hero_product.jpg"
+    product_hero = BASE_DIR / "assets" / "products" / "default_product.jpg"
 
     kf_dir = out_dir / "keyframes"
     kf_dir.mkdir(parents=True, exist_ok=True)

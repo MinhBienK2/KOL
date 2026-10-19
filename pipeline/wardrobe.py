@@ -81,15 +81,8 @@ WARDROBE_CATALOG: Dict[str, WardrobeItem] = {
             "asymmetrical high leg slit, fluid bias-cut drape, elegant neckline, sleek polished chignon hair, "
             "minimalist platinum jewelry, editorial Parisian gala fashion standard."
         ),
-        reference_image_path="assets/wardrobe/fashion_french_dress/01_wide_runway.jpg",
-        shot_references={
-            "shot_01": "assets/wardrobe/fashion_french_dress/01_wide_runway.jpg",
-            "shot_02": "assets/wardrobe/fashion_french_dress/02_cowboy_reveal.jpg",
-            "shot_03": "assets/wardrobe/fashion_french_dress/03_fabric_macro.jpg",
-            "shot_04": "assets/wardrobe/fashion_french_dress/04_movement_walk.jpg",
-            "shot_05": "assets/wardrobe/fashion_french_dress/05_styling_versatility.jpg",
-            "shot_06": "assets/wardrobe/fashion_french_dress/06_cta_closer.jpg",
-        },
+        reference_image_path=None,
+        shot_references={},
     ),
     # 1b. Fashion / Apparel: French Vintage Cherry Dress
     "costume_french_cherry_dress": WardrobeItem(
@@ -110,15 +103,8 @@ WARDROBE_CATALOG: Dict[str, WardrobeItem] = {
             "corseted sweetheart bustier neckline, cinched waist, flowing flare pleated skirt, and delicate scarlet red ribbon tie shoulder straps, "
             "romantic French soft wavy hair, delicate pearl-cherry accessories, Parisian summer picnic chic."
         ),
-        reference_image_path="assets/wardrobe/fashion_cherry_dress/01_hero_cherry_dress.jpg",
-        shot_references={
-            "shot_01": "assets/wardrobe/fashion_cherry_dress/01_wide_runway.jpg",
-            "shot_02": "assets/wardrobe/fashion_cherry_dress/02_cowboy_reveal.jpg",
-            "shot_03": "assets/wardrobe/fashion_cherry_dress/03_fabric_macro.jpg",
-            "shot_04": "assets/wardrobe/fashion_cherry_dress/04_movement_walk.jpg",
-            "shot_05": "assets/wardrobe/fashion_cherry_dress/05_styling_versatility.jpg",
-            "shot_06": "assets/wardrobe/fashion_cherry_dress/06_cta_closer.jpg",
-        },
+        reference_image_path=None,
+        shot_references={},
     ),
 
     # 2. Tech / Gadgets: Cyberpunk & Creative Studio
@@ -139,7 +125,8 @@ WARDROBE_CATALOG: Dict[str, WardrobeItem] = {
             "WEAR: Wearing modern minimalist obsidian black designer techwear hoodie, clean architectural tailoring, "
             "fitted charcoal base, titanium smartwatch on wrist, sleek contemporary creative technologist look."
         ),
-        reference_image_path="assets/wardrobe/tech_hoodie.png",
+        reference_image_path=None,
+        shot_references={},
     ),
 
     # 3. Beauty / Skincare: Minimalist Clean Girl & Spa
@@ -160,7 +147,8 @@ WARDROBE_CATALOG: Dict[str, WardrobeItem] = {
             "WEAR: Wearing relaxed luxury pearl-white silk wrap robe with loose kimono sleeves, dewy bare shoulders "
             "and collarbones, effortless hair claw clip updo, glowing healthy glass-skin skincare aesthetic."
         ),
-        reference_image_path="assets/wardrobe/beauty_spa_robe.png",
+        reference_image_path=None,
+        shot_references={},
     ),
 
     # 4. Home / Lifestyle: Cozy Scandinavian Knits
@@ -181,7 +169,8 @@ WARDROBE_CATALOG: Dict[str, WardrobeItem] = {
             "WEAR: Wearing cozy oversized oatmeal cashmere knit sweater with chunky ribbed cuffs, relaxed cream "
             "linen trousers, casual natural messy bun, warm comforting home sanctuary aesthetic."
         ),
-        reference_image_path="assets/wardrobe/cozy_knitwear.png",
+        reference_image_path=None,
+        shot_references={},
     ),
 
     # 5. General Commercial / Direct Response: Executive Presenter
@@ -202,7 +191,8 @@ WARDROBE_CATALOG: Dict[str, WardrobeItem] = {
             "WEAR: Wearing tailored slate-grey designer executive blazer, crisp silk inner camisole, structured "
             "sharp tailoring, polished shoulder-length blowout, minimalist gold watch, high-trust presenter aesthetic."
         ),
-        reference_image_path="assets/wardrobe/executive_blazer.png",
+        reference_image_path=None,
+        shot_references={},
     ),
 }
 

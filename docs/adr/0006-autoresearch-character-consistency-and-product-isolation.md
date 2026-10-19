@@ -10,7 +10,7 @@ Using the autonomous research paradigm (inspired by `autoresearch`), we created 
 ## Decision
 1. **Strict Product Isolation Gate**:
    - For any shot where `character_role == "product_only"`, human character portraits are strictly quarantined.
-   - The keyframe pipeline automatically routes to dedicated product visual anchors (`wardrobe.reference_image_path`, `assets/wardrobe/default_product.jpg`, or product hero assets).
+   - The keyframe pipeline automatically routes to dedicated product visual anchors (`assets/products/default_product.jpg`, project input hero assets, or pure product renders).
 2. **Archetype Wardrobe & Identity Binding**:
    - For character shots without pre-rendered campaign shot references, eliminate the legacy disparate beat map.
    - Bind character shots uniformly to the campaign's canonical archetype identity sheet from `assets/characters/kol_main/character.json` (`kol_main_fashion` for fashion, `kol_main_techwear` for tech, `kol_main_spa` for beauty/skincare, `kol_main_cozy` for home lifestyle, and `kol_main_office` for general commercial).
