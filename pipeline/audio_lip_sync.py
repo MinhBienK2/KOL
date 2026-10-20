@@ -8,9 +8,10 @@ import shutil
 import subprocess
 import time
 import urllib.request
-from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional, Tuple
+
+from pydantic import BaseModel
 
 from pipeline import telemetry
 from pipeline.config import (
@@ -58,45 +59,55 @@ def probe_audio_duration(file_path: str | Path) -> float:
     return float(data["format"]["duration"])
 
 
-@dataclass(frozen=True)
-class TTSResult:
-    """Outcome of one voice-stem synthesis, including how the stem was produced.
+class TTSUnavailableError(RuntimeError):
+    """Neural TTS could not produce speech and the caller asked for strict behaviour."""
 
-    ``engine`` is one of ``api`` (neural TTS), ``silence`` (no speech needed or local
-    silent placeholder) or ``espeak`` (local robotic placeholder). ``placeholder`` is True
-    whenever the stem is NOT real neural speech for a beat that has spoken text, and
-    ``tts_fallback`` is True when the network TTS was wanted but failed.
+
+class VoiceStemResult(BaseModel):
+    """A rendered voice stem plus whether it is genuine speech or a degraded placeholder.
+
+    ``engine``: ``api`` (neural TTS), ``silence`` (silent stem) or ``espeak`` (local robotic
+    speech). ``placeholder`` is True whenever a beat with spoken text did NOT get neural
+    speech. ``fallback`` is True only when the neural TTS was wanted but failed (``api`` mode).
     """
 
     path: str
     duration: float
-    engine: str
+    fallback: bool = False  # True when TTS failed and the stem is a silent placeholder
+    engine: str = "api"
     placeholder: bool = False
-    tts_fallback: bool = False
-    has_speech: bool = False
-    error: Optional[str] = None
+
+
+#: Floor for a silent (music/SFX-only) stem; never stretch a short beat to a long one.
+MIN_SILENT_STEM_SECONDS = 0.5
 
 
 def _write_silence(out_path: Path, duration: float) -> None:
-    subprocess.check_call(
-        [
-            "ffmpeg", "-y", "-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo",
-            "-t", f"{duration:.3f}", "-ar", "48000", "-ac", "2", str(out_path),
-        ],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
+    cmd_silence = [
+        "ffmpeg",
+        "-y",
+        "-f",
+        "lavfi",
+        "-i",
+        "anullsrc=r=48000:cl=stereo",
+        "-t",
+        f"{duration:.3f}",
+        "-ar",
+        "48000",
+        str(out_path),
+    ]
+    subprocess.check_call(cmd_silence, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
-def _synthesize_local_stem(text: str, out_path: Path, target_duration: float) -> TTSResult:
-    """Deterministic, network-free stem: espeak-ng speech if installed, else silence.
+def _synthesize_local_stem(text: str, out_path: Path, target_duration: float) -> VoiceStemResult:
+    """Deterministic, network-free stem for a beat with spoken text.
 
-    Never emits a tone: a sine wave passed off as speech would be indistinguishable from a
-    working voice track in downstream gates. Silence is honest and trivially detectable.
+    espeak-ng speech (Vietnamese voice) when installed, otherwise digital silence of the
+    beat's duration. Never a tone: a sine wave passed off as speech is indistinguishable from
+    a working voice track downstream, whereas silence is honest and trivially detectable.
     """
-    has_text = bool(text and text.strip())
     duration = max(2.0, float(target_duration or 0.0))
-    espeak = shutil.which("espeak-ng") if has_text else None
+    espeak = shutil.which("espeak-ng")
     if espeak:
         raw = out_path.with_suffix(".espeak.wav")
         try:
@@ -113,34 +124,36 @@ def _synthesize_local_stem(text: str, out_path: Path, target_duration: float) ->
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
-            return TTSResult(
-                str(out_path), probe_audio_duration(out_path), "espeak",
-                placeholder=True, has_speech=True,
+            return VoiceStemResult(
+                path=str(out_path), duration=probe_audio_duration(out_path), engine="espeak", placeholder=True
             )
         except (subprocess.SubprocessError, OSError):
             pass  # fall through to silence
         finally:
             raw.unlink(missing_ok=True)
     _write_silence(out_path, duration)
-    return TTSResult(
-        str(out_path), probe_audio_duration(out_path), "silence",
-        placeholder=has_text, has_speech=False,
+    return VoiceStemResult(
+        path=str(out_path), duration=probe_audio_duration(out_path), engine="silence", placeholder=True
     )
 
 
-def synthesize_tts_stem_ex(
+def synthesize_voice_stem(
     text: str,
     output_wav_path: str | Path,
     voice: str = "nova",
     model: str = "tts-1",
     target_duration: float = 4.0,
+    strict: bool = False,
     mode: str = "api",
-) -> TTSResult:
-    """Voice stem synthesis with provenance.
+) -> VoiceStemResult:
+    """Generates a voiceover stem (neural TTS, or a local placeholder when ``mode="local"``).
 
-    ``mode="api"`` calls the neural TTS (refused with ``OfflineNetworkError`` while offline);
-    if the API call fails the stem falls back to the local placeholder and is flagged
-    ``tts_fallback``. ``mode="local"`` never touches the network.
+    Empty text (music/SFX-only beats) yields clean 48kHz stereo silence of ``target_duration``.
+    ``mode="local"`` never touches the network (espeak-ng or silence; flagged ``placeholder``).
+    ``mode="api"`` is refused with ``OfflineNetworkError`` while offline. If the TTS endpoint
+    fails, ``strict`` raises :class:`TTSUnavailableError`; otherwise a *silent* placeholder of
+    the estimated spoken length is written and ``fallback`` is flagged so the
+    director/telemetry can surface it (a beep must never ship as a voiceover).
     """
     if mode not in ("api", "local"):
         raise ValueError(f"Unknown TTS mode {mode!r}; expected 'api' or 'local'")
@@ -148,9 +161,9 @@ def synthesize_tts_stem_ex(
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     if not text or not text.strip():
-        est_duration = max(3.0, target_duration)
-        _write_silence(out_path, est_duration)
-        return TTSResult(str(out_path), est_duration, "silence")
+        duration = max(MIN_SILENT_STEM_SECONDS, target_duration)
+        _write_silence(out_path, duration)
+        return VoiceStemResult(path=str(out_path), duration=duration, engine="silence")
 
     if mode == "local":
         return _synthesize_local_stem(text, out_path, target_duration)
@@ -163,47 +176,52 @@ def synthesize_tts_stem_ex(
         "Content-Type": "application/json",
         "User-Agent": "Mozilla/5.0",
     }
-    payload = {"model": model, "input": text, "voice": voice}
+    payload = {
+        "model": model,
+        "input": text,
+        "voice": voice,
+    }
 
-    error: Optional[str] = None
-    started = time.monotonic()
+    success = False
+    failure = ""
     try:
-        req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers)
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(url, data=data, headers=headers)
         with guarded_urlopen(req, operation="tts.speech", timeout=30) as resp:
             temp_mp3.write_bytes(resp.read())
+            success = True
     except OfflineNetworkError:
         raise
     except Exception as exc:
-        error = str(exc)
-    telemetry.record_api_call(
-        "tts.speech",
-        endpoint=url,
-        request={"model": model, "voice": voice, "input_chars": len(text)},
-        response={"error": error} if error else {"size_bytes": temp_mp3.stat().st_size if temp_mp3.exists() else None},
-        status="error" if error else "ok",
-        ok=error is None,
-        duration_seconds=time.monotonic() - started,
-        stage=STAGE_AUDIO_LIP_SYNC,
-    )
+        failure = str(exc)
 
-    if error is not None or not temp_mp3.exists() or temp_mp3.stat().st_size == 0:
+    if not success or not temp_mp3.exists() or temp_mp3.stat().st_size == 0:
         temp_mp3.unlink(missing_ok=True)
-        reason = error or "empty TTS response"
-        print(f"[TTS] Neural TTS API call failed ({reason}); using LOCAL PLACEHOLDER stem (tts_fallback).")
-        local = _synthesize_local_stem(text, out_path, target_duration)
-        return TTSResult(
-            local.path, local.duration, local.engine,
-            placeholder=True, tts_fallback=True, has_speech=local.has_speech, error=reason,
+        if strict:
+            raise TTSUnavailableError(f"Neural TTS failed ({failure or 'empty response'})")
+        print(f"[TTS] Neural TTS API call failed ({failure or 'empty response'}); writing SILENT placeholder stem.")
+        est_duration = max(2.5, min(12.0, len(text) * 0.08))
+        _write_silence(out_path, est_duration)
+        return VoiceStemResult(
+            path=str(out_path), duration=est_duration, fallback=True, engine="silence", placeholder=True
         )
 
     # Convert to standard 48kHz broadcast WAV stem
-    subprocess.check_call(
-        ["ffmpeg", "-y", "-i", str(temp_mp3), "-ar", "48000", "-ac", "2", str(out_path)],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
+    cmd_convert = [
+        "ffmpeg",
+        "-y",
+        "-i",
+        str(temp_mp3),
+        "-ar",
+        "48000",
+        "-ac",
+        "2",
+        str(out_path),
+    ]
+    subprocess.check_call(cmd_convert, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     temp_mp3.unlink(missing_ok=True)
-    return TTSResult(str(out_path), probe_audio_duration(out_path), "api", has_speech=True)
+
+    return VoiceStemResult(path=str(out_path), duration=probe_audio_duration(out_path))
 
 
 def synthesize_tts_stem(
@@ -214,13 +232,11 @@ def synthesize_tts_stem(
     target_duration: float = 4.0,
     mode: str = "api",
 ) -> Tuple[str, float]:
-    """Generates a voiceover stem; returns ``(path, duration)``.
-
-    Thin wrapper over :func:`synthesize_tts_stem_ex` (use that to learn whether the stem is
-    a placeholder). Empty text yields clean 48 kHz stereo silence.
-    """
-    result = synthesize_tts_stem_ex(text, output_wav_path, voice, model, target_duration, mode)
-    return result.path, result.duration
+    """Backwards-compatible tuple wrapper around :func:`synthesize_voice_stem`."""
+    res = synthesize_voice_stem(
+        text, output_wav_path, voice=voice, model=model, target_duration=target_duration, mode=mode
+    )
+    return res.path, res.duration
 
 
 def align_lip_sync_clip(
@@ -290,6 +306,7 @@ def produce_all_audio_and_lip_sync(
     audio_dir: Path | None = None,
     synced_clips_dir: Path | None = None,
     workspace: Optional[ProjectWorkspace] = None,
+    strict_tts: bool = False,
     offline: Optional[bool] = None,
     tts_mode: str = "auto",
 ) -> Tuple[List[str], List[str]]:
@@ -345,20 +362,29 @@ def produce_all_audio_and_lip_sync(
         print(f"[AudioEngine] [{shot_id}] Speech Mode: {lip_dec.voiceover_mix_mode} | Spoken text: '{beat.spoken_text[:30]}...'")
         # Local TTS also scopes the global guard so nothing below can reach the network.
         with offline_mode(True) if resolved_tts == "local" else contextlib.nullcontext():
-            tts = synthesize_tts_stem_ex(
+            stem = synthesize_voice_stem(
                 text=beat.spoken_text,
                 output_wav_path=stem_path,
                 voice="nova",
                 target_duration=beat.estimated_duration,
+                strict=strict_tts,
                 mode=resolved_tts,
             )
-        stem_duration = tts.duration
-        if tts.placeholder:
+        stem_duration = stem.duration
+        # Local placeholders are a deliberate offline fallback: flag them like a failed TTS.
+        tts_fallback = stem.fallback or (stem.placeholder and resolved_tts == "local")
+        if stem.fallback:
             telemetry.note(
-                f"[{shot_id}] voice stem is a LOCAL PLACEHOLDER ({tts.engine}), not neural speech",
+                f"[{shot_id}] TTS unavailable: silent placeholder stem written; re-run stage 6 once TTS recovers",
                 shot_id=shot_id,
-                tts_engine=tts.engine,
-                tts_fallback=tts.tts_fallback,
+                tts_fallback=True,
+            )
+        elif stem.placeholder:
+            telemetry.note(
+                f"[{shot_id}] offline: voice stem is a LOCAL PLACEHOLDER ({stem.engine}), not neural speech",
+                shot_id=shot_id,
+                tts_fallback=True,
+                tts_engine=stem.engine,
                 placeholder=True,
             )
         audio_stems.append(str(stem_path))
@@ -376,14 +402,14 @@ def produce_all_audio_and_lip_sync(
             label=f"{shot_id} TTS",
             item={
                 "id": shot_id,
-                "status": "tts_synthesized",
+                "status": "tts_fallback_silent" if tts_fallback else "tts_synthesized",
+                "tts_fallback": tts_fallback,
+                "tts_engine": stem.engine,
+                "placeholder": stem.placeholder,
                 "stem": (stem_record or {}).get("rel_path") or str(stem_path),
                 "duration_seconds": round(stem_duration, 2),
                 "has_speech": bool(beat.spoken_text and beat.spoken_text.strip()),
                 "mix_mode": lip_dec.voiceover_mix_mode,
-                "tts_engine": tts.engine,
-                "placeholder": tts.placeholder,
-                "tts_fallback": tts.tts_fallback or (tts.placeholder and resolved_tts == "local"),
             },
         )
         try:
@@ -441,7 +467,7 @@ def produce_all_audio_and_lip_sync(
                     "mix_mode": lip_dec.voiceover_mix_mode,
                     "needs_mouth_articulation": bool(lip_dec.needs_mouth_articulation),
                     "placeholder_video": Path(f"{matching_raw}.placeholder.json").exists(),
-                    "placeholder_audio": tts.placeholder,
+                    "placeholder_audio": stem.placeholder,
                     "duration_seconds": round(stem_duration, 2),
                 },
             )

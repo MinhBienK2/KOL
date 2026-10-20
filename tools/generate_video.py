@@ -12,6 +12,7 @@ import json
 import os
 import sys
 import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import Optional
@@ -23,10 +24,88 @@ if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
 from pipeline import telemetry  # noqa: E402  (import after the sys.path bootstrap)
-from pipeline.offline import guard_network, guarded_urlopen, guarded_urlretrieve  # noqa: E402
+from pipeline.offline import (  # noqa: E402
+    OfflineNetworkError,
+    guard_network,
+    guarded_urlopen,
+    guarded_urlretrieve,
+)
 
 API_BASE_URL = os.environ.get("MINIMAX_BASE_URL", "https://aiapi.2tocom.space")
 API_KEY = os.environ.get("MINIMAX_API_KEY", "sk-cu-hr7Y6QZPkzksXlfn74J4yeF_xmL9Rlubf_tAhD4Sgfw")
+
+#: MiniMax ``base_resp.status_code`` values that retrying can never fix (and that would
+#: burn paid submissions): auth, balance, sensitive prompt/output, invalid parameters.
+NON_RETRYABLE_CODES = frozenset({1004, 1008, 1026, 1027, 2013, 2049})
+RATE_LIMIT_CODE = 1002
+
+
+class VideoAPIError(RuntimeError):
+    """A MiniMax-reported failure carrying its ``base_resp`` code and retry classification.
+
+    ``task_failed`` is True when the remote *task* itself reached ``Fail`` (so its task id
+    is dead and the next attempt must submit a fresh job rather than resume it).
+    """
+
+    def __init__(
+        self,
+        message: str,
+        code: Optional[int] = None,
+        *,
+        retryable: Optional[bool] = None,
+        task_failed: bool = False,
+    ) -> None:
+        super().__init__(message)
+        self.code = code
+        self.retryable = (code not in NON_RETRYABLE_CODES) if retryable is None else retryable
+        self.task_failed = task_failed
+
+    @property
+    def rate_limited(self) -> bool:
+        return self.code == RATE_LIMIT_CODE
+
+
+def is_retryable_error(exc: BaseException) -> bool:
+    """True when ``exc`` is worth another (paid) attempt: transient network/server/rate-limit faults."""
+    if isinstance(exc, OfflineNetworkError):
+        return False
+    if isinstance(exc, VideoAPIError):
+        return exc.retryable
+    if isinstance(exc, urllib.error.HTTPError):
+        return exc.code in (408, 425, 429) or exc.code >= 500
+    if isinstance(exc, (FileNotFoundError, PermissionError, ValueError)):
+        return False
+    return True
+
+
+def normalize_duration(duration: float, resolution: Optional[str] = None) -> int:
+    """Map a requested duration onto Hailuo-2.3's contract: 6s, or 10s (768P only; 1080P is 6s only)."""
+    if str(resolution or "").upper() == "1080P":
+        return 6
+    return 10 if duration >= 8.5 else 6
+
+
+def _raise_for_base_resp(res: dict, *, task_failed: bool = False) -> None:
+    """Raise :class:`VideoAPIError` when the response carries a non-zero ``base_resp.status_code``."""
+    base = res.get("base_resp") if isinstance(res, dict) else None
+    code = (base or {}).get("status_code")
+    if code not in (None, 0):
+        raise VideoAPIError(
+            f"MiniMax error {code}: {(base or {}).get('status_msg') or res}",
+            int(code),
+            task_failed=task_failed,
+        )
+
+
+def _download_atomic(video_url: str, output_path: Path) -> None:
+    """Download to ``<name>.part`` then rename, so a partial file never masquerades as a clip."""
+    part = output_path.with_name(output_path.name + ".part")
+    try:
+        guarded_urlretrieve(video_url, part, operation="minimax.download_video")
+        os.replace(part, output_path)
+    finally:
+        if part.exists():
+            part.unlink()
 
 
 def upload_first_frame(image_path: str | Path) -> str:
@@ -91,9 +170,12 @@ def submit_video_job(
     aspect_ratio: str = "9:16",
     duration: int = 6,
     model: str = "MiniMax-Hailuo-2.3",
+    subject_reference: list[str] | None = None,
+    resolution: str | None = None,
 ) -> str:
+    """Submit one video job (I2V via ``image_url``, R2V via ``subject_reference`` face images)."""
     guard_network("minimax.submit_video")
-    valid_duration = 10 if duration >= 8.5 else 6
+    valid_duration = normalize_duration(duration, resolution)
     url = f"{API_BASE_URL.rstrip('/')}/v1/media/video"
     payload: dict = {
         "model": model,
@@ -103,6 +185,10 @@ def submit_video_job(
     }
     if image_url:
         payload["input_image"] = image_url
+    if resolution:
+        payload["resolution"] = resolution
+    if subject_reference:
+        payload["subject_reference"] = [{"type": "character", "image": [ref]} for ref in subject_reference]
     req = urllib.request.Request(
         url,
         data=json.dumps(payload).encode("utf-8"),
@@ -121,6 +207,7 @@ def submit_video_job(
         with guarded_urlopen(req, operation="minimax.submit_video", timeout=60) as resp:
             status_code = getattr(resp, "status", None)
             res = json.loads(resp.read().decode("utf-8"))
+            _raise_for_base_resp(res)
             task_id = res["task_id"]
     except Exception as exc:
         error = str(exc)
@@ -135,6 +222,8 @@ def submit_video_job(
                 "aspect_ratio": payload["aspect_ratio"],
                 "duration": payload["duration"],
                 "input_image": payload.get("input_image"),
+                "resolution": payload.get("resolution"),
+                "subject_reference": payload.get("subject_reference"),
                 "prompt_chars": len(payload["prompt"]),
             },
             response={"task_id": task_id} if error is None else None,
@@ -145,7 +234,19 @@ def submit_video_job(
     return str(task_id)
 
 
-def poll_and_download_video(task_id: str, output_path: str | Path, timeout_seconds: int = 300) -> str:
+def poll_and_download_video(
+    task_id: str,
+    output_path: str | Path,
+    timeout_seconds: int = 300,
+    poll_interval: float = 10.0,
+    max_transient_errors: int = 3,
+) -> str:
+    """Poll a video task to completion and download it atomically.
+
+    Transient poll faults (network blips, 5xx, 429) are absorbed up to ``max_transient_errors``
+    consecutive failures so one dropped request does not orphan a paid, still-rendering task.
+    A remote ``Fail`` raises :class:`VideoAPIError` (``task_failed=True``).
+    """
     guard_network("minimax.poll_video")
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -158,6 +259,7 @@ def poll_and_download_video(task_id: str, output_path: str | Path, timeout_secon
     start = time.time()
     print(f"[VideoGen] Polling video task {task_id} (timeout {timeout_seconds}s)...")
     polls = 0
+    transient_errors = 0
     last_status: Optional[str] = None
     poll_request = {"task_id": task_id, "timeout_seconds": timeout_seconds}
     while time.time() - start < timeout_seconds:
@@ -167,18 +269,23 @@ def poll_and_download_video(task_id: str, output_path: str | Path, timeout_secon
             with guarded_urlopen(req, operation="minimax.poll_video", timeout=30) as resp:
                 status_code = getattr(resp, "status", None)
                 res = json.loads(resp.read().decode("utf-8"))
+            transient_errors = 0
         except Exception as exc:
+            transient_errors += 1
             telemetry.record_api_call(
                 "minimax.poll_video",
                 endpoint=poll_url,
                 method="GET",
                 request=poll_request,
-                response={"error": str(exc)},
+                response={"error": str(exc), "consecutive_errors": transient_errors},
                 status="error",
                 ok=False,
                 duration_seconds=time.monotonic() - start,
             )
-            raise
+            if not is_retryable_error(exc) or transient_errors >= max_transient_errors:
+                raise
+            time.sleep(poll_interval)
+            continue
 
         status = res.get("status")
         elapsed = int(time.time() - start)
@@ -195,7 +302,7 @@ def poll_and_download_video(task_id: str, output_path: str | Path, timeout_secon
             download_started = time.monotonic()
             download_error: Optional[str] = None
             try:
-                guarded_urlretrieve(video_url, output_path, operation="minimax.download_video")
+                _download_atomic(video_url, output_path)
             except Exception as exc:
                 download_error = str(exc)
                 raise
@@ -237,9 +344,10 @@ def poll_and_download_video(task_id: str, output_path: str | Path, timeout_secon
                 ok=False,
                 duration_seconds=time.monotonic() - start,
             )
-            raise RuntimeError(f"Video generation failed: {res}")
+            _raise_for_base_resp(res, task_failed=True)
+            raise VideoAPIError(f"Video generation failed: {res}", None, task_failed=True)
 
-        time.sleep(10)
+        time.sleep(poll_interval)
 
     telemetry.record_api_call(
         "minimax.poll_video",

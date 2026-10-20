@@ -15,7 +15,7 @@ from pipeline.archetypes import ProductArchetype
 from pipeline.audio_lip_sync import (
     probe_audio_duration,
     produce_all_audio_and_lip_sync,
-    synthesize_tts_stem_ex,
+    synthesize_voice_stem,
 )
 from pipeline.briefing import create_product_brief
 from pipeline.identity_keyframe import generate_clean_keyframes
@@ -107,7 +107,6 @@ def test_guard_raises_clear_error_when_offline(monkeypatch):
     monkeypatch.setenv("KOL_OFFLINE", "1")
     with pytest.raises(OfflineNetworkError, match="KOL_OFFLINE"):
         guard_network("minimax.submit_video", "https://example.invalid/x")
-    guard_network("fine")  # online is a no-op once unset
     monkeypatch.delenv("KOL_OFFLINE")
     guard_network("fine")
 
@@ -121,7 +120,7 @@ def test_guard_raises_clear_error_when_offline(monkeypatch):
         lambda tmp: researcher.call_llm("system", "user"),
         lambda tmp: dramaclaw_shot_builder.upload_reference_image("assets/characters/kol_main/portrait.png"),
         lambda tmp: guarded_urlopen(urllib.request.Request("http://127.0.0.1:9/"), operation="t"),
-        lambda tmp: synthesize_tts_stem_ex("xin chào", tmp / "v.wav", mode="api"),
+        lambda tmp: synthesize_voice_stem("xin chào", tmp / "v.wav", mode="api"),
         lambda tmp: render_single_video_clip("shot_01", "p", tmp / "c.mp4", max_retries=3, initial_retry_delay=0),
         lambda tmp: render_all_video_clips(mode="api"),
     ],
@@ -212,13 +211,14 @@ def test_stage5_ffmpeg_and_stage6_offline_never_touch_network(tmp_path, monkeypa
     ledger = state["prompts"]
     assert ledger and all(p["mode"] == "LOCAL_FFMPEG" and p["placeholder"] is True for p in ledger.values())
     assert all("minimax" not in c.get("name", "") for c in state.get("api_calls", []))
-    events = telemetry.read_events(tmp_path / "telemetry") if hasattr(telemetry, "read_events") else []
+    events = telemetry.read_events(recorder.events_path)
     tts_items = [
-        e for e in events if e.get("type") == "stage_progress" and (e.get("payload") or {}).get("item", {}).get("status") == "tts_synthesized"
+        e["payload"]["item"]
+        for e in events
+        if e.get("type") == "stage_progress" and "tts_engine" in ((e.get("payload") or {}).get("item") or {})
     ]
     assert tts_items, "stage 6 emitted no TTS progress items"
-    assert all(e["payload"]["item"]["placeholder"] for e in tts_items)
-    assert all(e["payload"]["item"]["tts_fallback"] for e in tts_items)
+    assert all(item["placeholder"] and item["tts_fallback"] for item in tts_items)
 
 
 def test_ffmpeg_mode_works_without_kol_offline_env_and_scopes_guard(tmp_path, monkeypatch, network_explodes):
@@ -255,7 +255,7 @@ def test_api_mode_discards_stale_placeholder_instead_of_caching_it(tmp_path, mon
 
 def test_local_tts_is_silent_not_a_tone(tmp_path, monkeypatch):
     monkeypatch.setattr(audio_lip_sync.shutil, "which", lambda name: None)
-    result = synthesize_tts_stem_ex("Xin chào các bạn", tmp_path / "v.wav", target_duration=3.0, mode="local")
+    result = synthesize_voice_stem("Xin chào các bạn", tmp_path / "v.wav", target_duration=3.0, mode="local")
     assert result.engine == "silence" and result.placeholder
     assert result.duration == pytest.approx(3.0, abs=0.1)
     stats = subprocess.run(
@@ -268,9 +268,8 @@ def test_local_tts_is_silent_not_a_tone(tmp_path, monkeypatch):
 def test_api_tts_failure_falls_back_to_flagged_local_stem(tmp_path, monkeypatch):
     monkeypatch.setattr(audio_lip_sync.shutil, "which", lambda name: None)
     monkeypatch.setattr(audio_lip_sync, "guarded_urlopen", lambda *a, **k: (_ for _ in ()).throw(OSError("down")))
-    result = synthesize_tts_stem_ex("Xin chào", tmp_path / "v.wav", target_duration=2.5, mode="api")
-    assert result.tts_fallback and result.placeholder and result.engine == "silence"
-    assert "down" in (result.error or "")
+    result = synthesize_voice_stem("Xin chào", tmp_path / "v.wav", target_duration=2.5, mode="api")
+    assert result.fallback and result.placeholder and result.engine == "silence"
 
 
 def test_produce_audio_api_mode_refused_while_offline(tmp_path, monkeypatch):

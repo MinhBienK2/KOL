@@ -48,6 +48,10 @@ KINETIC_ACTION_VERBS: Set[str] = {
     "chuyển", "động", "dáng", "sáng", "rơi", "chảy", "lướt", "bắt", "nhấp",
 }
 
+# Unicode-aware word tokenizer: letters only (no digits/underscores), so Vietnamese
+# diacritics stay inside the word ("bước", "chạm") instead of splitting it.
+_WORD_RE = re.compile(r"[^\W\d_]+", re.UNICODE)
+
 # Static camera motion keywords indicating high slideshow risk
 STATIC_CAMERA_KEYWORDS: Set[str] = {
     "static", "none", "fixed", "locked-off", "stationary", "no movement",
@@ -81,6 +85,17 @@ def _extract_shot_dict(shot: Any) -> Dict[str, Any]:
     return {}
 
 
+# Commercial intent vocabulary: the canonical taxonomy plus every beat type the archetype
+# templates emit (scene_ids look like "shot_03_fabric_macro").
+_VALID_INTENT_TOKENS: Set[str] = {
+    "hook", "pain", "problem", "agitation", "solution", "reveal", "demonstration", "demo",
+    "proof", "gratification", "cta", "call", "action", "urgency", "reaction",
+    "unboxing", "macro", "detail", "texture", "fabric", "movement", "flow", "styling",
+    "versatility", "performance", "specs", "feature", "functional", "application",
+    "transformation", "social", "lifestyle", "context", "convenience", "benefit", "usp",
+}
+
+
 def _is_static_camera(camera_motion: str) -> bool:
     """Detects if camera motion string specifies static or no movement."""
     norm = camera_motion.strip().lower()
@@ -92,7 +107,7 @@ def _is_static_camera(camera_motion: str) -> bool:
 def _has_kinetic_subject_action(description: str, explicit_kinetic: Optional[str] = None) -> bool:
     """Checks if scene action contains active physical movement verbs."""
     combined = f"{description} {explicit_kinetic or ''}".lower()
-    words = set(re.findall(r"[a-z]+", combined))
+    words = set(_WORD_RE.findall(combined))
     return len(words.intersection(KINETIC_ACTION_VERBS)) > 0
 
 def _score_repetition(shots: List[Dict[str, Any]]) -> DimensionScore:
@@ -225,17 +240,14 @@ def _score_weak_motion(shots: List[Dict[str, Any]]) -> DimensionScore:
 
 def _score_weak_shot_intent(shots: List[Dict[str, Any]]) -> DimensionScore:
     """Scores completeness of explicit commercial shot intent (hook, pain, reveal, proof, cta)."""
-    valid_intents = {
-        "hook", "pain", "problem", "solution", "reveal", "demonstration", "demo",
-        "proof", "gratification", "cta", "call_to_action", "urgency", "reaction",
-    }
+    valid_intents = _VALID_INTENT_TOKENS
     missing_intent = 0
     flagged = []
 
     for s in shots:
         shot_id = s.get("shot_id", "unknown")
         intent_raw = s.get("shot_intent") or s.get("scene_id") or ""
-        intent_tokens = set(re.findall(r"[a-z]+", intent_raw.lower()))
+        intent_tokens = set(_WORD_RE.findall(intent_raw.lower()))
         if not intent_tokens.intersection(valid_intents):
             missing_intent += 1
             flagged.append(shot_id)

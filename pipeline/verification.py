@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime
 import json
+import re
 import subprocess
 from pathlib import Path
 from typing import Any, List, Optional
@@ -28,6 +29,20 @@ from pipeline.workspace import ProjectWorkspace
 from pipeline.slideshow_risk import score_slideshow_risk
 
 STAGE_VERIFICATION = telemetry.stage_number("verification_publish")
+
+# Media Quality Gate thresholds (ffmpeg blackdetect / freezedetect / ebur128).
+MAX_BLACK_SECONDS = 1.0  # total black picture tolerated (fade in/out); longer is a render defect
+MAX_FROZEN_SECONDS = 2.0  # one frozen hold this long means a static slide or stalled diffusion clip
+MAX_FROZEN_SHARE = 0.20  # ...or this share of the runtime spent on short held still frames
+FREEZE_NOISE_TOLERANCE = 0.003
+TARGET_LUFS = -14.0  # the composer's delivery target for TikTok / Reels / Shorts
+LUFS_TOLERANCE = 3.0
+TRUE_PEAK_CEILING_DBTP = 0.0  # above this the master is clipping
+SILENT_LUFS = -50.0
+THUMBNAIL_MAX_TIMESTAMP = 18.0
+
+# technical, media quality, character sheet integrity, character consistency, continuity, slideshow risk
+VERIFICATION_GATE_COUNT = 6
 
 
 def _ensure_stage_started(total: int) -> None:
@@ -139,6 +154,145 @@ def verify_technical_gate(video_path: str | Path) -> GateVerificationResult:
         details=details,
         error_message="; ".join(errors) if errors else None,
     )
+
+def _parse_media_quality_log(stderr: str) -> dict[str, Any]:
+    """Extract black intervals, frozen intervals and the ebur128 summary from an ffmpeg log."""
+    black = [
+        float(m.group(1))
+        for m in re.finditer(r"black_start:\S+\s+black_end:\S+\s+black_duration:([\d.]+)", stderr)
+    ]
+    freeze_starts = [float(m.group(1)) for m in re.finditer(r"lavfi\.freezedetect\.freeze_start:\s*([\d.]+)", stderr)]
+    freeze_durations = [float(m.group(1)) for m in re.finditer(r"lavfi\.freezedetect\.freeze_duration:\s*([\d.]+)", stderr)]
+    summary = stderr.rsplit("Summary:", 1)[-1] if "Summary:" in stderr else ""
+    integrated = re.search(r"^\s*I:\s+(-?[\d.]+|-inf)\s+LUFS", summary, re.MULTILINE)
+    peak = re.search(r"^\s*Peak:\s+(-?[\d.]+|-inf)\s+dBFS", summary, re.MULTILINE)
+
+    def _num(match: Optional[re.Match]) -> Optional[float]:
+        if match is None:
+            return None
+        return -120.0 if match.group(1) == "-inf" else float(match.group(1))
+
+    return {
+        "black_intervals": black,
+        "freeze_starts": freeze_starts,
+        "freeze_durations": freeze_durations,
+        "integrated_lufs": _num(integrated),
+        "true_peak_dbtp": _num(peak),
+    }
+
+
+def verify_media_quality_gate(video_path: str | Path) -> GateVerificationResult:
+    """Perceptual defect scan of the master: black frames, frozen frames and loudness.
+
+    One ffmpeg pass runs ``blackdetect`` and ``freezedetect`` on the picture and ``ebur128``
+    (ITU-R BS.1770 integrated loudness and true peak) on the audio. The Technical Integrity Gate only
+    proves the container is well formed; this gate proves the film is not black, not a slideshow that
+    stalled, and not silent or off-level.
+    """
+    v_path = Path(video_path)
+    gate_name = "media_quality_gate"
+    if not v_path.exists():
+        return GateVerificationResult(
+            gate_name=gate_name,
+            passed=False,
+            details={},
+            error_message=f"Video file does not exist: {v_path}",
+        )
+
+    cmd = [
+        "ffmpeg",
+        "-hide_banner",
+        "-nostats",
+        "-i",
+        str(v_path),
+        "-vf",
+        f"blackdetect=d=0.2:pix_th=0.10,freezedetect=n={FREEZE_NOISE_TOLERANCE}:d=1",
+        "-af",
+        "ebur128=peak=true:framelog=quiet",
+        "-f",
+        "null",
+        "-",
+    ]
+    try:
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=300)
+    except Exception as exc:
+        return GateVerificationResult(
+            gate_name=gate_name,
+            passed=False,
+            details={},
+            error_message=f"ffmpeg media analysis failed: {exc}",
+        )
+    stderr = proc.stderr.decode("utf-8", errors="replace")
+    if proc.returncode != 0:
+        return GateVerificationResult(
+            gate_name=gate_name,
+            passed=False,
+            details={},
+            error_message=f"ffmpeg media analysis exited {proc.returncode}: {stderr.strip()[-200:]}",
+        )
+
+    parsed = _parse_media_quality_log(stderr)
+    black_seconds = round(sum(parsed["black_intervals"]), 3)
+
+    # freezedetect reports freeze_duration when a freeze ends; a freeze that runs to end of file only
+    # reports freeze_start, so its length is the remaining runtime.
+    duration_probe = re.search(r"Duration:\s*(\d+):(\d+):([\d.]+)", stderr)
+    total = (
+        int(duration_probe.group(1)) * 3600 + int(duration_probe.group(2)) * 60 + float(duration_probe.group(3))
+        if duration_probe
+        else 0.0
+    )
+    freeze_intervals = list(parsed["freeze_durations"])
+    if len(parsed["freeze_starts"]) > len(parsed["freeze_durations"]) and total:
+        freeze_intervals.append(max(0.0, total - parsed["freeze_starts"][-1]))
+    frozen_seconds = round(sum(freeze_intervals), 3)
+    longest_frozen = round(max(freeze_intervals, default=0.0), 3)
+    frozen_share = round(frozen_seconds / total, 3) if total else 0.0
+
+    lufs = parsed["integrated_lufs"]
+    peak = parsed["true_peak_dbtp"]
+    details: dict[str, Any] = {
+        "black_seconds": black_seconds,
+        "frozen_seconds": frozen_seconds,
+        "longest_frozen_seconds": longest_frozen,
+        "frozen_share": frozen_share,
+        "frozen_intervals": len(freeze_intervals),
+        "integrated_lufs": lufs,
+        "true_peak_dbtp": peak,
+        "target_lufs": TARGET_LUFS,
+    }
+
+    errors: List[str] = []
+    if black_seconds > MAX_BLACK_SECONDS:
+        errors.append(f"Black picture for {black_seconds:.1f}s (limit {MAX_BLACK_SECONDS:.1f}s)")
+    if longest_frozen >= MAX_FROZEN_SECONDS:
+        errors.append(
+            f"Frozen picture for {longest_frozen:.1f}s in one hold (limit {MAX_FROZEN_SECONDS:.1f}s): "
+            "static slide or stalled clip"
+        )
+    elif frozen_share > MAX_FROZEN_SHARE:
+        errors.append(
+            f"Frozen picture covers {frozen_share:.0%} of the runtime (limit {MAX_FROZEN_SHARE:.0%}): "
+            "clips are being held on a still frame"
+        )
+    if lufs is None:
+        errors.append("Loudness measurement unavailable (no audio stream analysed)")
+    elif lufs <= SILENT_LUFS:
+        errors.append(f"Loudness {lufs:.1f} LUFS: master is silent")
+    elif abs(lufs - TARGET_LUFS) > LUFS_TOLERANCE:
+        errors.append(
+            f"Loudness {lufs:.1f} LUFS outside {TARGET_LUFS:.0f} +/- {LUFS_TOLERANCE:.0f} LUFS delivery target"
+        )
+    if peak is not None and peak > TRUE_PEAK_CEILING_DBTP:
+        errors.append(f"True peak {peak:.1f} dBTP exceeds {TRUE_PEAK_CEILING_DBTP:.0f} dBTP: audio is clipping")
+
+    return GateVerificationResult(
+        gate_name=gate_name,
+        passed=not errors,
+        details=details,
+        error_message="; ".join(errors) if errors else None,
+    )
+
 
 def verify_character_sheet_integrity_gate(
     character_file: str | Path = CHARACTER_PATH,
@@ -333,6 +487,11 @@ def verify_slideshow_risk_gate(scene_plan_path: str | Path) -> GateVerificationR
     )
 
 
+def publish_thumbnail_timestamp(duration: float) -> float:
+    """Poster-frame time: one second before the end, capped at 18s, never negative."""
+    return max(0.0, min(duration - 1.0, THUMBNAIL_MAX_TIMESTAMP))
+
+
 def generate_commercial_thumbnail(
     video_path: str | Path,
     output_thumbnail_path: str | Path,
@@ -379,9 +538,10 @@ def run_all_verification_gates(
     manifest_path = target_artifacts_dir / "asset_manifest.json"
     scene_plan_path = target_artifacts_dir / "scene_plan.json"
 
-    # Run 5 independent verification gates (including Two-Tier Character Sheet Integrity)
+    # Run the independent verification gates (including Two-Tier Character Sheet Integrity)
     gate_runners = (
         lambda: verify_technical_gate(video_path),
+        lambda: verify_media_quality_gate(video_path),
         lambda: verify_character_sheet_integrity_gate(),
         lambda: verify_character_consistency_gate(manifest_path),
         lambda: verify_continuity_gate(script_path, manifest_path),
@@ -443,14 +603,24 @@ def run_all_verification_gates(
         json.dump(report.model_dump(), f, ensure_ascii=False, indent=2)
     telemetry.register_artifact(report_file, stage=STAGE_VERIFICATION, label="Render report")
 
+    publish_file = target_artifacts_dir / "publish_log.json"
+    if overall_status != "PASSED":
+        # ADR 0004: a master that failed a gate must never reach the publication catalog, and a
+        # publish_log.json left by an earlier PASSED run no longer describes this master.
+        publish_file.unlink(missing_ok=True)
+        failed_gates = "; ".join(
+            f"{gate.gate_name}: {gate.error_message or 'failed'}" for gate in all_gates if not gate.passed
+        )
+        telemetry.fail_stage(STAGE_VERIFICATION, f"Overall: {report.overall_status} ({failed_gates})")
+        return report
+
     # Generate thumbnail and publish_log.json
     if workspace is not None:
         thumb_path = workspace.thumbnail_path
     else:
         thumb_path = video_path.parent / f"thumbnail_{video_path.stem}.jpg"
-    if video_path.exists():
-        generate_commercial_thumbnail(video_path, thumb_path, timestamp=min(duration - 1.0, 18.0))
-        telemetry.register_artifact(thumb_path, stage=STAGE_VERIFICATION, label="Publish thumbnail")
+    generate_commercial_thumbnail(video_path, thumb_path, timestamp=publish_thumbnail_timestamp(duration))
+    telemetry.register_artifact(thumb_path, stage=STAGE_VERIFICATION, label="Publish thumbnail")
 
     clean_tag = "".join(product_name.title().split())
     publish_log = PublishLogArtifact(
@@ -464,17 +634,9 @@ def run_all_verification_gates(
         published_at=datetime.datetime.utcnow().isoformat() + "Z",
     )
 
-    publish_file = target_artifacts_dir / "publish_log.json"
     with open(publish_file, "w", encoding="utf-8") as f:
         json.dump(publish_log.model_dump(), f, ensure_ascii=False, indent=2)
     telemetry.register_artifact(publish_file, stage=STAGE_VERIFICATION, label="Publish log")
-
-    if overall_status == "PASSED":
-        telemetry.complete_stage(STAGE_VERIFICATION, message=f"Overall: {report.overall_status}")
-    else:
-        failed_gates = "; ".join(
-            f"{gate.gate_name}: {gate.error_message or 'failed'}" for gate in all_gates if not gate.passed
-        )
-        telemetry.fail_stage(STAGE_VERIFICATION, f"Overall: {report.overall_status} ({failed_gates})")
+    telemetry.complete_stage(STAGE_VERIFICATION, message=f"Overall: {report.overall_status}")
 
     return report
