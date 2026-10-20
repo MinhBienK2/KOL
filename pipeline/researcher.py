@@ -33,7 +33,8 @@ from pipeline.archetypes import (
 )
 from pipeline.workspace import ProjectWorkspace
 from pipeline.config import ARTIFACTS_DIR
-from pipeline.offline import guard_network, guarded_urlopen, is_offline
+from pipeline import llm
+from pipeline.offline import OfflineNetworkError, guard_network, guarded_urlopen, is_offline
 
 STAGE_RESEARCH = telemetry.stage_number("research_briefing")
 RESEARCH_PHASES = ("ingest_product_input", "product_intelligence", "competitor_hooks", "creative_concepts")
@@ -302,33 +303,16 @@ def build_page_content(meta: Dict[str, Any]) -> str:
 # LLM Integration Helpers
 # ==============================================================================
 
-ROUTER_URL = os.environ.get("ROUTER_URL", "http://127.0.0.1:20128/v1/chat/completions")
-ROUTER_API_KEY = os.environ.get("ROUTER_API_KEY", "sk-2f93e87a4f9afb6b-m7h8ur-9bb0bb0f")
-DEFAULT_RESEARCH_MODEL = os.environ.get("RESEARCH_MODEL", "gemini/gemini-3.6-flash")
+DEFAULT_RESEARCH_MODEL = os.environ.get("RESEARCH_MODEL") or llm.default_model()
 
 
-def call_llm(system_prompt: str, user_prompt: str, model: str = DEFAULT_RESEARCH_MODEL, timeout: int = 40) -> Optional[str]:
-    """Invokes the LLM via 9router OpenAI-compatible API with fallback handling.
+def call_llm(system_prompt: str, user_prompt: str, model: Optional[str] = None, timeout: int = 90) -> Optional[str]:
+    """Invokes the configured LLM (MiniMax via nine-router by default, see ``pipeline.llm``).
 
-    Raises ``OfflineNetworkError`` when offline; callers use the deterministic fallbacks instead.
+    Returns the cleaned completion text, or ``None`` when every model failed so callers use their
+    deterministic fallbacks. Raises ``OfflineNetworkError`` when offline.
     """
-    guard_network("router.chat_completion", ROUTER_URL)
-    req_data = {
-        "model": model,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        "stream": False,
-    }
-    req = urllib.request.Request(
-        ROUTER_URL,
-        data=json.dumps(req_data).encode("utf-8"),
-        headers={
-            "Authorization": f"Bearer {ROUTER_API_KEY}",
-            "Content-Type": "application/json",
-        },
-    )
+    model = model or DEFAULT_RESEARCH_MODEL
     request_meta = {
         "model": model,
         "system_prompt_chars": len(system_prompt),
@@ -337,31 +321,12 @@ def call_llm(system_prompt: str, user_prompt: str, model: str = DEFAULT_RESEARCH
     }
     started = time.monotonic()
     try:
-        with guarded_urlopen(req, operation="router.chat_completion", timeout=timeout) as resp:
-            status_code = getattr(resp, "status", None)
-            res = json.loads(resp.read().decode("utf-8"))
-            content = res["choices"][0]["message"]["content"].strip()
-            # Clean markdown codeblocks
-            if content.startswith("```"):
-                content = content.split("\n", 1)[1]
-            if content.endswith("```"):
-                content = content.rsplit("\n", 1)[0]
-            content = content.strip()
-            telemetry.record_api_call(
-                "router.chat_completion",
-                endpoint=ROUTER_URL,
-                request=request_meta,
-                response={"content_chars": len(content)},
-                status=status_code,
-                ok=True,
-                duration_seconds=time.monotonic() - started,
-                stage=STAGE_RESEARCH,
-            )
-            return content
+        result = llm.chat(system_prompt, user_prompt, model=model, timeout=timeout)
+    except OfflineNetworkError:
+        raise
     except Exception as e:
         telemetry.record_api_call(
-            "router.chat_completion",
-            endpoint=ROUTER_URL,
+            "llm.chat_completion",
             request=request_meta,
             response={"error": str(e)},
             status="error",
@@ -369,19 +334,18 @@ def call_llm(system_prompt: str, user_prompt: str, model: str = DEFAULT_RESEARCH
             duration_seconds=time.monotonic() - started,
             stage=STAGE_RESEARCH,
         )
-        # Fallback to secondary fast model if primary times out or fails
-        if model != "gemini/gemini-2.5-flash":
-            telemetry.note(
-                f"Router model '{model}' failed ({e}); retrying with fallback model 'gemini/gemini-2.5-flash'",
-                model=model,
-                fallback_model="gemini/gemini-2.5-flash",
-                error=str(e),
-            )
-            try:
-                return call_llm(system_prompt, user_prompt, model="gemini/gemini-2.5-flash", timeout=25)
-            except Exception:
-                pass
+        telemetry.note(f"LLM call failed ({e}); deterministic fallback will be used", model=model, error=str(e))
         return None
+    telemetry.record_api_call(
+        "llm.chat_completion",
+        request={**request_meta, "model_used": result["model"]},
+        response={"content_chars": len(result["content"]), "usage": result["usage"]},
+        status=200,
+        ok=True,
+        duration_seconds=time.monotonic() - started,
+        stage=STAGE_RESEARCH,
+    )
+    return result["content"]
 
 
 # ==============================================================================
@@ -441,7 +405,7 @@ Output JSON schema:
         res = call_llm(PRODUCT_INTEL_SYSTEM_PROMPT, user_prompt)
         if res:
             try:
-                parsed = json.loads(res)
+                parsed = llm.extract_json(res)
                 intel = ProductIntel.model_validate(parsed)
                 # Explicit prices in the source always beat model-reported ones (no hallucinated pricing).
                 explicit = extract_prices_from_text(raw_content)
@@ -607,7 +571,7 @@ Output JSON schema:
         res = call_llm(COMPETITOR_HOOK_SYSTEM_PROMPT, user_prompt)
         if res:
             try:
-                parsed = json.loads(res)
+                parsed = llm.extract_json(res)
                 landscape = CompetitorLandscape.model_validate(parsed.get("landscape", {}))
                 hooks = [ViralHookCandidate.model_validate(h) for h in parsed.get("hooks", [])]
                 if hooks:
@@ -789,7 +753,7 @@ Output JSON schema:
         res = call_llm(CREATIVE_CONCEPT_SYSTEM_PROMPT, user_prompt)
         if res:
             try:
-                parsed = json.loads(res)
+                parsed = llm.extract_json(res)
                 options = [CreativeAngle.model_validate(c) for c in parsed.get("concept_options", [])]
                 try:
                     winning: Optional[SelectedWinningAngle] = SelectedWinningAngle.model_validate(
