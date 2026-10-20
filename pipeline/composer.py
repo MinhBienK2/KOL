@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import datetime
 import json
+import re
 import subprocess
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from pipeline import telemetry
 from pipeline.config import (
@@ -15,6 +17,7 @@ from pipeline.config import (
     SYNCED_CLIPS_DIR,
     TARGET_RESOLUTION,
 )
+from pipeline.lip_sync_engine import ShotTimingPlan, plan_shot_timing
 from pipeline.schemas import (
     AssetManifestArtifact,
     AudioTrackConfig,
@@ -26,8 +29,18 @@ from pipeline.workspace import ProjectWorkspace
 STAGE_COMPOSITION = telemetry.stage_number("composition")
 
 #: Single source of truth for the multi-track mix targets (mirrored in the FFmpeg filter).
+#: Nominal BGM duck under speech (ADR 0003). The sidechain filter is level-dependent, so this is the
+#: guaranteed-floor design point: measured dips with real ffmpeg are >=10 dB for quiet speech (-32 dB mean),
+#: ~14 dB at -27 dB and ~19 dB for typical TTS (-22 dB mean). The previous filter dipped only 0.3-7.6 dB.
 BGM_DUCKING_ATTENUATION_DB = -14.0
 TARGET_LUFS = -14.0
+#: Master integrated loudness must land within this many LU of TARGET_LUFS to be "compliant".
+LOUDNESS_TOLERANCE_LU = 1.5
+
+#: Sidechain compressor ducking BGM (first input) keyed by the speech stem (second input).
+DUCKING_FILTER = "sidechaincompress=threshold=0.012:ratio=12:attack=30:release=600:mix=1"
+
+_SEGMENT_FPS = 30
 
 def get_clip_duration(file_path: str | Path) -> float:
     cmd = [
