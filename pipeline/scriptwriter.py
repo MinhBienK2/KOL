@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import json
+import math
+import re
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, Iterable, List, Optional, Union
 
 from pipeline import telemetry
 from pipeline.config import ARTIFACTS_DIR
 from pipeline.schemas import BriefArtifact, ScriptArtifact, ScriptBeat
 from pipeline.workspace import ProjectWorkspace
+from pipeline.cinematography import camera_phrase
 from pipeline.archetypes import (
     AudioStrategy,
     CameraChoreography,
@@ -20,6 +23,114 @@ from pipeline.archetypes import (
 )
 
 STAGE_SCRIPTWRITING = telemetry.stage_number("scriptwriting")
+
+# --- Timing contract -----------------------------------------------------------
+# Hailuo-2.3 renders 6s or 10s clips (see video_engine); a 6s beat is the cheapest
+# clip and the TikTok/Reels sweet spot for one idea per shot, so beats are capped there.
+MAX_BEAT_SECONDS = 6.0
+MIN_BEAT_SECONDS = 1.5
+# Hook must land inside the scroll-decision window (~3s, tolerate 4s with lead-in).
+MAX_HOOK_SECONDS = 4.0
+# Short-form ads cluster at 15-30s; above ~35s drop-off dominates.
+MAX_TOTAL_SECONDS = 35.0
+# Conservative Vietnamese TTS pace (syllables per second) plus lead-in/out padding.
+VI_SYLLABLES_PER_SECOND = 4.5
+SPEECH_PADDING_SECONDS = 0.4
+SPEECH_PAUSE_SECONDS = 0.15  # per clause/sentence punctuation mark
+
+
+def estimate_speech_seconds(text: str) -> float:
+    """Estimate how long a Vietnamese line takes to speak with neural TTS.
+
+    Vietnamese words are single syllables, so whitespace tokens approximate syllables;
+    long Latin brand tokens (CyberKey, GlowRevive) are counted as several syllables.
+    Returns 0.0 for empty text.
+    """
+    if not text or not text.strip():
+        return 0.0
+    syllables = 0
+    for token in text.split():
+        letters = re.sub(r"[^\w]", "", token, flags=re.UNICODE)
+        if not letters:
+            continue
+        syllables += 1
+        if letters.isascii() and letters.isalpha() and len(letters) > 6:
+            syllables += math.ceil(len(letters) / 3) - 1
+    pauses = len(re.findall(r"[,.;:?!…]", text))
+    return round(syllables / VI_SYLLABLES_PER_SECOND + pauses * SPEECH_PAUSE_SECONDS + SPEECH_PADDING_SECONDS, 2)
+
+
+def _speaks(beat: ScriptBeat) -> bool:
+    """True when the beat's spoken_text is actually voiced (not a music-only beat)."""
+    return bool(beat.spoken_text and beat.spoken_text.strip()) and beat.audio_strategy != AudioStrategy.MUSIC_AND_SFX_ONLY
+
+
+def fit_beat_durations_to_speech(beats: Iterable[ScriptBeat]) -> List[str]:
+    """Stretch beat durations (never shrink) so each voiced line fits, capped at MAX_BEAT_SECONDS.
+
+    The TTS stem is not time-compressed downstream, so a line longer than its clip is
+    cut off or bleeds into the next shot. Durations round up to 0.5s steps. Returns
+    warnings for lines that still cannot fit inside the cap (the copy must be shortened).
+    """
+    warnings: List[str] = []
+    for beat in beats:
+        if not _speaks(beat):
+            continue
+        need = estimate_speech_seconds(beat.spoken_text)
+        if need <= beat.estimated_duration:
+            continue
+        target = math.ceil(need * 2) / 2
+        beat.estimated_duration = min(MAX_BEAT_SECONDS, max(beat.estimated_duration, target))
+        if need > MAX_BEAT_SECONDS:
+            warnings.append(
+                f"{beat.scene_id}: spoken line needs ~{need:.1f}s but a beat is capped at "
+                f"{MAX_BEAT_SECONDS:.1f}s; shorten the copy"
+            )
+    return warnings
+
+
+def validate_script(beats: List[ScriptBeat]) -> List[str]:
+    """Check a beat list against short-form ad structure and video-model limits.
+
+    Returns human-readable issues (empty list = valid). Use it on agent-authored beats.
+    """
+    issues: List[str] = []
+    if not beats:
+        return ["script has no beats"]
+    if "hook" not in beats[0].beat_type.lower():
+        issues.append(f"first beat must be a hook (got '{beats[0].beat_type}')")
+    if "cta" not in beats[-1].beat_type.lower():
+        issues.append(f"last beat must be a cta (got '{beats[-1].beat_type}')")
+    seen: set[str] = set()
+    for beat in beats:
+        if beat.scene_id in seen:
+            issues.append(f"duplicate scene_id '{beat.scene_id}'")
+        seen.add(beat.scene_id)
+        if not beat.visual_cue.strip():
+            issues.append(f"{beat.scene_id}: empty visual_cue (the video model has nothing to render)")
+        if beat.estimated_duration > MAX_BEAT_SECONDS:
+            issues.append(
+                f"{beat.scene_id}: duration {beat.estimated_duration:.1f}s exceeds the {MAX_BEAT_SECONDS:.1f}s "
+                "single-clip limit; split it into two beats"
+            )
+        if beat.estimated_duration < MIN_BEAT_SECONDS:
+            issues.append(f"{beat.scene_id}: duration {beat.estimated_duration:.1f}s is below {MIN_BEAT_SECONDS:.1f}s")
+        if _speaks(beat):
+            need = estimate_speech_seconds(beat.spoken_text)
+            if need > beat.estimated_duration + 1e-6:
+                issues.append(
+                    f"{beat.scene_id}: spoken line needs ~{need:.1f}s but beat lasts {beat.estimated_duration:.1f}s"
+                )
+    hook = beats[0]
+    if "hook" in hook.beat_type.lower() and hook.estimated_duration > MAX_HOOK_SECONDS:
+        issues.append(
+            f"hook lasts {hook.estimated_duration:.1f}s; keep it within {MAX_HOOK_SECONDS:.1f} seconds "
+            "so it lands before the scroll decision"
+        )
+    total = sum(b.estimated_duration for b in beats)
+    if total > MAX_TOTAL_SECONDS:
+        issues.append(f"total runtime {total:.1f}s exceeds the {MAX_TOTAL_SECONDS:.0f}s short-form ceiling")
+    return issues
 
 
 def _clean_spoken_product_name(product: str) -> str:
@@ -41,7 +152,17 @@ def _clean_spoken_product_name(product: str) -> str:
             name = name.split(sep)[0].strip()
     words = name.split()
     if len(words) > 5:
-        return " ".join(words[:4])
+        # Keep the trailing Latin brand run (e.g. "Lumina Pro") and as much of the leading
+        # category as fits in 5 words, instead of chopping the brand off mid-name.
+        brand: List[str] = []
+        for w in reversed(words):
+            if w.isascii() and w[:1].isalpha():
+                brand.insert(0, w)
+            else:
+                break
+        brand = brand[-3:]
+        head = words[: max(2, 5 - len(brand))]
+        return " ".join(head + brand) if brand and len(brand) < len(words) else " ".join(words[:5])
     return name
 
 
@@ -101,6 +222,7 @@ def _build_archetype_beats(
     beats: List[ScriptBeat] = []
     for idx, tpl in enumerate(config.beat_templates, start=1):
         scene_id = f"shot_{idx:02d}_{tpl.beat_type}"
+        cam_label = camera_phrase(tpl.camera_choreography)
 
         # Build contextual spoken and on-screen copy per archetype
         if archetype == ProductArchetype.FASHION_APPAREL:
@@ -108,23 +230,23 @@ def _build_archetype_beats(
             if tpl.beat_type == "hook":
                 spoken = concept_hook or f"Item thời trang chân ái giúp bạn nâng tầm phong cách: {spoken_prod}."
                 on_screen = concept_caption or (f"PARISIAN CHIC • {spoken_prod.upper()}" if is_dress else f"MUST-HAVE • {spoken_prod.upper()}")
-                visual = concept_visual or f"Góc máy {tpl.camera_choreography.value} từ thấp lên cao, {character_tag} bước sải chân tự tin với phong thái cuốn hút"
+                visual = concept_visual or f"Góc máy {cam_label} từ thấp lên cao, {character_tag} bước sải chân tự tin với phong thái cuốn hút"
             elif tpl.beat_type == "reveal":
                 spoken = "Form dáng suông chuẩn Hàn Quốc, độn vai nhẹ tôn dáng và che trọn khuyết điểm." if not is_dress else "Phom dáng corset ôm trọn vòng eo thon gọn, tôn xương quai xanh cực quyến rũ."
                 on_screen = "CORSET FIT • 360° SILHOUETTE" if is_dress else "PERFECT FIT • 360° SILHOUETTE"
-                visual = f"Camera {tpl.camera_choreography.value} xoay 360 quanh {character_tag}, khoe trọn phom dáng thanh lịch của {spoken_prod}"
+                visual = f"Camera {cam_label} xoay 360 quanh {character_tag}, khoe trọn phom dáng thanh lịch của {spoken_prod}"
             elif tpl.beat_type == "fabric_macro":
                 spoken = "Vải jacquard dập nổi vân waffle dày dặn đứng phom, chống nhăn tuyệt đối và mát mịn." if is_dress else "Chất vải tuyết mưa cao cấp chống nhăn tuyệt đối, vò mạnh thả ra vẫn phẳng lì đứng phom."
                 on_screen = "WAFFLE JACQUARD • CHERRY PRINT" if is_dress else "PREMIUM FABRIC • WRINKLE-FREE"
-                visual = f"Góc cận cảnh macro {tpl.camera_choreography.value}, bắt trọn từng thớ vải mịn màng đung đưa chuyển động mềm mại"
+                visual = f"Góc cận cảnh macro {cam_label}, bắt trọn từng thớ vải mịn màng đung đưa chuyển động mềm mại"
             elif tpl.beat_type == "movement_flow":
                 spoken = "Họa tiết ngọt ngào cùng ruy-băng thắt nơ vai điệu đà đậm chất tiểu thư Pháp." if is_dress else "Vạt áo bay nhẹ nhàng tự nhiên, thoải mái vận động cả ngày dài không hề gò bó."
                 on_screen = "FLUID MOVEMENT • PARIS STREET" if is_dress else "FLUID MOVEMENT • ALL DAY COMFORT"
-                visual = f"Camera {tpl.camera_choreography.value} tracking song song khi {character_tag} rảo bước năng động"
+                visual = f"Camera {cam_label} tracking song song khi {character_tag} rảo bước năng động"
             elif tpl.beat_type == "styling_versatility":
                 spoken = "Dễ dàng phối cùng túi cói mini cho buổi dạo phố, hay thêm phụ kiện đỏ cho bữa tối hẹn hò lãng mạn." if is_dress else "Dễ dàng mix ngoài áo sơ mi trắng đi làm công sở, hay khoác hờ dạo phố cà phê đều cực sang."
                 on_screen = "PARISIAN PICNIC • SUMMER VIBES" if is_dress else "EASY MIX & MATCH • WORK TO STREET"
-                visual = f"Cắt nhanh {tpl.camera_choreography.value} đổi phong cách phối đồ linh hoạt cùng phụ kiện"
+                visual = f"Cắt nhanh {cam_label} đổi phong cách phối đồ linh hoạt cùng phụ kiện"
             else:  # cta
                 spoken = "Đang có ưu đãi độc quyền 30% hôm nay! Nhấp ngay vào link giỏ hàng bên dưới để sở hữu nhé!"
                 on_screen = "ƯU ĐÃI ĐỘC QUYỀN 30% • NHẤP LINK BIO"
@@ -132,25 +254,25 @@ def _build_archetype_beats(
 
         elif archetype == ProductArchetype.TECH_GADGETS:
             if tpl.beat_type == "hook":
-                spoken = concept_hook or f"Bàn phím cơ lạch cạch làm ồn cả phòng, gõ lâu thì mỏi nhừ tay? Đã có {spoken_prod}!"
+                spoken = concept_hook or f"Phím cơ ồn ào, gõ mỏi tay? Thử {spoken_prod}!"
                 on_screen = concept_caption or "BÀN PHÍM CƠ SIÊU ÊM • CYBERKEY PRO"
-                visual = concept_visual or f"Camera {tpl.camera_choreography.value} cận cảnh khuôn mặt {character_tag} bực bội trước tiếng ồn bàn phím cũ"
+                visual = concept_visual or f"Camera {cam_label} cận cảnh khuôn mặt {character_tag} bực bội trước tiếng ồn bàn phím cũ"
             elif tpl.beat_type == "unboxing":
                 spoken = f"Mở hộp ngay em {spoken_prod} thay đổi hoàn toàn trải nghiệm làm việc."
                 on_screen = f"UNBOXING • {spoken_prod.upper()}"
-                visual = f"Góc quay từ trên xuống {tpl.camera_choreography.value}, bóc lớp seal mờ sang trọng, lộ diện thiết kế tinh xảo của {spoken_prod}"
+                visual = f"Góc quay từ trên xuống {cam_label}, bóc lớp seal mờ sang trọng, lộ diện thiết kế tinh xảo của {spoken_prod}"
             elif tpl.beat_type == "macro_detail":
                 spoken = "Khung nhôm CNC nguyên khối cực đầm tay, gõ phím siêu êm và đầm tiếng."
                 on_screen = "CNC ALUMINUM • TACTILE FEEL"
-                visual = f"Macro {tpl.camera_choreography.value} chuyển nét mượt mà trên bề mặt kim loại nguyên khối và cổng kết nối"
+                visual = f"Macro {cam_label} chuyển nét mượt mà trên bề mặt kim loại nguyên khối và cổng kết nối"
             elif tpl.beat_type == "performance_demo":
                 spoken = "Kết nối không dây 3 chế độ cực nhạy, độ trễ 0ms siêu mượt mà."
                 on_screen = "TRI-MODE WIRELESS • 0MS LATENCY"
-                visual = f"Camera {tpl.camera_choreography.value} trình diễn gõ phím tốc độ cao phản hồi tức thì trên màn hình"
+                visual = f"Camera {cam_label} trình diễn gõ phím tốc độ cao phản hồi tức thì trên màn hình"
             elif tpl.beat_type == "specs_proof":
                 spoken = "Pin trâu 4000mAh dùng nhiều tuần liền, tương thích mượt mà Mac, iPad và PC."
                 on_screen = "4000MAH BATTERY • MULTI-DEVICE"
-                visual = f"Thao tác cất gọn {spoken_prod} vào balo thanh lịch, góc quay {tpl.camera_choreography.value} nhanh gọn"
+                visual = f"Thao tác cất gọn {spoken_prod} vào balo thanh lịch, góc quay {cam_label} nhanh gọn"
             else:  # cta
                 spoken = f"Nâng cấp bàn làm việc của bạn cùng {spoken_prod} ngay tại link bên dưới!"
                 on_screen = "ƯU ĐÃI ĐỘC QUYỀN • LINK GIỎ HÀNG"
@@ -158,25 +280,25 @@ def _build_archetype_beats(
 
         elif archetype == ProductArchetype.BEAUTY_SKINCARE:
             if tpl.beat_type == "hook":
-                spoken = concept_hook or "Một giọt serum tinh chất có thể thay đổi làn da của bạn như thế nào?"
+                spoken = concept_hook or "Chỉ một giọt serum, làn da đổi thay thế nào?"
                 on_screen = concept_caption or "GLOW SKIN REVOLUTION"
-                visual = concept_visual or f"Góc cận cảnh macro {tpl.camera_choreography.value}, giọt tinh chất {spoken_prod} óng ánh rơi từ ống nhỏ giọt thủy tinh"
+                visual = concept_visual or f"Góc cận cảnh macro {cam_label}, giọt tinh chất {spoken_prod} óng ánh rơi từ ống nhỏ giọt thủy tinh"
             elif tpl.beat_type == "skin_agitation":
                 spoken = "Da xỉn màu, khô ráp và thiếu sức sống mỗi sáng thức dậy?"
                 on_screen = "DA THIẾU NƯỚC & KÉM SẮC?"
-                visual = f"Góc {tpl.camera_choreography.value} cận mặt {character_tag} chạm nhẹ lên gò má bày tỏ nỗi lo"
+                visual = f"Góc {cam_label} cận mặt {character_tag} chạm nhẹ lên gò má bày tỏ nỗi lo"
             elif tpl.beat_type == "texture_macro":
                 spoken = "Chất serum mỏng nhẹ như nhung, thẩm thấu tức thì vào từng tế bào da."
                 on_screen = "VELVET TEXTURE • FAST ABSORPTION"
-                visual = f"Macro {tpl.camera_choreography.value} swatch tinh chất sánh mịn trên phiến đá pha lê bắt sáng lấp lánh"
+                visual = f"Macro {cam_label} swatch tinh chất sánh mịn trên phiến đá pha lê bắt sáng lấp lánh"
             elif tpl.beat_type == "application_method":
                 spoken = "Cấp ẩm tầng sâu, phục hồi hàng rào bảo vệ cho làn da căng bóng mịn màng."
                 on_screen = "MULTI-PEPTIDE • DEEP REPAIR"
-                visual = f"Góc nghiêng {tpl.camera_choreography.value}, {character_tag} thoa tinh chất nhẹ nhàng lên gò má, tạo độ bóng căng mọng"
+                visual = f"Góc nghiêng {cam_label}, {character_tag} thoa tinh chất nhẹ nhàng lên gò má, tạo độ bóng căng mọng"
             elif tpl.beat_type == "transformation_proof":
                 spoken = "Hiệu ứng căng bóng chuẩn Glass Skin rạng ngời suốt 24 giờ."
                 on_screen = "RADIANT GLASS SKIN • 24H HYDRATION"
-                visual = f"Góc quay {tpl.camera_choreography.value} bắt trọn ánh sáng tự nhiên trên làn da mịn màng, nụ cười rạng rỡ của {character_tag}"
+                visual = f"Góc quay {cam_label} bắt trọn ánh sáng tự nhiên trên làn da mịn màng, nụ cười rạng rỡ của {character_tag}"
             else:  # cta
                 spoken = f"Yêu thương làn da cùng {spoken_prod}, nhận ngay bộ quà tặng độc quyền tại link bio nhé!"
                 on_screen = "MUA 1 TẶNG 1 • LINK TẠI BIO"
@@ -186,23 +308,23 @@ def _build_archetype_beats(
             if tpl.beat_type == "hook":
                 spoken = concept_hook or "Muốn không gian sống luôn ấm cúng, tinh tế và gọn gàng ngăn nắp?"
                 on_screen = concept_caption or "GIẢI PHÁP CHO TỔ ẤM HIỆN ĐẠI"
-                visual = concept_visual or f"Góc quay lướt {tpl.camera_choreography.value} trong căn phòng ngập tràn ánh nắng ấm áp buổi sáng"
+                visual = concept_visual or f"Góc quay lướt {cam_label} trong căn phòng ngập tràn ánh nắng ấm áp buổi sáng"
             elif tpl.beat_type == "reveal":
                 spoken = f"Đây chính là mảnh ghép hoàn hảo cho ngôi nhà bạn: {spoken_prod}."
                 on_screen = f"{spoken_prod.upper()} • MINIMALIST"
-                visual = f"Camera {tpl.camera_choreography.value} hạ thấp mượt mà, hé lộ vẻ đẹp tối giản của {spoken_prod} trên bàn gỗ sồi"
+                visual = f"Camera {cam_label} hạ thấp mượt mà, hé lộ vẻ đẹp tối giản của {spoken_prod} trên bàn gỗ sồi"
             elif tpl.beat_type == "functional_demo":
                 spoken = "Vận hành êm ái thông minh, tối ưu từng góc nhỏ trong căn nhà."
                 on_screen = "SMART OPERATION • LOW NOISE"
-                visual = f"Cận cảnh {tpl.camera_choreography.value} ngón tay chạm nhẹ nút cảm ứng, cơ chế hoạt động mượt mà tĩnh lặng"
+                visual = f"Cận cảnh {cam_label} ngón tay chạm nhẹ nút cảm ứng, cơ chế hoạt động mượt mà tĩnh lặng"
             elif tpl.beat_type == "lifestyle_context":
                 spoken = "Tận hưởng những giây phút thư thái thảnh thơi sau ngày dài bận rộn."
                 on_screen = "PEACE OF MIND • COZY LIVING"
-                visual = f"Toàn cảnh {tpl.camera_choreography.value}, {character_tag} ngồi thư giãn trên ghế sofa, không gian ấm cúng bình yên"
+                visual = f"Toàn cảnh {cam_label}, {character_tag} ngồi thư giãn trên ghế sofa, không gian ấm cúng bình yên"
             elif tpl.beat_type == "convenience_proof":
                 spoken = "Dễ dàng vệ sinh, cất gọn gàng ngăn nắp mà không chiếm diện tích."
                 on_screen = "EASY CLEAN • SPACE SAVING"
-                visual = f"Thao tác lau chùi nhẹ nhàng {tpl.camera_choreography.value}, thiết kế thông minh gọn gàng"
+                visual = f"Thao tác lau chùi nhẹ nhàng {cam_label}, thiết kế thông minh gọn gàng"
             else:  # cta
                 spoken = f"Nâng tầm phong cách sống cùng {spoken_prod} ngay hôm nay với ưu đãi 35%!"
                 on_screen = "ƯU ĐÃI TỔ ẤM 35% • LINK ĐẶT HÀNG"
@@ -212,23 +334,23 @@ def _build_archetype_beats(
             if tpl.beat_type == "hook":
                 spoken = concept_hook or "Tìm kiếm giải pháp hoàn hảo cho công việc và đời sống hàng ngày?"
                 on_screen = concept_caption or "BẠN ĐANG TÌM GIẢI PHÁP NÀY?"
-                visual = concept_visual or f"Camera {tpl.camera_choreography.value} cận cảnh biểu cảm ngạc nhiên bất lực của {character_tag}"
+                visual = concept_visual or f"Camera {cam_label} cận cảnh biểu cảm ngạc nhiên bất lực của {character_tag}"
             elif tpl.beat_type == "pain_agitation":
                 spoken = "Những rắc rối bất tiện khiến bạn mất quá nhiều thời gian và công sức?"
                 on_screen = "GIẢI PHÁP TIẾT KIỆM THỜI GIAN"
-                visual = f"Góc cận {tpl.camera_choreography.value} nhấn mạnh vào rắc rối thực tế xảy ra"
+                visual = f"Góc cận {cam_label} nhấn mạnh vào rắc rối thực tế xảy ra"
             elif tpl.beat_type == "solution_reveal":
                 spoken = f"Và đây chính là cứu tinh dành cho bạn: {spoken_prod}!"
                 on_screen = f"GIẢI PHÁP TOÀN DIỆN • {spoken_prod.upper()}"
-                visual = f"Ánh sáng quét qua sản phẩm {tpl.camera_choreography.value}, xuất hiện sang trọng đầy ấn tượng"
+                visual = f"Ánh sáng quét qua sản phẩm {cam_label}, xuất hiện sang trọng đầy ấn tượng"
             elif tpl.beat_type == "feature_demo":
                 spoken = "Thiết kế thông minh đột phá, mang lại hiệu quả vượt trội ngay từ lần đầu trải nghiệm."
                 on_screen = "SMART DESIGN • HIGH EFFICIENCY"
-                visual = f"Trình diễn tính năng chi tiết {tpl.camera_choreography.value}, thao tác mượt mà chính xác"
+                visual = f"Trình diễn tính năng chi tiết {cam_label}, thao tác mượt mà chính xác"
             elif tpl.beat_type == "social_proof":
                 spoken = "Hàng ngàn khách hàng đã tin dùng và hoàn toàn bị thuyết phục."
                 on_screen = "5 SAO TIN DÙNG • 100% HÀI LÒNG"
-                visual = f"{character_tag} mỉm cười hài lòng {tpl.camera_choreography.value}, đồ họa đánh giá 5 sao xuất hiện"
+                visual = f"{character_tag} mỉm cười hài lòng {cam_label}, đồ họa đánh giá 5 sao xuất hiện"
             else:  # cta
                 spoken = "Nhấp ngay link bên dưới để nhận voucher ưu đãi độc quyền hôm nay nhé!"
                 on_screen = "NHẤP LINK BIO • VOUCHER ĐỘC QUYỀN"
@@ -261,8 +383,17 @@ def generate_commercial_script(
     output_dir: Path | None = None,
     archetype: ProductArchetype | str | None = None,
     workspace: Optional[ProjectWorkspace] = None,
+    beats: Optional[List[Union[ScriptBeat, dict]]] = None,
+    strict: bool = True,
 ) -> ScriptArtifact:
-    """Generates high-conversion TVC script based on brief.json and directorial archetype."""
+    """Generates high-conversion TVC script based on brief.json and directorial archetype.
+
+    An orchestrating agent can direct the script itself by passing ``beats`` (ScriptBeat
+    objects or plain dicts). They replace the archetype templates, get their durations
+    fitted to the spoken line, and are checked with :func:`validate_script`; with
+    ``strict=True`` (default) any issue raises ``ValueError``, with ``strict=False`` the
+    issues are only recorded in the run telemetry.
+    """
     target_artifacts_dir = workspace.artifacts_dir if workspace is not None else (output_dir or ARTIFACTS_DIR)
     target_artifacts_dir.mkdir(parents=True, exist_ok=True)
 
@@ -289,8 +420,24 @@ def generate_commercial_script(
     else:
         selected_archetype = brief.archetype or ProductArchetype.GENERAL_COMMERCIAL
 
+    custom_beats: Optional[List[ScriptBeat]] = None
+    if beats is not None:
+        custom_beats = [b if isinstance(b, ScriptBeat) else ScriptBeat.model_validate(b) for b in beats]
+        for cb in custom_beats:
+            if cb.archetype is None:
+                cb.archetype = selected_archetype
+
     # If legacy mug campaign is tested without custom archetype override, maintain 4-beat legacy compatibility
-    if brief.campaign_id == "campaign_lumina_mug_01" and archetype is None and selected_archetype == ProductArchetype.GENERAL_COMMERCIAL:
+    if custom_beats is not None:
+        beats = custom_beats  # type: ignore[assignment]
+        script_warnings = fit_beat_durations_to_speech(custom_beats)
+        script_warnings += validate_script(custom_beats)
+        script_warnings = list(dict.fromkeys(script_warnings))
+        if script_warnings and strict:
+            raise ValueError("Invalid agent-authored script: " + "; ".join(script_warnings))
+        if script_warnings:
+            telemetry.note("Script validation warnings: " + "; ".join(script_warnings), warnings=script_warnings)
+    elif brief.campaign_id == "campaign_lumina_mug_01" and archetype is None and selected_archetype == ProductArchetype.GENERAL_COMMERCIAL:
         beats: List[ScriptBeat] = [
             ScriptBeat(
                 scene_id="shot_01_hook",
@@ -351,6 +498,13 @@ def generate_commercial_script(
         ]
     else:
         beats = _build_archetype_beats(brief, selected_archetype, target_artifacts_dir)
+        template_warnings = fit_beat_durations_to_speech(beats)
+        template_warnings += [i for i in validate_script(beats) if "spoken line needs" not in i]
+        if template_warnings:
+            telemetry.note(
+                "Template script advisories: " + "; ".join(template_warnings),
+                warnings=template_warnings,
+            )
 
     total_duration = sum(b.estimated_duration for b in beats)
 

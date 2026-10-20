@@ -195,6 +195,46 @@ LIGHTING_CONTRACT_REGISTRY: Dict[LightingContractType, LightingContractSpec] = {
 }
 
 
+# The archetype layer (pipeline.archetypes) names its camera/lighting vocabulary slightly
+# differently from this registry. Without these aliases values such as "macro_push_in" or
+# "editorial_fashion" fell through to the TRUCK / THREE_POINT defaults silently.
+CHOREOGRAPHY_ALIASES: Dict[str, CameraChoreographyType] = {
+    "drone_flythrough": CameraChoreographyType.DRONE_FLY_THROUGH,
+    "macro_push_in": CameraChoreographyType.ZOOM_IN,
+    "top_down_flat_lay": CameraChoreographyType.ZOOM_IN,
+}
+
+LIGHTING_ALIASES: Dict[str, LightingContractType] = {
+    "studio_3point": LightingContractType.THREE_POINT_STUDIO,
+    "editorial_fashion": LightingContractType.THREE_POINT_STUDIO,
+    "beauty_high_key": LightingContractType.THREE_POINT_STUDIO,
+    "golden_hour": LightingContractType.GOLDEN_HOUR_NATURAL,
+    "nordic_minimalist": LightingContractType.MINIMALIST_NORDIC_INTERIOR,
+}
+
+
+def resolve_choreography_type(value: str) -> CameraChoreographyType:
+    """Map a registry or archetype choreography name to a registry type (TRUCK if unknown)."""
+    key = value.strip().lower()
+    if key in CHOREOGRAPHY_ALIASES:
+        return CHOREOGRAPHY_ALIASES[key]
+    try:
+        return CameraChoreographyType(key)
+    except ValueError:
+        return CameraChoreographyType.TRUCK
+
+
+def resolve_lighting_type(value: str) -> LightingContractType:
+    """Map a registry or archetype lighting name to a registry type (3-point studio if unknown)."""
+    key = value.strip().lower()
+    if key in LIGHTING_ALIASES:
+        return LIGHTING_ALIASES[key]
+    try:
+        return LightingContractType(key)
+    except ValueError:
+        return LightingContractType.THREE_POINT_STUDIO
+
+
 class SpatialAnchor(BaseModel):
     """Spatial topology anchor representing an established location in the stage world."""
     anchor_id: str
@@ -266,11 +306,7 @@ class DramaClawSpatialGrammar:
         """Synthesizes a 7-part DramaClaw structured spatial prompt."""
         # Resolve choreography
         if isinstance(choreography, str):
-            try:
-                ch_type = CameraChoreographyType(choreography.lower())
-                choreography_spec = CAMERA_CHOREOGRAPHY_REGISTRY[ch_type]
-            except (ValueError, KeyError):
-                choreography_spec = CAMERA_CHOREOGRAPHY_REGISTRY[CameraChoreographyType.TRUCK]
+            choreography_spec = CAMERA_CHOREOGRAPHY_REGISTRY[resolve_choreography_type(choreography)]
         elif isinstance(choreography, CameraChoreographyType):
             choreography_spec = CAMERA_CHOREOGRAPHY_REGISTRY[choreography]
         else:
@@ -278,11 +314,7 @@ class DramaClawSpatialGrammar:
 
         # Resolve lighting
         if isinstance(lighting, str):
-            try:
-                lt_type = LightingContractType(lighting.lower())
-                lighting_spec = LIGHTING_CONTRACT_REGISTRY[lt_type]
-            except (ValueError, KeyError):
-                lighting_spec = LIGHTING_CONTRACT_REGISTRY[LightingContractType.THREE_POINT_STUDIO]
+            lighting_spec = LIGHTING_CONTRACT_REGISTRY[resolve_lighting_type(lighting)]
         elif isinstance(lighting, LightingContractType):
             lighting_spec = LIGHTING_CONTRACT_REGISTRY[lighting]
         else:
