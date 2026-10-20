@@ -184,3 +184,7 @@ _Avoid_: Partial pass, soft fail, warning-only release
 **Speech Intelligibility Gate**:
 A verification gate over stage 6's `speech_report.json`: each real neural voice stem is transcribed (ASR, `whisper-1`) and compared with the scripted spoken text by character error rate (primary metric for Vietnamese, threshold 0.35). Any verified shot above the threshold fails the master (`FAILED`, not `DRAFT`); a missing report or unverified shots (ASR unavailable, placeholder stems) only warn.
 _Avoid_: Trusting TTS output blindly, word-error-rate for Vietnamese, failing stage 6 on ASR outages
+
+**Face Identity Gate**:
+A verification gate that compares the face in each presenter/model shot's keyframe and sampled raw-clip frames against the Face Anchor using YuNet detection and SFace embedding cosine similarity (threshold 0.363, `KOL_FACE_SIMILARITY_THRESHOLD` to override). Fails on a mismatching face or a missing face on a presenter shot; product-only shots are skipped; reports `unverified` (passes) when the models cannot be downloaded offline.
+_Avoid_: Keyframe file check, manual likeness review, insightface

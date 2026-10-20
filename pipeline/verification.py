@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional
 
 from PIL import Image
-from pipeline import telemetry
+from pipeline import face_identity, telemetry
 from pipeline.config import (
     ARTIFACTS_DIR,
     BASE_DIR,
@@ -56,8 +56,8 @@ STATUS_DRAFT = "DRAFT"
 PLACEHOLDER_GATE_NAME = "prompt_ledger_audit_gate"
 
 # technical, media quality, character sheet integrity, character consistency, continuity, slideshow risk,
-# identity pre-flight audit, prompt ledger audit, speech intelligibility
-VERIFICATION_GATE_COUNT = 9
+# identity pre-flight audit, prompt ledger audit, speech intelligibility, face identity
+VERIFICATION_GATE_COUNT = 10
 
 
 def _ensure_stage_started(total: int) -> None:
@@ -486,6 +486,130 @@ def verify_character_consistency_gate(
     )
 
 
+#: Character Roles that put the character's face on screen (product_only is excluded: Product Isolation).
+FACE_ROLES = frozenset({"presenter", "model"})
+#: Roles where a missing face fails the gate. A model shot may legitimately hide the face (back view, crop).
+FACE_REQUIRED_ROLES = frozenset({"presenter"})
+
+
+def _shot_clip(raw_paths: Iterable[str], shot_id: str) -> Optional[Path]:
+    """The raw clip on disk whose file name carries ``shot_id`` (the composer's matching rule)."""
+    for raw in raw_paths:
+        if shot_id in Path(raw).name and Path(raw).is_file():
+            return Path(raw)
+    return None
+
+
+def _unverified_face_gate(reason: str, **details: Any) -> GateVerificationResult:
+    return GateVerificationResult(
+        gate_name="face_identity_gate",
+        passed=True,
+        details={"status": "unverified", "reason": reason, **details},
+        error_message=None,
+    )
+
+
+def _failed_face_gate(message: str, **details: Any) -> GateVerificationResult:
+    return GateVerificationResult(
+        gate_name="face_identity_gate",
+        passed=False,
+        details={"status": "failed", **details},
+        error_message=message,
+    )
+
+
+def verify_face_identity_gate(
+    scene_plan_path: str | Path,
+    manifest_path: str | Path,
+    character_file: str | Path = CHARACTER_PATH,
+    threshold: Optional[float] = None,
+    n_frames: int = face_identity.DEFAULT_SAMPLE_FRAMES,
+) -> GateVerificationResult:
+    """Face Identity Gate: generated faces must match the Face Anchor (SFace cosine similarity).
+
+    For every shot whose Character Role shows a person (presenter, model; never product_only) the
+    cleaned keyframe and a few sampled frames of the raw clip (when present) are compared against
+    the Face Anchor. A shot fails when the best similarity is below the threshold, or when no face
+    is found on a presenter shot. Missing models or inputs make the gate ``unverified`` (it passes,
+    with ``details["status"] == "unverified"``) rather than crashing, e.g. offline without models.
+    """
+    limit = face_identity.face_similarity_threshold() if threshold is None else threshold
+    scene_plan_p, manifest_p = Path(scene_plan_path), Path(manifest_path)
+    char_path = Path(character_file)
+    if not char_path.is_absolute():
+        char_path = BASE_DIR / char_path
+    scene_plan = _load_json_file(scene_plan_p)
+    manifest = _load_json_file(manifest_p)
+    char_data = _load_json_file(char_path)
+    if not isinstance(scene_plan, dict) or not isinstance(manifest, dict) or not isinstance(char_data, dict):
+        return _unverified_face_gate("scene_plan.json, asset_manifest.json or character profile missing", threshold=limit)
+
+    face_ref = char_data.get("face_anchor") or char_data.get("portrait_image")
+    anchor_path = BASE_DIR / face_ref if face_ref else None
+    if anchor_path is None or not anchor_path.exists():
+        return _failed_face_gate(f"Face anchor image missing: {face_ref}", threshold=limit)
+
+    keyframes = {kf.get("shot_id"): kf for kf in manifest.get("keyframes", [])}
+    raw_clips = manifest.get("raw_video_clips", [])
+    shots: List[Dict[str, Any]] = []
+    errors: List[str] = []
+    try:
+        anchor_emb = face_identity.embed_face(face_identity.read_image(anchor_path))
+        if anchor_emb is None:
+            return _failed_face_gate(f"No face detected in the Face Anchor {face_ref}", threshold=limit)
+        for shot in scene_plan.get("shots", []):
+            shot_id = str(shot.get("shot_id"))
+            role = str(getattr(shot.get("character_role"), "value", shot.get("character_role")) or "presenter").lower()
+            entry: Dict[str, Any] = {"shot_id": shot_id, "character_role": role}
+            shots.append(entry)
+            if role not in FACE_ROLES or shot.get("generation_mode") == "product_hero":
+                entry["status"] = "skipped"
+                continue
+            kf = keyframes.get(shot_id) or {}
+            kf_ref = kf.get("cleaned_image_path") or kf.get("image_path")
+            checks: Dict[str, Any] = {}
+            if kf_ref and Path(kf_ref).is_file():
+                checks["keyframe"] = face_identity.verify_shot_identity(anchor_emb, kf_ref, threshold=limit)
+            clip_path = _shot_clip(raw_clips, shot_id)
+            if clip_path is not None:
+                checks["clip"] = face_identity.verify_shot_identity(
+                    anchor_emb, clip_path, n_frames=n_frames, threshold=limit
+                )
+            entry["checks"] = checks
+            if not checks:
+                entry.update(status="unverified", reason="no keyframe or raw clip on disk")
+                continue
+            problems: List[str] = []
+            for label, result in checks.items():
+                if not result["face_found"]:
+                    if role in FACE_REQUIRED_ROLES:
+                        problems.append(f"{shot_id} {label}: no face found")
+                elif not result["passed"]:
+                    problems.append(
+                        f"{shot_id} {label}: similarity {result['similarity']:.3f} below threshold {limit:.3f}"
+                    )
+            entry["status"] = "failed" if problems else "passed"
+            errors.extend(problems)
+    except face_identity.FaceModelsUnavailable as exc:
+        return _unverified_face_gate(str(exc), threshold=limit)
+
+    checked = [s for s in shots if s["status"] in {"passed", "failed"}]
+    details = {
+        "status": "failed" if errors else ("verified" if checked else "unverified"),
+        "threshold": limit,
+        "face_anchor": str(face_ref),
+        "shots_checked": len(checked),
+        "shots_failed": sum(1 for s in shots if s["status"] == "failed"),
+        "shots": shots,
+    }
+    return GateVerificationResult(
+        gate_name="face_identity_gate",
+        passed=not errors,
+        details=details,
+        error_message="; ".join(errors) if errors else None,
+    )
+
+
 def verify_continuity_gate(script_path: str | Path, manifest_path: str | Path) -> GateVerificationResult:
     """Verifies scene continuity and timing alignment across all beats."""
     with open(script_path, "r", encoding="utf-8") as f:
@@ -824,6 +948,7 @@ def run_all_verification_gates(
             sorted(set(_audio_stage_tts_fallback_shots()) | set(silent_voice_stems(script_path, manifest_path))),
         ),
         lambda: speech_intelligibility_gate(target_artifacts_dir / "speech_report.json"),
+        lambda: verify_face_identity_gate(scene_plan_path, manifest_path),
     )
 
     all_gates: List[GateVerificationResult] = []

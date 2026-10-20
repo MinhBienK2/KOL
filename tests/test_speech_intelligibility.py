@@ -308,4 +308,4 @@ def test_failing_speech_gate_makes_master_failed_not_draft(tmp_path, monkeypatch
 
     assert report.overall_status == STATUS_FAILED
     assert len(report.verification_gates) == VERIFICATION_GATE_COUNT
-    assert report.verification_gates[-1].gate_name == "speech_intelligibility_gate"
+    assert any(g.gate_name == "speech_intelligibility_gate" and not g.passed for g in report.verification_gates)
