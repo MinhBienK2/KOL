@@ -16,13 +16,13 @@
   "target_duration": 30.0,
   "aspect_ratio": "9:16",
   "has_kol": true,
-  "kol_persona": "Minh Anh",
+  "kol_persona": "Mai Ly",
   "character_role": "presenter",
   "audio_strategy": "on_camera_speech",
   "creative_directives": [
     "Nhịp 1 (Hook): Bắt đầu bằng cận cảnh hơi nước nghi ngút và ngón tay chạm nắp LED sáng đèn",
     "Nhịp 2 (Pain): Phản chiếu không gian văn phòng làm việc bận rộn, cốc nước cũ nguội lạnh",
     "Nhịp 3 (USP): Trình diễn rót nước nóng khói bốc nhẹ, nắp hiển thị 65°C chính xác",
-    "Nhịp 4 (CTA): KOL Minh Anh nâng ly mỉm cười sảng khoái, kêu gọi nhấp link ưu đãi độc quyền"
+    "Nhịp 4 (CTA): KOL Mai Ly nâng ly mỉm cười sảng khoái, kêu gọi nhấp link ưu đãi độc quyền"
   ]
 }

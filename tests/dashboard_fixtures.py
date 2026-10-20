@@ -34,9 +34,9 @@ def _fake_audio(path: Path) -> Path:
 
 STORY_PROMPT = (
     "Framing: [WIDE_SHOT] with [24mm_wide] lens. Camera angle: [low_angle_15deg]. "
-    "Commercial fashion and lifestyle video featuring [KOL_MA] Minh Anh. "
+    "Commercial fashion and lifestyle video featuring [KOL_MAIN] Mai Ly. "
     "Wardrobe and styling: Wearing the featured fashion apparel item directly. "
-    "Visual acting action: [KOL_MA] walks toward camera. "
+    "Visual acting action: [KOL_MAIN] walks toward camera. "
     "Environment: Paris cafe terrace in soft daylight."
 )
 
@@ -97,7 +97,7 @@ def build_workspace_run(base_dir: Path, project_id: str = "campaign_demo", topic
                     "beat_type": "hook",
                     "spoken_text": "Đây là chiếc đầm khiến bạn nổi bật.",
                     "on_screen_text": "ĐẦM XÒE CHERRY",
-                    "visual_cue": "[KOL_MA] walks toward camera",
+                    "visual_cue": "[KOL_MAIN] walks toward camera",
                     "estimated_duration": 6.0,
                 }
             ],
@@ -116,7 +116,7 @@ def build_workspace_run(base_dir: Path, project_id: str = "campaign_demo", topic
                     "camera_motion": "truck",
                     "lighting": "editorial_fashion",
                     "style_constraints": "Fashion commercial aesthetic",
-                    "scene_description": "[KOL_MA] walks toward camera",
+                    "scene_description": "[KOL_MAIN] walks toward camera",
                     "prompt_6part": STORY_PROMPT,
                     "estimated_duration": 6.0,
                     "color_temp_kelvin": 5600,
@@ -293,7 +293,7 @@ def build_legacy_run(base_dir: Path, project_id: str = "campaign_legacy") -> Pat
                     "lighting": "studio_3point",
                     "style_constraints": "Cinematic photorealistic",
                     "scene_description": "Macro of the mug",
-                    "prompt_6part": "Generate a [9:16] aspect ratio cinematic commercial shot. Character: [KOL_MA].",
+                    "prompt_6part": "Generate a [9:16] aspect ratio cinematic commercial shot. Character: [KOL_MAIN].",
                     "estimated_duration": 5.0,
                 }
             ],

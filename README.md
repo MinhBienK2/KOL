@@ -59,7 +59,7 @@ Mọi cờ dưới đây đều tuỳ chọn; không truyền thì pipeline ch�
 | `--beats PATH.json` | 2 | Danh sách beat do agent viết, truyền `generate_commercial_script(beats=..., strict=True)` |
 | `--shot-overrides PATH.json` | 3 | Ghi đè từng shot cho `generate_scene_plan(shot_overrides=...)` |
 | `--references PATH.json` | 4 | `reference_overrides` cho `generate_clean_keyframes` |
-| `--character PATH_OR_ID` | 3, 4 | File/thư mục `character.json` hoặc persona id trong `assets/characters/` (vd `kol_minhanh`) |
+| `--character PATH_OR_ID` | 3, 4 | File/thư mục `character.json` hoặc persona id trong `assets/characters/` (vd `kol_main`) |
 | `--strict-resolution` | 4 | Lỗi thay vì chấp nhận reference độ phân giải thấp |
 | `--strict-tts` | 6 | Lỗi thay vì rơi về giọng TTS suy giảm |
 | `--transitions PATH.json` | 7 | Mỗi mối nối một `{"type", "duration"}` (hoặc tên transition); mặc định đọc trường `transition` của từng beat trong `script.json` (transition của beat là mối nối SAU beat đó) |
@@ -180,7 +180,7 @@ KOL/
 │                   ├── keyframes/             # Ảnh First Frame 9:16 sạch đã khử watermark
 │                   ├── media/                 # raw_clips/, synced_clips/, audio/
 │                   └── telemetry/             # state.json & events.jsonl
-├── assets/characters/{persona_id}/  # kol_main (Mai Ly), kol_minhanh (Minh Anh)
+├── assets/characters/{persona_id}/  # kol_main (Mai Ly)
 │   ├── character.json               # Hồ sơ nhân vật; mỗi identity = 1 trang phục
 │   ├── portrait.png                 # Face Anchor
 │   └── outfits/{outfit_id}.png      # 1 character sheet cho mỗi trang phục (ADR 0008)

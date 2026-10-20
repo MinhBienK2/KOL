@@ -47,7 +47,7 @@ def _stream_durations(path: Path) -> dict:
 def test_synthesize_tts_and_align_lipsync(tmp_path: Path):
     stem_path = tmp_path / "test_voice.wav"
     audio_path, duration = synthesize_tts_stem(
-        text="Xin chào các bạn, tôi là Minh Anh.",
+        text="Xin chào các bạn, tôi là Mai Ly.",
         output_wav_path=stem_path,
     )
     assert Path(audio_path).exists()

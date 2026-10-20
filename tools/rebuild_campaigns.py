@@ -27,7 +27,7 @@ from pipeline.storyboard import generate_scene_plan
 
 CAMPAIGNS = [
     {
-        "campaign_id": "campaign_blazer_minhanh_master",
+        "campaign_id": "campaign_blazer_master",
         "archetype": ProductArchetype.FASHION_APPAREL,
         "product_name": "Áo Khoác Blazer Nữ Form Rộng Phong Cách Hàn Quốc Vải Tuyết Mưa",
         "category": "fashion_apparel",

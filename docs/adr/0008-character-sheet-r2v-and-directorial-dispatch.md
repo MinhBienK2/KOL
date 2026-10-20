@@ -25,7 +25,7 @@ Commercial TVC production requires consistent character identity across disparat
    - **Pre-flight Gate**: Verifies asset completeness, minimum resolution (>= 1080p / 2K), and dual-anchor integrity before initiating diffusion jobs, preventing API credit waste.
    - **Post-flight Gate (Stage 8)**: Audits telemetry prompt ledgers to guarantee 100% character shot anchor binding and 0% product shot leakage.
 5. **Multi-Character Architecture**:
-   - Establish `kol_main` as the primary flagship KOL based on the Warmly Lit Bob Portrait identity, while preserving `kol_minhanh` as a secondary selectable persona in `PERSONA_CATALOG`.
+   - Establish `kol_main` (Mai Ly) as the primary flagship KOL based on the Warmly Lit Bob Portrait identity across all production campaigns.
 
 ## Consequences
 - Character shots achieve full kinetic freedom for model shots while maintaining absolute facial stability for presenter lip-sync.

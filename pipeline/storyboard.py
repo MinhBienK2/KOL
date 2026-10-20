@@ -92,7 +92,7 @@ def generate_scene_plan(
     """Generates the cinematic scene plan artifact.
 
     The KOL that drives identity/wardrobe prompts is chosen by, in order: ``persona`` (a
-    ``CharacterPersona`` or a PERSONA_CATALOG id such as "kol_minhanh"), an explicitly
+    ``CharacterPersona`` or a PERSONA_CATALOG id such as "kol_main"), an explicitly
     passed ``character_path`` (a character.json, whose directory name becomes the persona
     id), else the archetype default.
 
@@ -127,7 +127,7 @@ def generate_scene_plan(
     elif character_path is not None:
         explicit_persona = DynamicPromptBuilder.persona_from_character_file(char_file, script.archetype)
 
-    char_tag = explicit_persona.character_tag if explicit_persona else char_data.get("character_tag", "[KOL_MA]")
+    char_tag = explicit_persona.character_tag if explicit_persona else char_data.get("character_tag", "[KOL_MAIN]")
     face_prompt = explicit_persona.base_face_prompt if explicit_persona else char_data.get("face_prompt", "")
     identity_lock = f"Same character, consistent facial structure, {face_prompt}"
     style_pos = "cinematic photorealistic, modern minimalist office, high-end commercial aesthetic, studio softbox lighting, 8k, tack sharp focus, clean background"

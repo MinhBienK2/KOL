@@ -10,7 +10,7 @@ from pipeline.schemas import ScenePlanArtifact
 def test_build_6part_prompt():
     prompt = build_6part_prompt(
         aspect_ratio="9:16",
-        character_tag="[KOL_MA]",
+        character_tag="[KOL_MAIN]",
         identity_lock="lock_directive",
         style_positive="clean, studio",
         style_negative="blurry",
@@ -18,7 +18,7 @@ def test_build_6part_prompt():
         camera_choreography="slow push",
     )
     assert "[9:16]" in prompt
-    assert "[KOL_MA]" in prompt
+    assert "[KOL_MAIN]" in prompt
     assert "lock_directive" in prompt
     assert "clean, studio" in prompt
     assert "blurry" in prompt
@@ -34,7 +34,7 @@ def test_generate_scene_plan(tmp_path: Path):
     assert plan.campaign_id == script.campaign_id
     assert len(plan.shots) == 4
     for shot in plan.shots:
-        assert shot.character_tag in ("[KOL_MAIN]", "[KOL_MA]")
+        assert shot.character_tag == "[KOL_MAIN]"
         assert shot.prompt_6part.startswith("Generate a [9:16]")
         assert shot.estimated_duration > 0
 

@@ -83,6 +83,7 @@ def test_character_role_prompt_suppression():
         scene_action="Tactile unboxing, peeling protective matte film",
     )
     # Character tag and face description must be omitted
+    assert "[KOL_MAIN]" not in prompt_prod
     assert "[KOL_MA]" not in prompt_prod
     assert "Vietnamese young woman" not in prompt_prod
     assert "zero character face" in prompt_prod

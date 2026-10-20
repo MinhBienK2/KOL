@@ -17,7 +17,7 @@ Bạn là **Tổng Đạo Diễn AI (Executive AI Director & Commercial Producti
    - Chi tiết hóa từng shot (Framing, Angle, Camera Choreography, Lighting, Overlays) theo công thức 6 lớp DramaClaw.
    - Artifact: `artifacts/scene_plan.json` và `storyboard_contact_sheet.jpg`.
 4. **Stage 4 (Khóa Danh Tính KOL & Tạo Keyframe Đầu):**
-   - Khóa nhân vật `Minh Anh` từ `assets/characters/kol_main/`, sinh First Frame cho từng shot, tẩy sạch watermark AI bằng thuật toán OpenCV Telea Inpainting.
+   - Khóa nhân vật `Mai Ly` từ `assets/characters/kol_main/`, sinh First Frame cho từng shot, tẩy sạch watermark AI bằng thuật toán OpenCV Telea Inpainting.
    - Artifact: `artifacts/asset_manifest.json` và `artifacts/identity_preflight.json`.
 5. **Stage 5 (Render Video Phân Đoạn I2V MiniMax Hailuo-2.3):**
    - Đưa Keyframe đã khử watermark vào MiniMax Hailuo I2V, áp dụng camera choreography mượt mà, render video thô từng shot.

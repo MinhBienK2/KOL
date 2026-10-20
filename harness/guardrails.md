@@ -15,7 +15,7 @@
 ## 3. RÀNG BUỘC CHẤT LƯỢNG THỊ GIÁC & TÍNH LIỀN MẠCH (VISUAL CONTINUITY)
 - **Zero Black Frames:** Cấm xuất hiện đoạn khung hình đen kéo dài quá 1.0 giây.
 - **No Frozen Holds:** Không được có phân cảnh đứng yên liên tục >= 2.0s hoặc tổng thời lượng đứng hình vượt quá 20% video.
-- **Character Identity Consistency:** Cấu trúc khuôn mặt, kiểu tóc, màu da của KOL `Minh Anh` phải đồng nhất xuyên suốt giữa shot đầu và shot cuối.
+- **Character Identity Consistency:** Cấu trúc khuôn mặt, kiểu tóc, màu da của KOL `Mai Ly` (`kol_main`) phải đồng nhất xuyên suốt giữa shot đầu và shot cuối.
 - **Slideshow Risk Gate:** Bắt buộc sử dụng động từ hành động thị giác mạnh mẽ trong prompt; loại bỏ triệt để cảm giác ảnh tĩnh zoom lướt kiểu slideshow.
 
 ## 4. BỘ 8 CỔNG KIỂM ĐỊNH NGHIỆM THU ĐỘC LẬP (VERIFICATION GATES - ADR 0004)

@@ -133,8 +133,8 @@ def test_keyframe_direction_passed(tmp_path, stages):
 
 
 def test_character_persona_id_resolves_under_assets():
-    resolved = pdirector.resolve_character_path("kol_minhanh")
-    assert resolved == pdirector.BASE_DIR / "assets" / "characters" / "kol_minhanh" / "character.json"
+    resolved = pdirector.resolve_character_path("kol_main")
+    assert resolved == pdirector.BASE_DIR / "assets" / "characters" / "kol_main" / "character.json"
     with pytest.raises(FileNotFoundError):
         pdirector.resolve_character_path("no_such_persona_xyz")
 

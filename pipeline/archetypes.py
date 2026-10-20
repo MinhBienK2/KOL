@@ -7,7 +7,7 @@ This module defines:
 1. ProductArchetype matrix (Fashion, Tech, Beauty, Home, General Commercial)
 2. CharacterRole triad (Presenter vs Model vs Product-Only) & Dynamic Routing
 3. AudioStrategy & Cinematography vocabularies (Choreography, Lighting, Spatial Staging)
-4. Dynamic Character Persona & Wardrobe Adaptation (No hardcoded "Minh Anh mug")
+4. Dynamic Character Persona & Wardrobe Adaptation (Data-driven persona and wardrobe)
 5. Pre-configured high-conversion beat formulas per archetype
 """
 
@@ -729,28 +729,6 @@ PERSONA_CATALOG: Dict[str, CharacterPersona] = {
             ProductArchetype.FASHION_APPAREL,
         ],
     ),
-    "kol_minhanh": CharacterPersona(
-        persona_id="kol_minhanh",
-        name="Minh Anh",
-        character_tag="[KOL_MINHANH]",
-        gender="female",
-        ethnicity="Vietnamese",
-        age_group="young adult 22-26",
-        body_type="Slim, elegant posture, 165cm",
-        base_face_prompt=(
-            "Vietnamese young woman, early 20s, refined oval face shape, natural straight black "
-            "collarbone-length bob hair, neat center-part, soft double eyelids, gentle dark brown "
-            "almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin"
-        ),
-        character_file="assets/characters/kol_minhanh/character.json",
-        supported_archetypes=[
-            ProductArchetype.TECH_GADGETS,
-            ProductArchetype.HOME_LIFESTYLE,
-            ProductArchetype.GENERAL_COMMERCIAL,
-            ProductArchetype.BEAUTY_SKINCARE,
-            ProductArchetype.FASHION_APPAREL,
-        ],
-    ),
     "model_fashion": CharacterPersona(
         persona_id="model_fashion",
         name="Linh Dan",
@@ -836,7 +814,7 @@ WARDROBE_RULES: Dict[ProductArchetype, ContextualWardrobeRule] = {
 
 
 class DynamicPromptBuilder:
-    """Dynamically builds video diffusion prompts, avoiding hardcoded 'Minh Anh mug' artifacts."""
+    """Dynamically builds video diffusion prompts with contextual character and wardrobe assets."""
 
     @staticmethod
     def resolve_persona(
@@ -848,7 +826,7 @@ class DynamicPromptBuilder:
             return requested_persona_id
         if requested_persona_id and requested_persona_id in PERSONA_CATALOG:
             return PERSONA_CATALOG[requested_persona_id]
-        # Canonical repository KOL is Minh Anh ([KOL_MA]) across all advertising campaigns
+        # Canonical repository KOL is kol_main ([KOL_MAIN]) across all advertising campaigns
         return PERSONA_CATALOG["kol_main"]
 
     @staticmethod

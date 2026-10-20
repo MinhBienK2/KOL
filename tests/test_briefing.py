@@ -14,7 +14,8 @@ def test_create_product_brief(tmp_path: Path):
     assert brief.product_name == "Test Product"
     assert len(brief.pain_points) == 3
     assert len(brief.usps) == 3
-    assert brief.presenter.character_tag in ("[KOL_MAIN]", "[KOL_MA]")
+    assert brief.presenter.character_tag == "[KOL_MAIN]"
+    assert brief.presenter.name == "Mai Ly"
 
     # Verify file written
     out_file = tmp_path / "brief.json"
