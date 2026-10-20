@@ -24,6 +24,7 @@ if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
 from pipeline import telemetry  # noqa: E402  (import after the sys.path bootstrap)
+from pipeline.config import MINIMAX_API_KEY, MINIMAX_BASE_URL, ConfigurationError  # noqa: E402
 from pipeline.offline import (  # noqa: E402
     OfflineNetworkError,
     guard_network,
@@ -31,8 +32,7 @@ from pipeline.offline import (  # noqa: E402
     guarded_urlretrieve,
 )
 
-API_BASE_URL = os.environ.get("MINIMAX_BASE_URL", "https://aiapi.2tocom.space")
-API_KEY = os.environ.get("MINIMAX_API_KEY", "sk-cu-hr7Y6QZPkzksXlfn74J4yeF_xmL9Rlubf_tAhD4Sgfw")
+API_BASE_URL = MINIMAX_BASE_URL
 
 #: MiniMax ``base_resp.status_code`` values that retrying can never fix (and that would
 #: burn paid submissions): auth, balance, sensitive prompt/output, invalid parameters.
@@ -67,7 +67,7 @@ class VideoAPIError(RuntimeError):
 
 def is_retryable_error(exc: BaseException) -> bool:
     """True when ``exc`` is worth another (paid) attempt: transient network/server/rate-limit faults."""
-    if isinstance(exc, OfflineNetworkError):
+    if isinstance(exc, (OfflineNetworkError, ConfigurationError)):
         return False
     if isinstance(exc, VideoAPIError):
         return exc.retryable
@@ -134,7 +134,7 @@ def upload_first_frame(image_path: str | Path) -> str:
         data=bytes(body),
         headers={
             "User-Agent": "Mozilla/5.0",
-            "Authorization": f"Bearer {API_KEY}",
+            "Authorization": f"Bearer {MINIMAX_API_KEY}",
             "Content-Type": f"multipart/form-data; boundary={boundary}",
         },
     )
@@ -194,7 +194,7 @@ def submit_video_job(
         data=json.dumps(payload).encode("utf-8"),
         headers={
             "User-Agent": "Mozilla/5.0",
-            "Authorization": f"Bearer {API_KEY}",
+            "Authorization": f"Bearer {MINIMAX_API_KEY}",
             "Content-Type": "application/json",
         },
     )
@@ -253,7 +253,7 @@ def poll_and_download_video(
     poll_url = f"{API_BASE_URL.rstrip('/')}/v1/media/video/{task_id}"
     headers = {
         "User-Agent": "Mozilla/5.0",
-        "Authorization": f"Bearer {API_KEY}",
+        "Authorization": f"Bearer {MINIMAX_API_KEY}",
     }
 
     start = time.time()

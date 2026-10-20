@@ -8,6 +8,11 @@ used because this conftest is not the top-level one).
 
 from __future__ import annotations
 
+import os
+
+# Hermetic: never load a developer's real .env (and its API keys) into the test process.
+os.environ["KOL_ENV_FILE"] = os.devnull
+
 from tests.dashboard_fixtures import run_tree  # noqa: F401  (re-exported fixture)
 
 
@@ -27,3 +32,9 @@ def _no_real_llm_provider(monkeypatch, tmp_path_factory):
     monkeypatch.setenv("LLM_BASE_URL", "http://127.0.0.1:9/v1")
     for var in ("ROUTER_URL", "LLM_API_KEY", "ROUTER_API_KEY", "LLM_MODEL", "RESEARCH_MODEL", "LLM_PROVIDER"):
         monkeypatch.delenv(var, raising=False)
+
+
+@pytest.fixture(autouse=True)
+def _dummy_minimax_key(monkeypatch):
+    """A fake key so mocked-API tests pass the configuration check; tests of the missing-key path delenv it."""
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-minimax-key")

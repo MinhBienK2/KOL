@@ -22,3 +22,5 @@ projects/**/*.png
 !projects/**/artifacts/
 !projects/**/telemetry/
 .venv/
+# Local secrets (see .env.example)
+.env

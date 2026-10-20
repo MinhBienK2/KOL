@@ -7,8 +7,12 @@ Agent contract
 * Exit codes: 0 success, 1 a stage failed, 2 invalid input / unmet prerequisites,
   3 the Stage 8 Verification Gates rejected the master (media exists, regenerate and re-verify),
   4 paused by ``--pause-after-stage N`` (human checkpoint; resume with ``--from-stage N+1``).
+* Paid-call estimate: before stage 5/6 the plan (new video jobs, TTS calls, generated seconds, optional
+  cost from ``KOL_UNIT_COSTS``) is printed and returned as ``estimate`` (also in ``--check`` and run_result.json).
+  ``--max-video-jobs N`` aborts with exit 2 / status ``budget_exceeded`` before any submit if exceeded.
+  A missing ``MINIMAX_API_KEY`` for a paid plan is exit 2 with ``error_code: missing_api_key`` (offline needs none).
 * Every executed run also saves the same result object as ``run_result.json`` in the run workspace;
-  its ``status`` is completed | failed | verification_failed | paused | invalid | checked.
+  its ``status`` is completed | failed | verification_failed | paused | invalid | budget_exceeded | checked.
 * Agent direction flags (all optional): ``--beats``, ``--shot-overrides``, ``--references``,
   ``--character``, ``--strict-resolution``, ``--strict-tts``, ``--transitions``, ``--offline``.
 * ``--inject NAME=PATH`` installs a validated canonical artifact (brief, script, scene_plan,
@@ -30,6 +34,7 @@ from typing import Any, Optional
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from pipeline.archetypes import ProductArchetype, detect_product_archetype
+from pipeline.cost import estimate_for_workspace
 from pipeline.director import load_json_arg, resolve_character_path, run_pipeline
 from pipeline.workspace import ProjectWorkspace, first_stage_after
 
@@ -136,6 +141,10 @@ def build_parser() -> argparse.ArgumentParser:
                              "resume with --from-stage N+1")
     direct.add_argument("--offline", action="store_true",
                         help="No network: sets KOL_OFFLINE=1 and forces --video-mode ffmpeg")
+    direct.add_argument("--max-video-jobs", type=int, default=None, metavar="N",
+                        help="Budget cap: abort (exit 2, status 'budget_exceeded') BEFORE any paid submit if stage 5 "
+                             "would need more than N new video jobs (cached shots are free). Default: no cap; the "
+                             "estimate is always printed and recorded")
     parser.add_argument(
         "--version",
         default=None,
@@ -232,6 +241,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.check and (args.inject or args.new_version):
         parser.error("--check is read-only and cannot be combined with --inject or --new-version")
+    if args.max_video_jobs is not None and args.max_video_jobs < 0:
+        parser.error("--max-video-jobs must be >= 0")
     if args.offline:
         os.environ["KOL_OFFLINE"] = "1"
         args.video_mode = "ffmpeg"
@@ -306,6 +317,10 @@ def main(argv: list[str] | None = None) -> int:
     stages_to_run = list(range(from_stage, LAST_STAGE + 1))
 
     if args.check:
+        estimate = estimate_for_workspace(workspace, args.video_mode, stages_to_run)
+        planned = estimate.get("video_jobs")
+        if args.max_video_jobs is not None and planned is not None and 5 in stages_to_run and planned > args.max_video_jobs:
+            problems = [*problems, f"plan needs {planned} new video job(s), over --max-video-jobs {args.max_video_jobs}"]
         ok = not problems
         result = _res(
             workspace,
@@ -316,6 +331,8 @@ def main(argv: list[str] | None = None) -> int:
             status="checked" if ok else "invalid",
             stages_to_run=stages_to_run,
             problems=problems,
+            estimate=estimate,
+            max_video_jobs=args.max_video_jobs,
             error=None if ok else "; ".join(problems),
         )
         return _emit(result, args.json)
@@ -359,14 +376,31 @@ def main(argv: list[str] | None = None) -> int:
             transitions=transitions,
             strict_tts=args.strict_tts,
             pause_after_stage=args.pause_after_stage,
+            max_video_jobs=args.max_video_jobs,
             result=run_status,
         )
 
     def _finish(result: dict[str, Any]) -> int:
         if run_status.get("last_completed_stage") is not None:
             result["last_completed_stage"] = run_status["last_completed_stage"]
+        if run_status.get("estimate") is not None:
+            result["estimate"] = run_status["estimate"]
         _persist(result, workspace)
         return _emit(result, args.json)
+
+    if run_status.get("status") in ("budget_exceeded", "config_error"):
+        return _finish(_res(
+            workspace,
+            from_stage,
+            False,
+            EXIT_INVALID_INPUT,
+            status=run_status["status"] if run_status["status"] == "budget_exceeded" else "invalid",
+            error=run_status.get("error"),
+            error_code=run_status.get("error_code"),
+            max_video_jobs=run_status.get("max_video_jobs"),
+            next_stage=run_status.get("next_stage"),
+            resume_hint=run_status.get("resume_hint"),
+        ))
 
     if run_status.get("status") == "paused":
         stage = run_status.get("paused_after_stage")

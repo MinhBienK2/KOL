@@ -26,9 +26,11 @@ from pipeline.video_engine import render_all_video_clips
 from pipeline.audio_lip_sync import produce_all_audio_and_lip_sync
 from pipeline.composer import compose_master_commercial
 from pipeline.verification import VERIFICATION_GATE_COUNT, run_all_verification_gates
-from pipeline.config import ARTIFACTS_DIR, OUTPUT_DIR, RAW_CLIPS_DIR, SYNCED_CLIPS_DIR, AUDIO_DIR, KEYFRAMES_DIR, BASE_DIR
+from pipeline.cost import estimate_for_workspace, format_estimate, unavailable_estimate
+from pipeline.config import MINIMAX_API_KEY, ARTIFACTS_DIR, OUTPUT_DIR, RAW_CLIPS_DIR, SYNCED_CLIPS_DIR, AUDIO_DIR, KEYFRAMES_DIR, BASE_DIR
 
 LAST_PAUSABLE_STAGE = 7
+LAST_STAGE = 8
 
 
 class StageCapabilityError(RuntimeError):
@@ -142,6 +144,7 @@ def run_pipeline(
     pause_after_stage: Optional[int] = None,
     result: Optional[dict] = None,
     archetype_source: Optional[str] = None,
+    max_video_jobs: Optional[int] = None,
     **kwargs: Any,
 ) -> bool:
     """Executes the complete 8-stage commercial production pipeline.
@@ -154,6 +157,9 @@ def run_pipeline(
     "paused"``); resume with ``resume_from_stage=N+1``.  ``result`` (if given) is filled with the
     status dict (``status``, ``last_completed_stage``, ``paused_after_stage``, ``next_stage``, ``failed_stage``)
     that tools/director.py merges into its single machine-readable result (also saved as run_result.json).
+    Before any paid call (stages 5-6) the plan of paid generation is estimated (see ``pipeline.cost``),
+    printed, recorded in telemetry and ``result["estimate"]``; ``max_video_jobs`` aborts the run (status
+    ``budget_exceeded``, before any submit) when the plan needs more new video jobs than that.
     """
     start_time = time.time()
     beats = load_json_arg(beats, "beats")
@@ -258,6 +264,7 @@ def run_pipeline(
     running_stage: int = 0
     last_stage_done: int = 0
     failed_stage: Optional[int] = None
+    paid_estimate: Optional[dict] = None
 
     def _safe_len(value: Any) -> int:
         """Length of a stage output, tolerating objects that do not support ``len()``."""
@@ -329,6 +336,8 @@ def run_pipeline(
                 "archetype_source": archetype_source,
                 **extra,
             }
+            if paid_estimate is not None:
+                payload["estimate"] = paid_estimate
             if result is not None:
                 result.clear()
                 result.update(payload)
@@ -475,6 +484,53 @@ def run_pipeline(
 
             if resume_from_stage <= 4 and _pause_check(4):
                 return False
+
+            # Paid-generation estimate + budget cap: computed before the first paid call (stage 5 / 6).
+            if resume_from_stage <= 6:
+                last_stage = int(pause_after_stage) if pause_after_stage is not None else LAST_STAGE
+                paid_stages = [n for n in range(resume_from_stage, last_stage + 1)]
+                try:
+                    paid_estimate = estimate_for_workspace(workspace, video_mode, paid_stages)
+                except Exception as exc:  # an unreadable artifact must not kill an uncapped run
+                    paid_estimate = unavailable_estimate(f"estimate failed: {exc}")
+                print(f"[Director] {format_estimate(paid_estimate)}")
+                telemetry.note(format_estimate(paid_estimate), estimate=paid_estimate)
+                with recorder._lock:
+                    recorder.state["run_meta"]["paid_estimate"] = paid_estimate
+                recorder.flush()
+                if paid_estimate.get("paid_calls") and not MINIMAX_API_KEY:
+                    error = (
+                        f"Configuration error: {len(paid_stages)} paid stage(s) planned "
+                        f"({paid_estimate['video_jobs']} video job(s), {paid_estimate['tts_calls']} TTS call(s)) but "
+                        f"MINIMAX_API_KEY is not set. Export it or put it in .env (see .env.example), or run --offline."
+                    )
+                    print(f"[DIRECTOR ERROR] {error}", file=sys.stderr)
+                    recorder.finish_run(False, summary=error, elapsed_seconds=round(time.time() - start_time, 2))
+                    _emit_result("config_error", False, error=error, error_code="missing_api_key",
+                                 next_stage=resume_from_stage, resume_hint=f"--from-stage {resume_from_stage}")
+                    return False
+                if max_video_jobs is not None and 5 in paid_stages:
+                    planned = paid_estimate.get("video_jobs")
+                    if planned is None or planned > max_video_jobs:
+                        reason = (
+                            f"cannot verify the video job count ({paid_estimate.get('reason')})"
+                            if planned is None
+                            else f"plan needs {planned} new video job(s), over --max-video-jobs {max_video_jobs}"
+                        )
+                        error = f"Budget cap: {reason}. No paid call was made; raise the cap and resume with --from-stage 5."
+                        print(f"[DIRECTOR ERROR] {error}", file=sys.stderr)
+                        workspace.update_project_meta(last_status="budget_exceeded")
+                        recorder.finish_run(
+                            False,
+                            summary=error,
+                            elapsed_seconds=round(time.time() - start_time, 2),
+                            failed_stage=None,
+                        )
+                        _emit_result(
+                            "budget_exceeded", False, error=error, error_code="max_video_jobs_exceeded",
+                            max_video_jobs=max_video_jobs, next_stage=5, resume_hint="--from-stage 5",
+                        )
+                        return False
 
             # Step 5: Video Generation (pipeline.video_engine owns the stage-5 completion).
             if resume_from_stage <= 5:

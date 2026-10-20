@@ -703,6 +703,54 @@ def _upload_and_submit(req: ClipRequest, out_p: Path, fingerprint: str) -> str:
     return str(task_id)
 
 
+def _shot_request_kwargs(shot: StoryboardShot, kf: Any) -> Dict[str, Any]:
+    """The ``build_clip_request`` arguments for ``shot`` (shared by rendering and cost estimation)."""
+    return dict(
+        image_path=kf.cleaned_image_path if kf else None,
+        duration=shot.estimated_duration,
+        aspect_ratio=DEFAULT_ASPECT_RATIO,
+        model=DEFAULT_VIDEO_MODEL,
+        generation_mode=getattr(kf, "generation_mode", None),
+        reference_assets=getattr(kf, "reference_assets", None),
+        resolution=DEFAULT_RESOLUTION,
+    )
+
+
+def plan_video_jobs(
+    scene_plan: ScenePlanArtifact,
+    manifest: AssetManifestArtifact,
+    raw_clips_dir: Path,
+) -> List[Dict[str, Any]]:
+    """Per-shot plan of Stage 5's paid submissions, with no network access and no writes.
+
+    Mirrors :func:`render_all_video_clips` in ``api`` mode: a shot whose clip is a valid cache
+    ``hit``/``legacy`` is free; ``miss``/``stale`` (or a request that cannot be built yet) would
+    submit a paid job. Each entry: ``shot_id``, ``cache``, ``submit``, ``model``, ``mode``,
+    ``duration`` (seconds the API will generate), ``resolution``.
+    """
+    keyframes_by_shot = {kf.shot_id: kf for kf in manifest.keyframes}
+    plan: List[Dict[str, Any]] = []
+    for shot in scene_plan.shots:
+        kwargs = _shot_request_kwargs(shot, keyframes_by_shot.get(shot.shot_id))
+        try:
+            request = build_clip_request(shot.shot_id, shot.prompt_6part, **kwargs)
+        except VideoGenerationError:
+            request = None  # would fail loudly in Stage 5; counted as a submission at the default spec
+        clip = Path(raw_clips_dir) / f"{shot.shot_id}.mp4"
+        # A placeholder clip is never reused as diffusion output, so it counts as a miss.
+        cache = "miss" if (request is None or is_placeholder_clip(clip)) else clip_cache_status(clip, request.fingerprint)
+        plan.append({
+            "shot_id": shot.shot_id,
+            "cache": cache,
+            "submit": cache not in ("hit", "legacy"),
+            "model": request.model if request else kwargs["model"],
+            "mode": request.mode if request else ("I2V" if kwargs["image_path"] else "T2V"),
+            "duration": request.duration if request else normalize_duration(shot.estimated_duration, kwargs["resolution"]),
+            "resolution": kwargs["resolution"],
+        })
+    return plan
+
+
 def render_all_video_clips(
     scene_plan: ScenePlanArtifact | None = None,
     manifest: AssetManifestArtifact | None = None,
@@ -790,8 +838,6 @@ def render_all_video_clips(
             _meta_path(out_clip_path).unlink(missing_ok=True)
         kf = keyframes_by_shot.get(shot.shot_id)
         kf_image_path = kf.cleaned_image_path if kf else None
-        kf_mode = getattr(kf, "generation_mode", None)
-        kf_refs = getattr(kf, "reference_assets", None)
         if local:
             if out_clip_path.exists() and verify_generated_clip(out_clip_path):
                 # A real (non-placeholder) clip is free to reuse; never overwrite paid output.
@@ -829,15 +875,7 @@ def render_all_video_clips(
                 advance=True,
             )
             return shot.shot_id, clip_path
-        request_kwargs = dict(
-            image_path=kf_image_path,
-            duration=shot.estimated_duration,
-            aspect_ratio=DEFAULT_ASPECT_RATIO,
-            model=DEFAULT_VIDEO_MODEL,
-            generation_mode=kf_mode,
-            reference_assets=kf_refs,
-            resolution=DEFAULT_RESOLUTION,
-        )
+        request_kwargs = _shot_request_kwargs(shot, kf)
         try:
             request = build_clip_request(shot.shot_id, shot.prompt_6part, **request_kwargs)
         except VideoGenerationError:
