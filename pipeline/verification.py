@@ -56,8 +56,8 @@ STATUS_DRAFT = "DRAFT"
 PLACEHOLDER_GATE_NAME = "prompt_ledger_audit_gate"
 
 # technical, media quality, character sheet integrity, character consistency, continuity, slideshow risk,
-# identity pre-flight audit, prompt ledger audit
-VERIFICATION_GATE_COUNT = 8
+# identity pre-flight audit, prompt ledger audit, speech intelligibility
+VERIFICATION_GATE_COUNT = 9
 
 
 def _ensure_stage_started(total: int) -> None:
@@ -589,6 +589,65 @@ def verify_identity_preflight_gate(preflight_path: str | Path) -> GateVerificati
     )
 
 
+def speech_intelligibility_gate(speech_report_path: str | Path) -> GateVerificationResult:
+    """Audit stage 6's ``speech_report.json`` (ASR round-trip of each neural voice stem vs the script).
+
+    Fails when any shot with ``status == "verified"`` has ``ok == false`` (the voiceover does not say
+    what the script says, CER above the report's threshold) or when the report is unreadable. A missing
+    report, or shots that are ``unverified``/``skipped`` (ASR unavailable, placeholder stems), pass with
+    a warning: the check is evidence, absence of evidence is surfaced but does not block release.
+    """
+    gate_name = "speech_intelligibility_gate"
+    path = Path(speech_report_path)
+    if not path.is_file():
+        return GateVerificationResult(
+            gate_name=gate_name,
+            passed=True,
+            details={"found": False, "warnings": [f"speech_report.json not found at {path}; speech unverified"]},
+        )
+    try:
+        report = json.loads(path.read_text(encoding="utf-8"))
+        shots = report["shots"]
+        if not isinstance(shots, list) or not all(isinstance(s, dict) for s in shots):
+            raise ValueError("'shots' is not a list of objects")
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        return GateVerificationResult(
+            gate_name=gate_name,
+            passed=False,
+            details={"found": True},
+            error_message=f"speech_report.json unreadable: {exc}",
+        )
+
+    verified = [s for s in shots if s.get("status") == "verified"]
+    failed = [s for s in verified if not s.get("ok")]
+    unverified = [str(s.get("shot_id", "?")) for s in shots if s.get("status") == "unverified"]
+    warnings: List[str] = []
+    if unverified:
+        warnings.append("speech unverified (ASR unavailable): " + ", ".join(unverified))
+    if not verified and not unverified and shots:
+        warnings.append("no voice stem was verified (placeholders or verification disabled)")
+    details = {
+        "found": True,
+        "threshold": report.get("threshold"),
+        "verified_shots": [str(s.get("shot_id", "?")) for s in verified],
+        "unverified_shots": unverified,
+        "failed_shots": [
+            {"shot_id": s.get("shot_id"), "cer": s.get("cer"), "expected": s.get("expected"), "transcript": s.get("transcript")}
+            for s in failed
+        ],
+        "warnings": warnings,
+    }
+    if failed:
+        labels = ", ".join(f"{s.get('shot_id', '?')} (CER {s.get('cer')})" for s in failed)
+        return GateVerificationResult(
+            gate_name=gate_name,
+            passed=False,
+            details=details,
+            error_message=f"Voiceover does not match the script (speech unintelligible): {labels}",
+        )
+    return GateVerificationResult(gate_name=gate_name, passed=True, details=details)
+
+
 def _load_json_file(path: Path) -> Any:
     try:
         return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else None
@@ -764,6 +823,7 @@ def run_all_verification_gates(
             load_run_ledger(target_artifacts_dir, workspace),
             sorted(set(_audio_stage_tts_fallback_shots()) | set(silent_voice_stems(script_path, manifest_path))),
         ),
+        lambda: speech_intelligibility_gate(target_artifacts_dir / "speech_report.json"),
     )
 
     all_gates: List[GateVerificationResult] = []

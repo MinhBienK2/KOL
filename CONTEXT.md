@@ -180,3 +180,7 @@ _Avoid_: Clip padding, freeze-frame fill, tpad
 **Draft Master**:
 A complete master whose only failing gate is the Prompt Ledger Audit Gate, meaning it contains placeholders (a degraded generation mode, a local ffmpeg stand-in or silent TTS fallback). Reported as `overall_status: DRAFT`: watchable as a preview, never published.
 _Avoid_: Partial pass, soft fail, warning-only release
+
+**Speech Intelligibility Gate**:
+A verification gate over stage 6's `speech_report.json`: each real neural voice stem is transcribed (ASR, `whisper-1`) and compared with the scripted spoken text by character error rate (primary metric for Vietnamese, threshold 0.35). Any verified shot above the threshold fails the master (`FAILED`, not `DRAFT`); a missing report or unverified shots (ASR unavailable, placeholder stems) only warn.
+_Avoid_: Trusting TTS output blindly, word-error-rate for Vietnamese, failing stage 6 on ASR outages

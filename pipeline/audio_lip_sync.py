@@ -13,7 +13,7 @@ from typing import List, Optional, Tuple
 
 from pydantic import BaseModel
 
-from pipeline import telemetry
+from pipeline import asr, telemetry
 from pipeline.config import (
     AUDIO_DIR,
     ARTIFACTS_DIR,
@@ -359,6 +359,70 @@ def _profile_stem_speech(shot_id: str, stem_path: Path, *, has_spoken_text: bool
     return prof
 
 
+SPEECH_REPORT_FILENAME = "speech_report.json"
+
+
+def _verify_stem_speech(shot_id: str, stem_path: Path, spoken_text: str, stem: VoiceStemResult, enabled: bool) -> dict:
+    """Round-trip one voice stem through ASR and score it against the script (Speech Intelligibility).
+
+    Returns the shot's ``speech_report.json`` entry. ``status`` is ``verified`` (scored),
+    ``unverified`` (ASR failed or was refused offline; never fatal) or ``skipped`` (placeholder
+    stem, verification disabled or no spoken text).
+    """
+    entry: dict = {"shot_id": shot_id, "expected": spoken_text}
+    if not spoken_text or not spoken_text.strip():
+        return {**entry, "status": "skipped", "reason": "no spoken text"}
+    if stem.placeholder:
+        return {**entry, "status": "skipped", "reason": f"placeholder stem ({stem.engine})"}
+    if not enabled:
+        return {**entry, "status": "skipped", "reason": "speech verification disabled"}
+    try:
+        transcript = asr.transcribe(stem_path, language="vi")
+    except Exception as exc:  # transport/offline/format errors must never fail stage 6
+        reason = f"{type(exc).__name__}: {exc}"
+        telemetry.note(
+            f"[{shot_id}] speech verification unavailable: {reason}", shot_id=shot_id, speech_status="unverified"
+        )
+        return {**entry, "status": "unverified", "reason": reason}
+    score = asr.speech_match(spoken_text, transcript)
+    telemetry.note(
+        f"[{shot_id}] speech intelligibility: CER {score['cer']:.2f} WER {score['wer']:.2f} "
+        f"({'ok' if score['ok'] else 'UNINTELLIGIBLE'})",
+        shot_id=shot_id,
+        speech_status="verified",
+        speech_ok=score["ok"],
+        speech_cer=score["cer"],
+        speech_wer=score["wer"],
+        speech_cer_unaccented=score["cer_unaccented"],
+    )
+    if not score["ok"]:
+        telemetry.log(
+            f"[{shot_id}] voiceover does not match the script (CER {score['cer']:.2f} > {asr.SPEECH_CER_THRESHOLD}); "
+            f"heard: {transcript[:80]!r}",
+            level="warning",
+            stage=STAGE_AUDIO_LIP_SYNC,
+        )
+    return {**entry, "status": "verified", "transcript": transcript, **score}
+
+
+def _write_speech_report(artifacts_dir: Path, shots: List[dict]) -> None:
+    """Persist ``speech_report.json`` (always written so a stale report from a previous run never survives)."""
+    report = {
+        "version": 1,
+        "model": asr.ASR_MODEL,
+        "language": "vi",
+        "metric": "cer",
+        "threshold": asr.SPEECH_CER_THRESHOLD,
+        "verified_shots": sum(1 for s in shots if s["status"] == "verified"),
+        "shots": shots,
+    }
+    path = artifacts_dir / SPEECH_REPORT_FILENAME
+    path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    recorder = telemetry.current()
+    if recorder is not None:
+        recorder.register_artifact(path, stage=STAGE_AUDIO_LIP_SYNC, label="speech intelligibility report")
+
+
 def produce_all_audio_and_lip_sync(
     script: ScriptArtifact | None = None,
     manifest: AssetManifestArtifact | None = None,
@@ -369,6 +433,7 @@ def produce_all_audio_and_lip_sync(
     strict_tts: bool = False,
     offline: Optional[bool] = None,
     tts_mode: str = "auto",
+    verify_speech: Optional[bool] = None,
 ) -> Tuple[List[str], List[str]]:
     """Generates all audio stems and synchronizes each shot's video with its speech.
 
@@ -377,6 +442,10 @@ def produce_all_audio_and_lip_sync(
     espeak-ng speech when installed), deterministic, never touch the network and are flagged
     ``placeholder`` / ``tts_fallback`` in telemetry. ``tts_mode="api"`` while offline raises
     ``OfflineNetworkError``.
+
+    ``verify_speech`` (default: on unless offline) round-trips every real (non-placeholder)
+    neural stem through ASR (:mod:`pipeline.asr`) and writes ``speech_report.json``; ASR
+    failures are recorded as ``unverified`` and never fail the stage.
     """
     if tts_mode not in ("auto", "api", "local"):
         raise ValueError(f"Unknown tts_mode {tts_mode!r}; expected 'auto', 'api' or 'local'")
@@ -386,6 +455,7 @@ def produce_all_audio_and_lip_sync(
         raise OfflineNetworkError(
             "Offline mode: tts_mode='api' would call the paid TTS service; use tts_mode='local' or 'auto'."
         )
+    do_verify_speech = (not is_off) if verify_speech is None else (bool(verify_speech) and not is_off)
     target_artifacts_dir = workspace.artifacts_dir if workspace is not None else (artifacts_dir or ARTIFACTS_DIR)
     target_audio_dir = workspace.audio_dir if workspace is not None else (audio_dir or AUDIO_DIR)
     target_audio_dir.mkdir(parents=True, exist_ok=True)
@@ -400,6 +470,7 @@ def produce_all_audio_and_lip_sync(
         with open(target_artifacts_dir / "asset_manifest.json", "r", encoding="utf-8") as f:
             manifest = AssetManifestArtifact.model_validate(json.load(f))
 
+    speech_shots: List[dict] = []
     audio_stems: List[str] = []
     synced_clips: List[str] = []
 
@@ -450,6 +521,8 @@ def produce_all_audio_and_lip_sync(
         if tts_fallback:
             _flag_ledger_tts_fallback(shot_id, stem)
         audio_stems.append(str(stem_path))
+        speech = _verify_stem_speech(shot_id, stem_path, beat.spoken_text, stem, do_verify_speech)
+        speech_shots.append(speech)
         recorder = telemetry.current()
         stem_record = (
             recorder.register_artifact(stem_path, stage=STAGE_AUDIO_LIP_SYNC, label=f"{shot_id} voice stem")
@@ -472,6 +545,9 @@ def produce_all_audio_and_lip_sync(
                 "duration_seconds": round(stem_duration, 2),
                 "has_speech": bool(beat.spoken_text and beat.spoken_text.strip()),
                 "mix_mode": lip_dec.voiceover_mix_mode,
+                "speech_status": speech["status"],
+                "speech_ok": speech.get("ok"),
+                "speech_cer": speech.get("cer"),
             },
         )
         _profile_stem_speech(
@@ -526,6 +602,9 @@ def produce_all_audio_and_lip_sync(
                     "tts_fallback": tts_fallback,
                     "tts_engine": stem.engine,
                     "duration_seconds": round(stem_duration, 2),
+                    "speech_status": speech["status"],
+                    "speech_ok": speech.get("ok"),
+                    "speech_cer": speech.get("cer"),
                 },
             )
         else:
@@ -542,6 +621,8 @@ def produce_all_audio_and_lip_sync(
                     "mix_mode": lip_dec.voiceover_mix_mode,
                 },
             )
+
+    _write_speech_report(target_artifacts_dir, speech_shots)
 
     # Update manifest
     manifest.audio_stems = audio_stems

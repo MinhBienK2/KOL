@@ -27,3 +27,17 @@ def _no_real_llm_provider(monkeypatch, tmp_path_factory):
     monkeypatch.setenv("LLM_BASE_URL", "http://127.0.0.1:9/v1")
     for var in ("ROUTER_URL", "LLM_API_KEY", "ROUTER_API_KEY", "LLM_MODEL", "RESEARCH_MODEL", "LLM_PROVIDER"):
         monkeypatch.delenv(var, raising=False)
+
+
+@pytest.fixture(autouse=True)
+def _no_real_asr_network(monkeypatch):
+    """Speech-verification tests must never reach the 2tocom transcription endpoint.
+
+    Tests that exercise ``transcribe`` replace ``pipeline.asr.guarded_urlopen`` with their own fake.
+    """
+    from pipeline import asr
+
+    def _blocked(req, *, operation, **kwargs):
+        raise RuntimeError(f"tests may not call the real ASR endpoint ({operation})")
+
+    monkeypatch.setattr(asr, "guarded_urlopen", _blocked)
