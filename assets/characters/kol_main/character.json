@@ -11,15 +11,15 @@
   "face_prompt": "Vietnamese young woman, early 20s, refined oval face shape, natural chin-length black bob hairstyle, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin, calm intelligent and approachable expression, studio portrait lighting, 8k",
   "appearance_details": "Chic off-shoulder matte black long-sleeve top, tailored charcoal grey slim trousers, minimalist black flats",
   "portrait_image": "assets/characters/kol_main/portrait.png",
-  "face_anchor": "assets/characters/kol_main/portrait.png",
-  "character_sheet": "assets/characters/kol_main/outfits/studio_chic_black.png",
+  "face_anchor": "assets/characters/kol_main/face_anchor.png",
+  "character_sheet": "assets/characters/kol_main/outfits/studio_chic_black/character_sheet.png",
   "identities": [
     {
       "identity_id": "kol_main_office",
       "identity_name": "Modern Studio Chic",
       "character_tag": "[KOL_MAIN_OFFICE]",
       "appearance_details": "Chic off-shoulder matte black long-sleeve top, tailored charcoal grey slim trousers, minimalist black flats",
-      "character_sheet": "assets/characters/kol_main/outfits/studio_chic_black.png"
+      "character_sheet": "assets/characters/kol_main/outfits/studio_chic_black/character_sheet.png"
     }
   ]
 }

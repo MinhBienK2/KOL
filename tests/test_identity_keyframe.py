@@ -69,15 +69,18 @@ def test_product_isolation_and_wardrobe_consistency(tmp_path: Path):
         reference_overrides={"product_hero": str(product)},
     )
 
+    character = json.loads(Path("assets/characters/kol_main/character.json").read_text(encoding="utf-8"))
+    face_anchor_name = Path(character["face_anchor"]).name
+
     kf_map = {kf.shot_id: kf for kf in manifest.keyframes}
     for shot in plan.shots:
         kf = kf_map[shot.shot_id]
         if shot.character_role == CharacterRole.PRODUCT_ONLY or getattr(shot.character_role, "value", None) == "product_only":
             # Product isolation: no character face reference
-            assert "portrait.png" not in kf.image_path
+            assert face_anchor_name not in kf.image_path
             assert "ref_10" not in kf.image_path
         else:
             # Character shot: framed from the face anchor; the outfit sheet is a reference, never the frame
-            assert "portrait.png" in kf.image_path
+            assert face_anchor_name in kf.image_path
             assert kf.generation_mode in ("i2v", "r2v")
             assert kf.reference_assets is not None
