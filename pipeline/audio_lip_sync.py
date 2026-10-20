@@ -318,6 +318,47 @@ def _flag_ledger_tts_fallback(shot_id: str, stem: VoiceStemResult) -> None:
     )
 
 
+def _profile_stem_speech(shot_id: str, stem_path: Path, *, has_spoken_text: bool, mix_mode: str):
+    """Profile a voice stem's speech energy, log it, and flag a silent stem on a spoken beat.
+
+    A stem with no audible energy (e.g. offline placeholder without espeak-ng) on a beat that has
+    spoken text means the lip-sync will drive a mouth with no voice: surfaced as a telemetry
+    warning. Profiling is best-effort and never aborts the stage.
+    """
+    try:
+        prof = analyze_speech_energy(stem_path)
+    except Exception:
+        return None
+    print(
+        f"[LipSync] [{shot_id}] Audio Profile: {prof.duration_seconds}s | "
+        f"Speaking ratio: {prof.speaking_duration_ratio * 100:.0f}% | Bursts: {len(prof.speech_bursts)}"
+        + (" | SILENT" if prof.is_silent else "")
+    )
+    silent_on_spoken = bool(prof.is_silent and has_spoken_text)
+    telemetry.note(
+        f"[{shot_id}] speech energy: {prof.duration_seconds:.2f}s, "
+        f"speaking {prof.speaking_duration_ratio * 100:.0f}%, {len(prof.speech_bursts)} bursts",
+        shot_id=shot_id,
+        duration_seconds=prof.duration_seconds,
+        speaking_duration_ratio=prof.speaking_duration_ratio,
+        rms_peak=prof.rms_peak,
+        rms_peak_dbfs=prof.rms_peak_dbfs,
+        silence_pauses=prof.silence_pauses_count,
+        speech_bursts=len(prof.speech_bursts),
+        silent_stem=silent_on_spoken,
+        stem_is_silent=prof.is_silent,
+        mix_mode=mix_mode,
+    )
+    if silent_on_spoken:
+        telemetry.log(
+            f"[{shot_id}] voice stem is silent ({prof.rms_peak_dbfs} dBFS peak) but the beat has spoken text; "
+            f"mix mode '{mix_mode}' will play with no audible speech",
+            level="warning",
+            stage=STAGE_AUDIO_LIP_SYNC,
+        )
+    return prof
+
+
 def produce_all_audio_and_lip_sync(
     script: ScriptArtifact | None = None,
     manifest: AssetManifestArtifact | None = None,
@@ -433,21 +474,12 @@ def produce_all_audio_and_lip_sync(
                 "mix_mode": lip_dec.voiceover_mix_mode,
             },
         )
-        try:
-            energy_prof = analyze_speech_energy(stem_path)
-            print(f"[LipSync] [{shot_id}] Audio Profile: {energy_prof.duration_seconds}s | Speaking ratio: {energy_prof.speaking_duration_ratio*100:.0f}% | Bursts: {len(energy_prof.speech_bursts)}")
-            telemetry.note(
-                f"[{shot_id}] speech energy: {energy_prof.duration_seconds:.2f}s, "
-                f"speaking {energy_prof.speaking_duration_ratio * 100:.0f}%, {len(energy_prof.speech_bursts)} bursts",
-                shot_id=shot_id,
-                duration_seconds=energy_prof.duration_seconds,
-                speaking_duration_ratio=energy_prof.speaking_duration_ratio,
-                rms_peak=energy_prof.rms_peak,
-                silence_pauses=energy_prof.silence_pauses_count,
-                speech_bursts=len(energy_prof.speech_bursts),
-            )
-        except Exception:
-            pass
+        _profile_stem_speech(
+            shot_id,
+            stem_path,
+            has_spoken_text=bool(beat.spoken_text and beat.spoken_text.strip()),
+            mix_mode=lip_dec.voiceover_mix_mode,
+        )
 
         # Find matching raw video clip
         matching_raw = None
