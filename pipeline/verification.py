@@ -245,7 +245,7 @@ def verify_media_quality_gate(
         "-vf",
         f"blackdetect=d=0.2:pix_th=0.10,freezedetect=n={FREEZE_NOISE_TOLERANCE}:d=1",
         "-af",
-        "ebur128=peak=true:framelog=quiet",
+        "ebur128=peak=true",
         "-f",
         "null",
         "-",
