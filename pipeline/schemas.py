@@ -1,7 +1,7 @@
 """Canonical artifact schemas and validation."""
 
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from pipeline.archetypes import (
     AudioStrategy,
@@ -10,6 +10,28 @@ from pipeline.archetypes import (
     LightingContract,
     ProductArchetype,
 )
+from pipeline.cinematography import CameraAngle, CameraLens, ShotScale
+
+MAX_TRANSITION_DURATION = 1.5
+
+
+def validate_transition(value: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """Normalise a transition ({type, duration}) against the composer's supported set, or None."""
+    if value is None:
+        return None
+    if not isinstance(value, dict):
+        raise ValueError("transition must be a dict {type, duration} or None")
+    # Imported lazily: composer imports this module. The composer owns the vocabulary.
+    from pipeline.composer import SUPPORTED_TRANSITIONS
+
+    t_type = str(value.get("type", "cut")).strip().lower()
+    if t_type not in SUPPORTED_TRANSITIONS:
+        raise ValueError(f"transition type {t_type!r} not supported; use one of {', '.join(SUPPORTED_TRANSITIONS)}")
+    duration = float(value.get("duration", 0.0))
+    if duration < 0 or duration > MAX_TRANSITION_DURATION:
+        raise ValueError(f"transition duration must be within 0..{MAX_TRANSITION_DURATION}s")
+    return {"type": t_type, "duration": 0.0 if t_type == "cut" else duration}
+
 
 class PresenterInfo(BaseModel):
     name: str = "Minh Anh"
@@ -31,6 +53,9 @@ class BriefArtifact(BaseModel):
     category: Optional[str] = None
     character_role: CharacterRole = CharacterRole.PRESENTER
     target_audio_strategy: AudioStrategy = AudioStrategy.ON_CAMERA_SPEECH
+    # Offers/prices the advertiser actually supplied (e.g. "Giảm 20% đến hết 30/6").
+    # The scriptwriter never invents offers; with none supplied it uses neutral CTA copy.
+    offers: List[str] = Field(default_factory=list)
 
 class ScriptBeat(BaseModel):
     scene_id: str
@@ -45,6 +70,19 @@ class ScriptBeat(BaseModel):
     camera_choreography: Optional[CameraChoreography] = None
     lighting_contract: Optional[LightingContract] = None
     narrative_purpose: Optional[str] = None
+    # English visual description for video models (spoken_text / on_screen_text stay Vietnamese).
+    visual_cue_en: Optional[str] = None
+    # Optional agent direction persisted in script.json; storyboard honours it over its own planning.
+    shot_scale: Optional[ShotScale] = None
+    lens: Optional[CameraLens] = None
+    angle: Optional[CameraAngle] = None
+    # Transition INTO this beat from the previous one: {"type": <composer transition>, "duration": s}.
+    transition: Optional[Dict[str, Any]] = None
+
+    @field_validator("transition")
+    @classmethod
+    def _check_transition(cls, v: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+        return validate_transition(v)
 
 class ScriptArtifact(BaseModel):
     campaign_id: str
@@ -75,6 +113,8 @@ class StoryboardShot(BaseModel):
     shot_intent: Optional[str] = None
     kinetic_action: Optional[str] = None
     is_hero_moment: Optional[bool] = False
+    # Transition into this shot from the previous one (copied from the script beat).
+    transition: Optional[Dict[str, Any]] = None
     generation_mode: Optional[str] = None  # "i2v", "r2v", "product_hero"
     reference_assets: Optional[List[str]] = None
 

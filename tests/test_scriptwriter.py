@@ -14,7 +14,8 @@ def test_generate_commercial_script(tmp_path: Path):
     assert len(script.beats) == 4
     assert script.beats[0].beat_type == "hook"
     assert script.beats[3].beat_type == "cta"
-    assert 25 <= script.target_duration <= 35
+    assert 15 <= script.target_duration <= 35
+    assert all(b.estimated_duration <= 6.0 for b in script.beats)
 
     out_file = tmp_path / "script.json"
     assert out_file.exists()

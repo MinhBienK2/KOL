@@ -17,8 +17,10 @@ import re
 import unicodedata
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 from pydantic import BaseModel, Field
+
+from pipeline.cinematography import LIGHTING_PHRASES, camera_phrase
 
 
 # ==============================================================================
@@ -219,7 +221,7 @@ FASHION_APPAREL_CONFIG = DirectorialArchetypeConfig(
             audio_strategy=AudioStrategy.OFF_CAMERA_VO,
             camera_choreography=CameraChoreography.PEDESTAL,
             lighting_contract=LightingContract.EDITORIAL_FASHION,
-            narrative_purpose="Strong aspirational closer with exclusive collection discount tag in bio.",
+            narrative_purpose="Strong aspirational closer inviting the viewer to open the link in bio.",
             pacing_note="Editorial confident hero pose holding eye contact.",
         ),
     ],
@@ -329,8 +331,8 @@ TECH_GADGETS_CONFIG = DirectorialArchetypeConfig(
             audio_strategy=AudioStrategy.ON_CAMERA_SPEECH,
             camera_choreography=CameraChoreography.ZOOM_IN,
             lighting_contract=LightingContract.STUDIO_3POINT,
-            narrative_purpose="Direct recommendation from trusted presenter, holding product, limited flash sale CTA.",
-            pacing_note="Direct eye contact, confident nod, on-screen discount voucher banner.",
+            narrative_purpose="Direct recommendation from trusted presenter, holding product, clear link-click CTA.",
+            pacing_note="Direct eye contact, confident nod, on-screen link CTA banner (offer only if the brief supplies one).",
         ),
     ],
 )
@@ -549,7 +551,7 @@ HOME_LIFESTYLE_CONFIG = DirectorialArchetypeConfig(
             audio_strategy=AudioStrategy.OFF_CAMERA_VO,
             camera_choreography=CameraChoreography.ZOOM_IN,
             lighting_contract=LightingContract.GOLDEN_HOUR,
-            narrative_purpose="Warm smile holding product, 'Make your sanctuary complete today' CTA with discount.",
+            narrative_purpose="Warm smile holding product, 'Make your sanctuary complete today' CTA.",
             pacing_note="Heartwarming natural glance, on-screen link to shop the home collection.",
         ),
     ],
@@ -653,13 +655,13 @@ GENERAL_COMMERCIAL_CONFIG = DirectorialArchetypeConfig(
         BeatTemplate(
             beat_id="beat_06_cta",
             beat_type="cta",
-            name="Urgent Discount Offer Closer",
+            name="Direct Link Call-To-Action Closer",
             target_duration=4.5,
             recommended_role=CharacterRole.PRESENTER,
             audio_strategy=AudioStrategy.ON_CAMERA_SPEECH,
             camera_choreography=CameraChoreography.ZOOM_IN,
             lighting_contract=LightingContract.STUDIO_3POINT,
-            narrative_purpose="Strong direct call to action, limited voucher reminder, bio link tap.",
+            narrative_purpose="Strong direct call to action, bio link tap (any offer must come from the brief).",
             pacing_note="Direct eye contact, urgent CTA graphic tag overlay.",
         ),
     ],
@@ -877,13 +879,45 @@ class DynamicPromptBuilder:
     @staticmethod
     def resolve_persona(
         archetype: ProductArchetype,
-        requested_persona_id: Optional[str] = None,
+        requested_persona_id: Optional[Union[str, CharacterPersona]] = None,
     ) -> CharacterPersona:
         """Pick the best matching persona for the product archetype."""
+        if isinstance(requested_persona_id, CharacterPersona):
+            return requested_persona_id
         if requested_persona_id and requested_persona_id in PERSONA_CATALOG:
             return PERSONA_CATALOG[requested_persona_id]
         # Canonical repository KOL is Minh Anh ([KOL_MA]) across all advertising campaigns
         return PERSONA_CATALOG["kol_main"]
+
+    @staticmethod
+    def persona_from_character_file(
+        character_path: Union[Path, str],
+        archetype: Optional[ProductArchetype] = None,
+    ) -> CharacterPersona:
+        """Build a persona from a character.json so a chosen KOL drives the prompts.
+
+        persona_id is the character directory name so expression reference paths
+        (assets/characters/<persona_id>/expressions) keep resolving.
+        """
+        import json
+
+        path = Path(character_path)
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        persona_id = path.parent.name or "kol_main"
+        known = PERSONA_CATALOG.get(persona_id)
+        return CharacterPersona(
+            persona_id=persona_id,
+            name=data.get("name") or (known.name if known else "KOL"),
+            character_tag=data.get("character_tag") or (known.character_tag if known else "[KOL]"),
+            gender=data.get("gender") or "female",
+            ethnicity=data.get("ethnicity") or "Vietnamese",
+            age_group=data.get("age_group") or "young adult",
+            body_type=data.get("body_type") or "",
+            base_face_prompt=data.get("face_prompt") or data.get("description") or (known.base_face_prompt if known else ""),
+            character_file=str(path),
+            supported_archetypes=list(ProductArchetype),
+        )
 
     @staticmethod
     def build_subject_and_action_prompt(
@@ -913,9 +947,9 @@ class DynamicPromptBuilder:
             parts = [
                 f"Commercial macro product cinematography of {product_name}",
                 f"Action and interaction: {scene_action}",
-                f"Camera movement: {active_camera.value} with shallow depth of field, sharp focal plane on product geometry and surface materials",
+                f"Camera movement: {camera_phrase(active_camera, short=False)} with shallow depth of field, sharp focal plane on product geometry and surface materials",
                 f"Environment and staging: {rule.environment_directive}",
-                f"Lighting key: {active_lighting.value} at {config.nominal_color_temp_kelvin}K, realistic reflections and highlights",
+                f"Lighting key: {LIGHTING_PHRASES.get(active_lighting.value, active_lighting.value)} at {config.nominal_color_temp_kelvin}K, realistic reflections and highlights",
                 "Cinematic 8k commercial quality, photorealistic, zero character face, hyper-detailed textures",
             ]
             return ". ".join(parts)
@@ -928,9 +962,9 @@ class DynamicPromptBuilder:
                 f"Wardrobe and styling: {rule.wardrobe_directive}",
                 f"Visual acting action: {scene_action}",
                 f"Poise: {config.character_guidance}",
-                f"Camera movement: {active_camera.value} around subject",
+                f"Camera movement: {camera_phrase(active_camera, short=False)}",
                 f"Environment: {rule.environment_directive}",
-                f"Lighting: {active_lighting.value} with elegant skin tones, 8k cinematic master shot",
+                f"Lighting: {LIGHTING_PHRASES.get(active_lighting.value, active_lighting.value)} with elegant skin tones, 8k cinematic master shot",
             ]
             return ". ".join(parts)
 
@@ -940,9 +974,9 @@ class DynamicPromptBuilder:
             f"Subject: {p.base_face_prompt}",
             f"Wardrobe: {rule.wardrobe_directive}",
             f"Delivery action: Direct eye contact to camera, {scene_action}, speaking with clear engaged expression",
-            f"Camera framing: Medium close-up with {active_camera.value} subtle push",
+            f"Camera framing: Medium close-up with a {camera_phrase(active_camera, short=False)}",
             f"Environment: {rule.environment_directive}",
-            f"Lighting: {active_lighting.value} studio portrait lighting, crystal clear 8k resolution",
+            f"Lighting: {LIGHTING_PHRASES.get(active_lighting.value, active_lighting.value)}, studio portrait quality, crystal clear 8k resolution",
         ]
         return ". ".join(parts)
 

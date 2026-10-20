@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from pipeline import telemetry
 from pipeline.config import ARTIFACTS_DIR, CHARACTER_PATH
 from pipeline.schemas import ScenePlanArtifact, ScriptArtifact, StoryboardShot
 from pipeline.workspace import ProjectWorkspace
 from pipeline.archetypes import (
+    CharacterPersona,
     CharacterRole,
     DynamicPromptBuilder,
     ProductArchetype,
@@ -30,6 +31,7 @@ from pipeline.cinematography import (
 )
 from pipeline.spatial_staging import SpatialContinuityContract
 from pipeline.lip_sync_engine import determine_lip_sync_strategy
+from pipeline.scriptwriter import LEGACY_MUG_CAMPAIGN_ID, LEGACY_MUG_SCENE_IDS
 
 def build_6part_prompt(
     aspect_ratio: str,
@@ -85,8 +87,18 @@ def generate_scene_plan(
     output_dir: Path | None = None,
     workspace: Optional[ProjectWorkspace] = None,
     shot_overrides: Optional[Dict[str, Dict[str, Any]]] = None,
+    persona: Optional[Union[str, CharacterPersona]] = None,
 ) -> ScenePlanArtifact:
     """Generates the cinematic scene plan artifact.
+
+    The KOL that drives identity/wardrobe prompts is chosen by, in order: ``persona`` (a
+    ``CharacterPersona`` or a PERSONA_CATALOG id such as "kol_minhanh"), an explicitly
+    passed ``character_path`` (a character.json, whose directory name becomes the persona
+    id), else the archetype default.
+
+    Per-shot direction precedence: ``shot_overrides`` > ``ScriptBeat.shot_scale/lens/angle``
+    (persisted agent direction in script.json) > automatic beat-aware planning. English
+    prompts use ``ScriptBeat.visual_cue_en`` when present, else the Vietnamese ``visual_cue``.
 
     ``shot_overrides`` lets an orchestrating agent direct individual shots. Keys are a
     ``shot_id`` ("shot_02") or a script ``scene_id``; values may contain ``shot_scale``
@@ -109,14 +121,25 @@ def generate_scene_plan(
     with open(char_file, "r", encoding="utf-8") as f:
         char_data = json.load(f)
 
-    char_tag = char_data.get("character_tag", "[KOL_MA]")
-    face_prompt = char_data.get("face_prompt", "")
+    explicit_persona: Optional[CharacterPersona] = None
+    if persona is not None:
+        explicit_persona = DynamicPromptBuilder.resolve_persona(script.archetype, persona)
+    elif character_path is not None:
+        explicit_persona = DynamicPromptBuilder.persona_from_character_file(char_file, script.archetype)
+
+    char_tag = explicit_persona.character_tag if explicit_persona else char_data.get("character_tag", "[KOL_MA]")
+    face_prompt = explicit_persona.base_face_prompt if explicit_persona else char_data.get("face_prompt", "")
     identity_lock = f"Same character, consistent facial structure, {face_prompt}"
     style_pos = "cinematic photorealistic, modern minimalist office, high-end commercial aesthetic, studio softbox lighting, 8k, tack sharp focus, clean background"
     style_neg = "watermark, text, logo overlay, deformed limbs, bad hands, blurry, lowres, oversaturated, 3d render, cartoon"
 
-    if script.campaign_id != "campaign_lumina_mug_01" or script.archetype != ProductArchetype.GENERAL_COMMERCIAL or len(script.beats) != 4:
-        persona = DynamicPromptBuilder.resolve_persona(script.archetype)
+    is_legacy_mug = (
+        script.campaign_id == LEGACY_MUG_CAMPAIGN_ID
+        and script.archetype == ProductArchetype.GENERAL_COMMERCIAL
+        and [b.scene_id for b in script.beats] == LEGACY_MUG_SCENE_IDS
+    )
+    if not is_legacy_mug:
+        persona = explicit_persona or DynamicPromptBuilder.resolve_persona(script.archetype)
         arch_config = get_archetype_config(script.archetype)
         custom_costume = "costume_french_cherry_dress" if "cherry" in script.product_name.lower() or "đầm xòe" in script.product_name.lower() else None
         custom_env = "env_paris_cafe_terrace" if "cherry" in script.product_name.lower() or "đầm xòe" in script.product_name.lower() else None
@@ -140,10 +163,16 @@ def generate_scene_plan(
             shot_scale = (
                 _coerce_enum(ShotScale, override["shot_scale"], "shot_scale")
                 if "shot_scale" in override
-                else planned_scales[idx - 1]
+                else (beat.shot_scale or planned_scales[idx - 1])
             )
-            lens_override = _coerce_enum(CameraLens, override["lens"], "lens") if "lens" in override else None
-            angle_override = _coerce_enum(CameraAngle, override["angle"], "angle") if "angle" in override else None
+            lens_override = (
+                _coerce_enum(CameraLens, override["lens"], "lens") if "lens" in override else beat.lens
+            )
+            angle_override = (
+                _coerce_enum(CameraAngle, override["angle"], "angle") if "angle" in override else beat.angle
+            )
+            # English cue for video models; the Vietnamese visual_cue stays the fallback.
+            scene_action = beat.visual_cue_en or beat.visual_cue
             shot_type_label = f"{shot_scale.value.upper()} • {beat.beat_type.capitalize()}"
             telemetry.stage_progress(
                 3,
@@ -172,7 +201,7 @@ def generate_scene_plan(
                 character_role=beat.character_role,
                 archetype=script.archetype,
                 product_name=script.product_name,
-                scene_action=beat.visual_cue,
+                scene_action=scene_action,
                 persona=persona,
                 lighting=beat.lighting_contract,
                 camera=beat.camera_choreography,
@@ -239,7 +268,7 @@ def generate_scene_plan(
                     character_tag=None if is_prod_only else persona.character_tag,
                     identity_lock_directive=None if is_prod_only else f"Same character {persona.character_tag}, {persona.base_face_prompt}",
                     style_constraints=f"{arch_config.display_name} commercial aesthetic | Avoid: {style_neg}",
-                    scene_description=beat.visual_cue,
+                    scene_description=scene_action,
                     prompt_6part=full_cinematic_prompt,
                     estimated_duration=beat.estimated_duration,
                     reference_expression=expr_path,
@@ -249,6 +278,7 @@ def generate_scene_plan(
                     narrative_purpose=beat.narrative_purpose,
                     color_temp_kelvin=environment.nominal_color_temp_kelvin,
                     shot_intent=_shot_intent(beat),
+                    transition=beat.transition,
                     spatial_staging=(
                         f"{environment.name} @ {environment.nominal_color_temp_kelvin}K, "
                         f"key light locked to {spatial_contract.locked_key_light_azimuth} degrees camera-left"
@@ -339,10 +369,10 @@ def generate_scene_plan(
             "angle": "Straight on slightly dynamic three-quarter angle",
             "camera_motion": "Cinematic slow arc orbit with shallow DOF",
             "lighting": "Warm studio luxury backlight, soft beauty key light",
-            "scene_action": f"{char_tag} holding the sleek matte-finish Lumina Smart Mug with both hands, gently tapping the glossy touch LED lid that illuminates '65°C', taking a warm sip and smiling with immense satisfaction",
+            "scene_action": f"{char_tag} holding the sleek matte-finish Lumina Smart Mug with both hands, gently tapping the glossy touch LED lid that lights up, taking a warm sip and smiling with immense satisfaction",
             "camera_choreography": "Camera motion: slow cinematic orbit zoom-in, smooth floating stabilizer movement, high luxury commercial feel",
             "reference_expression": "assets/characters/kol_main/expressions/02_smiling.jpg",
-            "duration": 12.0,
+            "duration": 6.0,
         },
         {
             "shot_id": "shot_04",
@@ -354,9 +384,13 @@ def generate_scene_plan(
             "scene_action": f"{char_tag} standing upright in professional tailored office attire, holding up the Lumina Smart Mug toward the camera, smiling warmly and gesturing with invitation to check the link below",
             "camera_choreography": "Camera motion: gentle push-in, perfect centering for bottom CTA badge and promo graphic",
             "reference_expression": "assets/characters/kol_main/expressions/02_smiling.jpg",
-            "duration": 6.5,
+            "duration": 5.0,
         },
     ]
+    script_durations = {b.scene_id: b.estimated_duration for b in script.beats}
+    script_transitions = {b.scene_id: b.transition for b in script.beats}
+    for cfg in shot_configs:
+        cfg["duration"] = script_durations.get(cfg["scene_id"], cfg["duration"])
 
     shots: List[StoryboardShot] = []
     for idx, cfg in enumerate(shot_configs, start=1):
@@ -405,6 +439,7 @@ def generate_scene_plan(
                 prompt_6part=prompt_6,
                 estimated_duration=cfg["duration"],
                 reference_expression=cfg["reference_expression"],
+                transition=script_transitions.get(cfg["scene_id"]),
             )
         )
 

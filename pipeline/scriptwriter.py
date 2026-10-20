@@ -5,8 +5,9 @@ from __future__ import annotations
 import json
 import math
 import re
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable, List, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from pipeline import telemetry
 from pipeline.config import ARTIFACTS_DIR
@@ -23,6 +24,33 @@ from pipeline.archetypes import (
 )
 
 STAGE_SCRIPTWRITING = telemetry.stage_number("scriptwriting")
+
+LEGACY_MUG_CAMPAIGN_ID = "campaign_lumina_mug_01"
+LEGACY_MUG_SCENE_IDS = ["shot_01_hook", "shot_02_pain", "shot_03_solution", "shot_04_cta"]
+
+# ProductIntel.source values meaning the research numbers were synthesized rather than
+# scraped/supplied, so they must not be advertised as real offers.
+_UNTRUSTED_SOURCES = ("fallback", "heuristic", "synthetic", "mock", "template", "default", "unknown", "guess")
+
+# Short English camera labels for visual_cue_en. Deliberately not bare enum words ("orbit", "pan",
+# "tilt", "truck") so prompt humanisation never rewrites them.
+_CAMERA_LABEL_EN = {
+    "orbit": "orbiting",
+    "truck": "tracking",
+    "pedestal": "rising",
+    "pan": "panning",
+    "tilt": "tilting",
+    "zoom_in": "push-in",
+    "drone_flythrough": "fly-through",
+    "dutch_angle": "dutch-angle",
+    "macro_push_in": "macro push-in",
+    "top_down_flat_lay": "top-down",
+}
+
+# A short fade leads into the CTA; every other beat is a hard cut. Types come from
+# pipeline.composer.SUPPORTED_TRANSITIONS.
+_CTA_TRANSITION = {"type": "fade", "duration": 0.4}
+_CUT_TRANSITION = {"type": "cut", "duration": 0.0}
 
 # --- Timing contract -----------------------------------------------------------
 # Hailuo-2.3 renders 6s or 10s clips (see video_engine); a 6s beat is the cheapest
@@ -188,6 +216,376 @@ def _clean_caption(text: str, max_len: int = 38) -> str:
     return t[:max_len]
 
 
+# ==============================================================================
+# Research-derived inputs (winning concept, supplied offers)
+# ==============================================================================
+
+def _load_json(path: Path) -> Optional[Dict[str, Any]]:
+    try:
+        if path.exists():
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            return data if isinstance(data, dict) else None
+    except Exception:
+        return None
+    return None
+
+
+def _select_winning_option(cdata: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Looks up the angle named by winning_concept.selected_angle_id (fallback: first option)."""
+    options = cdata.get("concept_options") or []
+    if not options:
+        return None
+    winning_id = (cdata.get("winning_concept") or {}).get("selected_angle_id")
+    if winning_id:
+        for opt in options:
+            if isinstance(opt, dict) and opt.get("angle_id") == winning_id:
+                return opt
+    return options[0]
+
+
+def _format_vnd(amount: float) -> str:
+    return f"{int(round(amount)):,}".replace(",", ".") + "đ"
+
+
+def _resolve_offer(brief: BriefArtifact, artifacts_dir: Optional[Path]) -> Optional[str]:
+    """Returns offer copy ONLY if the brief or trusted research supplied one; else None."""
+    for offer in getattr(brief, "offers", None) or []:
+        if offer and offer.strip():
+            return offer.strip()
+
+    if artifacts_dir is None:
+        return None
+    research = _load_json(artifacts_dir / "competitor_research.json")
+    if not research:
+        return None
+    intel = research.get("product_intel") or {}
+    source = str(intel.get("source") or "").strip().lower()
+    if source and any(tag in source for tag in _UNTRUSTED_SOURCES):
+        return None
+    pricing = intel.get("pricing") or {}
+    pct = pricing.get("discount_percent")
+    if not (isinstance(pct, (int, float)) and pct > 0):
+        return None
+    offer = f"Đang giảm {int(pct)}%"
+    price = pricing.get("current_price") or 0
+    currency = str(pricing.get("currency") or "VND")
+    if price and price > 0:
+        offer += f", chỉ còn {_format_vnd(price)}" if currency.upper() == "VND" else f", chỉ còn {price:g} {currency}"
+    return offer
+
+
+# ==============================================================================
+# Beat copy templates (Vietnamese speech/captions, Vietnamese + English visuals)
+# ==============================================================================
+
+@dataclass
+class _Ctx:
+    product: str
+    spoken_prod: str
+    tag: str
+    cam_vi: str
+    cam_en: str
+    usps: List[str] = field(default_factory=list)
+    offer: Optional[str] = None
+    concept_hook: Optional[str] = None
+    concept_caption: Optional[str] = None
+    concept_visual: Optional[str] = None
+
+    @property
+    def PU(self) -> str:
+        return self.spoken_prod.upper()
+
+    def usp_spoken(self, idx: int, fallback: str) -> str:
+        """Spoken sentence derived from the brief's own USP text (never invented)."""
+        if not self.usps:
+            return fallback
+        text = self.usps[idx % len(self.usps)].split(":")[0].strip().rstrip(".")
+        words = text.split()
+        if len(words) > 16:
+            text = " ".join(words[:16])
+        return text + "." if text else fallback
+
+    def usp_caption(self, idx: int, fallback: str) -> str:
+        if not self.usps:
+            return fallback
+        words = self.usps[idx % len(self.usps)].split(":")[0].split()[:4]
+        return " ".join(words).upper() if words else fallback
+
+
+def _cta_copy(ctx: _Ctx, neutral_spoken: str, neutral_caption: str) -> Tuple[str, str]:
+    """CTA copy: advertises an offer only when one was supplied; otherwise neutral."""
+    if ctx.offer:
+        return (
+            f"{ctx.offer}! Nhấp vào link bên dưới để sở hữu {ctx.spoken_prod} nhé!",
+            f"{ctx.offer.upper()} • LINK BIO",
+        )
+    return neutral_spoken, neutral_caption
+
+
+def _copy_fashion(bt: str, c: _Ctx) -> Tuple[str, str, str, str]:
+    if bt == "hook":
+        return (
+            c.concept_hook or f"Item thời trang chân ái giúp bạn nâng tầm phong cách: {c.spoken_prod}.",
+            c.concept_caption or f"MUST-HAVE • {c.PU}",
+            c.concept_visual or f"Góc máy {c.cam_vi} từ thấp lên cao, {c.tag} bước sải chân tự tin với phong thái cuốn hút",
+            f"Low-angle shot with {c.cam_en} camera, the model strides confidently toward the camera wearing the {c.product}",
+        )
+    if bt == "reveal":
+        return (
+            c.usp_spoken(0, "Phom dáng thanh lịch, tôn dáng và tạo điểm nhấn cho tổng thể trang phục."),
+            "PERFECT FIT • FULL SILHOUETTE",
+            f"Camera {c.cam_vi} quanh {c.tag}, khoe trọn phom dáng thanh lịch của {c.spoken_prod}",
+            f"{c.cam_en.capitalize()} camera revealing the full silhouette of the {c.product} on the model, elegant poses",
+        )
+    if bt == "fabric_macro":
+        return (
+            c.usp_spoken(1, "Chất liệu mềm mại, từng đường may được chăm chút tỉ mỉ."),
+            "FABRIC DETAIL • CLOSE-UP",
+            f"Góc cận cảnh macro {c.cam_vi}, bắt trọn từng thớ vải mịn màng chuyển động mềm mại",
+            f"Macro close-up with {c.cam_en} camera, capturing the fabric weave and stitching of the {c.product} swaying softly",
+        )
+    if bt == "movement_flow":
+        return (
+            "Từng bước chân chuyển động uyển chuyển, tôn lên tinh thần của cả bộ trang phục.",
+            "FLUID MOVEMENT • STREET STYLE",
+            f"Camera {c.cam_vi} bám song song khi {c.tag} rảo bước năng động",
+            f"Tracking shot with {c.cam_en} camera as the model walks briskly, the garment flowing naturally with each step",
+        )
+    if bt == "styling_versatility":
+        return (
+            c.usp_spoken(2, "Dễ dàng phối cùng nhiều phụ kiện cho mọi dịp, từ dạo phố đến hẹn hò."),
+            "EASY MIX & MATCH",
+            f"Cắt nhanh {c.cam_vi} qua các cách phối đồ linh hoạt cùng phụ kiện",
+            f"Quick-cut montage with {c.cam_en} camera showing the {c.product} styled with different accessories",
+        )
+    spoken, cap = _cta_copy(
+        c,
+        f"Khám phá {c.spoken_prod} ngay qua link giỏ hàng bên dưới nhé!",
+        "XEM NGAY • LINK BIO",
+    )
+    return (
+        spoken,
+        cap,
+        f"{c.tag} mỉm cười rạng rỡ, khung hình kết thúc với banner kêu gọi mua hàng xuất hiện",
+        "The model smiles warmly at the camera, a clean call-to-action banner fades into the frame",
+    )
+
+
+def _copy_tech(bt: str, c: _Ctx) -> Tuple[str, str, str, str]:
+    if bt == "hook":
+        return (
+            c.concept_hook or f"Bàn làm việc còn thiếu món đồ công nghệ xịn? Thử {c.spoken_prod}!",
+            c.concept_caption or "NÂNG CẤP BÀN LÀM VIỆC",
+            c.concept_visual or f"Camera {c.cam_vi} cận cảnh khuôn mặt {c.tag} đang tìm kiếm món đồ công nghệ phù hợp",
+            f"Close-up with {c.cam_en} camera on the presenter's face, searching for the right piece of tech for the desk",
+        )
+    if bt == "unboxing":
+        return (
+            f"Mở hộp ngay em {c.spoken_prod} và cảm nhận trải nghiệm đầu tiên.",
+            f"UNBOXING • {c.PU}",
+            f"Góc quay {c.cam_vi}, bóc lớp seal mờ sang trọng, lộ diện thiết kế tinh xảo của {c.spoken_prod}",
+            f"Overhead view, {c.cam_en} camera, peeling off the matte seal to reveal the refined design of the {c.product}",
+        )
+    if bt == "macro_detail":
+        return (
+            c.usp_spoken(0, "Từng chi tiết hoàn thiện được chăm chút kỹ lưỡng, cầm lên là thấy chất."),
+            c.usp_caption(0, "PREMIUM BUILD • DETAIL"),
+            f"Macro {c.cam_vi} chuyển nét mượt mà trên bề mặt vật liệu và các cổng kết nối",
+            f"Macro shot with {c.cam_en} camera, focus gliding across the product's surface material and ports",
+        )
+    if bt == "performance_demo":
+        return (
+            c.usp_spoken(1, "Thao tác thực tế mượt mà, phản hồi nhanh ngay từ lần dùng đầu tiên."),
+            c.usp_caption(1, "TRẢI NGHIỆM THỰC TẾ"),
+            f"Camera {c.cam_vi} trình diễn thao tác thực tế trên màn hình, phản hồi tức thì",
+            f"Hands-on demo with {c.cam_en} camera, fingers operating the product with smooth, immediate response on screen",
+        )
+    if bt == "specs_proof":
+        return (
+            c.usp_spoken(2, "Thiết kế gọn gàng, dễ mang theo mỗi ngày đi làm."),
+            c.usp_caption(2, "GỌN GÀNG • DỄ MANG THEO"),
+            f"Thao tác cất gọn {c.spoken_prod} vào balo thanh lịch, góc quay {c.cam_vi} nhanh gọn",
+            f"Quick shot with {c.cam_en} camera of the {c.product} being tucked neatly into a stylish backpack",
+        )
+    spoken, cap = _cta_copy(
+        c,
+        f"Nâng cấp bàn làm việc của bạn cùng {c.spoken_prod} qua link bên dưới nhé!",
+        "XEM CHI TIẾT • LINK GIỎ HÀNG",
+    )
+    return (
+        spoken,
+        cap,
+        f"{c.tag} mỉm cười giơ cao {c.spoken_prod}, đồ họa CTA nổi bật xuất hiện",
+        f"The presenter smiles and holds up the {c.product} toward the camera, a bold call-to-action graphic appears",
+    )
+
+
+def _copy_beauty(bt: str, c: _Ctx) -> Tuple[str, str, str, str]:
+    if bt == "hook":
+        return (
+            c.concept_hook or "Chỉ một giọt tinh chất, thói quen chăm da đổi thay thế nào?",
+            c.concept_caption or "GLOW SKIN ROUTINE",
+            c.concept_visual or f"Góc cận cảnh macro {c.cam_vi}, giọt tinh chất {c.spoken_prod} óng ánh rơi từ ống nhỏ giọt thủy tinh",
+            f"Macro close-up with {c.cam_en} camera, a glistening drop of serum falls from a glass dropper",
+        )
+    if bt == "skin_agitation":
+        return (
+            "Da xỉn màu, khô ráp và thiếu sức sống mỗi sáng thức dậy?",
+            "DA THIẾU SỨC SỐNG?",
+            f"Góc {c.cam_vi} cận mặt {c.tag} chạm nhẹ lên gò má bày tỏ nỗi lo",
+            f"Close-up with {c.cam_en} camera, the model lightly touches her cheek with a worried expression about dull skin",
+        )
+    if bt == "texture_macro":
+        return (
+            c.usp_spoken(0, "Kết cấu mềm mịn, dễ tán đều trên da."),
+            "VELVET TEXTURE • CLOSE-UP",
+            f"Macro {c.cam_vi} swatch tinh chất sánh mịn trên phiến đá pha lê bắt sáng lấp lánh",
+            f"Macro swatch with {c.cam_en} camera, silky product texture spreading across a crystal slab catching the light",
+        )
+    if bt == "application_method":
+        return (
+            c.usp_spoken(1, "Thoa nhẹ nhàng lên da, massage đều tay để da cảm nhận trọn vẹn."),
+            c.usp_caption(1, "CÁCH SỬ DỤNG • NHẸ NHÀNG"),
+            f"Góc nghiêng {c.cam_vi}, {c.tag} thoa tinh chất nhẹ nhàng lên gò má, tạo độ bóng căng mọng",
+            f"Angled shot with {c.cam_en} camera, the model gently applies the product on her cheek leaving a dewy finish",
+        )
+    if bt == "transformation_proof":
+        return (
+            "Làn da được chăm sóc đều đặn mỗi ngày trông khỏe và rạng rỡ hơn.",
+            "DAILY GLOW ROUTINE",
+            f"Góc quay {c.cam_vi} bắt trọn ánh sáng tự nhiên trên làn da mịn màng, nụ cười rạng rỡ của {c.tag}",
+            f"Shot with {c.cam_en} camera catching natural light on healthy glowing skin as the model smiles brightly",
+        )
+    spoken, cap = _cta_copy(
+        c,
+        f"Yêu thương làn da cùng {c.spoken_prod}, xem chi tiết tại link bio nhé!",
+        "XEM CHI TIẾT • LINK BIO",
+    )
+    return (
+        spoken,
+        cap,
+        f"Chai {c.spoken_prod} bên cạnh hoa cỏ thanh khiết, thông điệp kêu gọi xuất hiện nhẹ nhàng",
+        "The product bottle sits beside fresh botanicals, a soft call-to-action message fades in",
+    )
+
+
+def _copy_home(bt: str, c: _Ctx) -> Tuple[str, str, str, str]:
+    if bt == "hook":
+        return (
+            c.concept_hook or "Muốn không gian sống luôn ấm cúng, tinh tế và gọn gàng ngăn nắp?",
+            c.concept_caption or "TỔ ẤM HIỆN ĐẠI",
+            c.concept_visual or f"Góc quay lướt {c.cam_vi} trong căn phòng ngập tràn ánh nắng ấm áp buổi sáng",
+            f"Gliding shot with {c.cam_en} camera through a room flooded with warm morning sunlight",
+        )
+    if bt == "reveal":
+        return (
+            f"Đây có thể là mảnh ghép hoàn hảo cho ngôi nhà bạn: {c.spoken_prod}.",
+            f"{c.PU} • MINIMALIST",
+            f"Camera {c.cam_vi} hạ thấp mượt mà, hé lộ vẻ đẹp tối giản của {c.spoken_prod} trên bàn gỗ sồi",
+            f"{c.cam_en.capitalize()} camera slowly revealing the minimalist {c.product} on an oak wood table",
+        )
+    if bt == "functional_demo":
+        return (
+            c.usp_spoken(0, "Vận hành êm ái, đơn giản, phù hợp với nhịp sống mỗi ngày."),
+            c.usp_caption(0, "DỄ DÙNG • TINH GỌN"),
+            f"Cận cảnh {c.cam_vi} ngón tay chạm nhẹ vào sản phẩm, cơ chế hoạt động mượt mà",
+            f"Close-up with {c.cam_en} camera, a finger lightly operates the {c.product}, smooth and calm",
+        )
+    if bt == "lifestyle_context":
+        return (
+            "Tận hưởng những giây phút thư thái sau một ngày dài bận rộn.",
+            "COZY LIVING",
+            f"Toàn cảnh {c.cam_vi}, {c.tag} ngồi thư giãn trên ghế sofa, không gian ấm cúng bình yên",
+            f"Wide lifestyle shot with {c.cam_en} camera, the model relaxes on a cozy sofa in a warm, peaceful living room",
+        )
+    if bt == "convenience_proof":
+        return (
+            c.usp_spoken(1, "Dễ dàng vệ sinh và cất gọn gàng trong không gian nhà bạn."),
+            c.usp_caption(1, "GỌN GÀNG • DỄ VỆ SINH"),
+            f"Thao tác lau chùi nhẹ nhàng {c.cam_vi}, thiết kế thông minh gọn gàng",
+            f"Gentle cleaning action with {c.cam_en} camera, showing the tidy practical design of the {c.product}",
+        )
+    spoken, cap = _cta_copy(
+        c,
+        f"Nâng tầm không gian sống cùng {c.spoken_prod}, xem chi tiết ở link bên dưới nhé!",
+        "XEM CHI TIẾT • LINK ĐẶT HÀNG",
+    )
+    return (
+        spoken,
+        cap,
+        f"{c.tag} nở nụ cười ấm áp, khung cảnh ngập tràn ánh hoàng hôn và thông điệp CTA",
+        "The model smiles warmly in a sunset-lit living room, a soft call-to-action message appears",
+    )
+
+
+def _copy_general(bt: str, c: _Ctx) -> Tuple[str, str, str, str]:
+    if bt == "hook":
+        return (
+            c.concept_hook or "Tìm kiếm giải pháp hoàn hảo cho công việc và đời sống hàng ngày?",
+            c.concept_caption or "BẠN ĐANG TÌM GIẢI PHÁP NÀY?",
+            c.concept_visual or f"Camera {c.cam_vi} cận cảnh biểu cảm băn khoăn của {c.tag}",
+            f"Close-up with {c.cam_en} camera on the presenter's puzzled, searching expression",
+        )
+    if bt == "pain_agitation":
+        return (
+            "Những rắc rối bất tiện khiến bạn mất nhiều thời gian và công sức?",
+            "RẮC RỐI MỖI NGÀY?",
+            f"Góc cận {c.cam_vi} nhấn mạnh vào rắc rối thực tế thường gặp",
+            f"Tight shot with {c.cam_en} camera emphasizing an everyday annoyance the product solves",
+        )
+    if bt == "solution_reveal":
+        return (
+            f"Và đây là giải pháp dành cho bạn: {c.spoken_prod}!",
+            f"GIẢI PHÁP • {c.PU}",
+            f"Ánh sáng quét qua sản phẩm {c.cam_vi}, xuất hiện sang trọng đầy ấn tượng",
+            f"Light sweeps across the {c.product} with {c.cam_en} camera, a polished hero reveal",
+        )
+    if bt == "feature_demo":
+        return (
+            c.usp_spoken(0, "Thiết kế thông minh, thao tác đơn giản ngay từ lần đầu trải nghiệm."),
+            c.usp_caption(0, "THIẾT KẾ THÔNG MINH"),
+            f"Trình diễn tính năng chi tiết {c.cam_vi}, thao tác mượt mà chính xác",
+            f"Feature demonstration with {c.cam_en} camera, smooth and precise hands-on use of the {c.product}",
+        )
+    if bt == "social_proof":
+        return (
+            c.usp_spoken(1, f"Một trải nghiệm đáng để thử, hãy xem điều gì khiến {c.spoken_prod} khác biệt."),
+            "TRẢI NGHIỆM THỰC TẾ",
+            f"{c.tag} mỉm cười hài lòng khi dùng sản phẩm, {c.cam_vi}",
+            f"The presenter smiles with satisfaction while using the product, {c.cam_en} camera",
+        )
+    spoken, cap = _cta_copy(
+        c,
+        "Nhấp vào link bên dưới để xem chi tiết sản phẩm nhé!",
+        "XEM CHI TIẾT • LINK BIO",
+    )
+    return (
+        spoken,
+        cap,
+        f"{c.tag} giơ cao {c.spoken_prod} rạng rỡ, banner kêu gọi hành động xuất hiện",
+        f"The presenter holds the {c.product} up to the camera with a bright smile, a call-to-action banner appears",
+    )
+
+
+_COPY_BY_ARCHETYPE = {
+    ProductArchetype.FASHION_APPAREL: _copy_fashion,
+    ProductArchetype.TECH_GADGETS: _copy_tech,
+    ProductArchetype.BEAUTY_SKINCARE: _copy_beauty,
+    ProductArchetype.HOME_LIFESTYLE: _copy_home,
+    ProductArchetype.GENERAL_COMMERCIAL: _copy_general,
+}
+
+
+def _transition_for(beat_type: str, index: int) -> Optional[Dict[str, Any]]:
+    """First beat has no inbound transition; a short fade leads into the CTA; otherwise hard cut."""
+    if index == 0:
+        return None
+    if beat_type == "cta":
+        return dict(_CTA_TRANSITION)
+    return dict(_CUT_TRANSITION)
+
+
 def _build_archetype_beats(
     brief: BriefArtifact,
     archetype: ProductArchetype,
@@ -196,174 +594,48 @@ def _build_archetype_beats(
     """Build structured commercial beats based on product archetype and brief specs."""
     config = get_archetype_config(archetype)
     product = brief.product_name
-    spoken_prod = _clean_spoken_product_name(product)
-    pains = brief.pain_points or ["Vấn đề bất tiện thường ngày"]
-    usps = brief.usps or ["Tính năng vượt trội hiện đại"]
-    character_name = brief.presenter.name if brief.presenter else "KOL"
     character_tag = brief.presenter.character_tag if brief.presenter else "[KOL]"
 
     concept_hook = None
     concept_caption = None
     concept_visual = None
-    if artifacts_dir is not None and (artifacts_dir / "creative_concept.json").exists():
-        try:
-            with open(artifacts_dir / "creative_concept.json", "r", encoding="utf-8") as f:
-                cdata = json.load(f)
-                options = cdata.get("concept_options", [])
-                if options:
-                    winning = options[0]
-                    hstrat = winning.get("hook_strategy", {})
-                    concept_hook = hstrat.get("spoken_hook")
-                    concept_caption = hstrat.get("on_screen_text")
-                    concept_visual = hstrat.get("visual_hook")
-        except Exception:
-            pass
+    if artifacts_dir is not None:
+        cdata = _load_json(artifacts_dir / "creative_concept.json")
+        winning = _select_winning_option(cdata) if cdata else None
+        if winning:
+            hstrat = winning.get("hook_strategy") or {}
+            concept_hook = hstrat.get("spoken_hook")
+            concept_caption = hstrat.get("on_screen_text")
+            concept_visual = hstrat.get("visual_hook")
+
+    offer = _resolve_offer(brief, artifacts_dir)
+    copy_fn = _COPY_BY_ARCHETYPE.get(archetype, _copy_general)
 
     beats: List[ScriptBeat] = []
     for idx, tpl in enumerate(config.beat_templates, start=1):
         scene_id = f"shot_{idx:02d}_{tpl.beat_type}"
-        cam_label = camera_phrase(tpl.camera_choreography)
+        ctx = _Ctx(
+            product=product,
+            spoken_prod=_clean_spoken_product_name(product),
+            tag=character_tag,
+            cam_vi=camera_phrase(tpl.camera_choreography),
+            cam_en=_CAMERA_LABEL_EN.get(tpl.camera_choreography.value, "smooth"),
+            usps=list(brief.usps or []),
+            offer=offer,
+            concept_hook=concept_hook,
+            concept_caption=concept_caption,
+            concept_visual=concept_visual,
+        )
+        spoken, on_screen, visual, visual_en = copy_fn(tpl.beat_type, ctx)
 
-        # Build contextual spoken and on-screen copy per archetype
-        if archetype == ProductArchetype.FASHION_APPAREL:
-            is_dress = any(k in product.lower() for k in ("đầm", "dress", "váy", "cherry"))
-            if tpl.beat_type == "hook":
-                spoken = concept_hook or f"Item thời trang chân ái giúp bạn nâng tầm phong cách: {spoken_prod}."
-                on_screen = concept_caption or (f"PARISIAN CHIC • {spoken_prod.upper()}" if is_dress else f"MUST-HAVE • {spoken_prod.upper()}")
-                visual = concept_visual or f"Góc máy {cam_label} từ thấp lên cao, {character_tag} bước sải chân tự tin với phong thái cuốn hút"
-            elif tpl.beat_type == "reveal":
-                spoken = "Form dáng suông chuẩn Hàn Quốc, độn vai nhẹ tôn dáng và che trọn khuyết điểm." if not is_dress else "Phom dáng corset ôm trọn vòng eo thon gọn, tôn xương quai xanh cực quyến rũ."
-                on_screen = "CORSET FIT • 360° SILHOUETTE" if is_dress else "PERFECT FIT • 360° SILHOUETTE"
-                visual = f"Camera {cam_label} xoay 360 quanh {character_tag}, khoe trọn phom dáng thanh lịch của {spoken_prod}"
-            elif tpl.beat_type == "fabric_macro":
-                spoken = "Vải jacquard dập nổi vân waffle dày dặn đứng phom, chống nhăn tuyệt đối và mát mịn." if is_dress else "Chất vải tuyết mưa cao cấp chống nhăn tuyệt đối, vò mạnh thả ra vẫn phẳng lì đứng phom."
-                on_screen = "WAFFLE JACQUARD • CHERRY PRINT" if is_dress else "PREMIUM FABRIC • WRINKLE-FREE"
-                visual = f"Góc cận cảnh macro {cam_label}, bắt trọn từng thớ vải mịn màng đung đưa chuyển động mềm mại"
-            elif tpl.beat_type == "movement_flow":
-                spoken = "Họa tiết ngọt ngào cùng ruy-băng thắt nơ vai điệu đà đậm chất tiểu thư Pháp." if is_dress else "Vạt áo bay nhẹ nhàng tự nhiên, thoải mái vận động cả ngày dài không hề gò bó."
-                on_screen = "FLUID MOVEMENT • PARIS STREET" if is_dress else "FLUID MOVEMENT • ALL DAY COMFORT"
-                visual = f"Camera {cam_label} tracking song song khi {character_tag} rảo bước năng động"
-            elif tpl.beat_type == "styling_versatility":
-                spoken = "Dễ dàng phối cùng túi cói mini cho buổi dạo phố, hay thêm phụ kiện đỏ cho bữa tối hẹn hò lãng mạn." if is_dress else "Dễ dàng mix ngoài áo sơ mi trắng đi làm công sở, hay khoác hờ dạo phố cà phê đều cực sang."
-                on_screen = "PARISIAN PICNIC • SUMMER VIBES" if is_dress else "EASY MIX & MATCH • WORK TO STREET"
-                visual = f"Cắt nhanh {cam_label} đổi phong cách phối đồ linh hoạt cùng phụ kiện"
-            else:  # cta
-                spoken = "Đang có ưu đãi độc quyền 30% hôm nay! Nhấp ngay vào link giỏ hàng bên dưới để sở hữu nhé!"
-                on_screen = "ƯU ĐÃI ĐỘC QUYỀN 30% • NHẤP LINK BIO"
-                visual = f"{character_tag} mỉm cười rạng rỡ, giơ cao mã ưu đãi, banner kêu gọi mua hàng xuất hiện"
-
-        elif archetype == ProductArchetype.TECH_GADGETS:
-            if tpl.beat_type == "hook":
-                spoken = concept_hook or f"Phím cơ ồn ào, gõ mỏi tay? Thử {spoken_prod}!"
-                on_screen = concept_caption or "BÀN PHÍM CƠ SIÊU ÊM • CYBERKEY PRO"
-                visual = concept_visual or f"Camera {cam_label} cận cảnh khuôn mặt {character_tag} bực bội trước tiếng ồn bàn phím cũ"
-            elif tpl.beat_type == "unboxing":
-                spoken = f"Mở hộp ngay em {spoken_prod} thay đổi hoàn toàn trải nghiệm làm việc."
-                on_screen = f"UNBOXING • {spoken_prod.upper()}"
-                visual = f"Góc quay từ trên xuống {cam_label}, bóc lớp seal mờ sang trọng, lộ diện thiết kế tinh xảo của {spoken_prod}"
-            elif tpl.beat_type == "macro_detail":
-                spoken = "Khung nhôm CNC nguyên khối cực đầm tay, gõ phím siêu êm và đầm tiếng."
-                on_screen = "CNC ALUMINUM • TACTILE FEEL"
-                visual = f"Macro {cam_label} chuyển nét mượt mà trên bề mặt kim loại nguyên khối và cổng kết nối"
-            elif tpl.beat_type == "performance_demo":
-                spoken = "Kết nối không dây 3 chế độ cực nhạy, độ trễ 0ms siêu mượt mà."
-                on_screen = "TRI-MODE WIRELESS • 0MS LATENCY"
-                visual = f"Camera {cam_label} trình diễn gõ phím tốc độ cao phản hồi tức thì trên màn hình"
-            elif tpl.beat_type == "specs_proof":
-                spoken = "Pin trâu 4000mAh dùng nhiều tuần liền, tương thích mượt mà Mac, iPad và PC."
-                on_screen = "4000MAH BATTERY • MULTI-DEVICE"
-                visual = f"Thao tác cất gọn {spoken_prod} vào balo thanh lịch, góc quay {cam_label} nhanh gọn"
-            else:  # cta
-                spoken = f"Nâng cấp bàn làm việc của bạn cùng {spoken_prod} ngay tại link bên dưới!"
-                on_screen = "ƯU ĐÃI ĐỘC QUYỀN • LINK GIỎ HÀNG"
-                visual = f"{character_tag} mỉm cười giơ cao {spoken_prod}, đồ họa CTA nổi bật nhấp nháy"
-
-        elif archetype == ProductArchetype.BEAUTY_SKINCARE:
-            if tpl.beat_type == "hook":
-                spoken = concept_hook or "Chỉ một giọt serum, làn da đổi thay thế nào?"
-                on_screen = concept_caption or "GLOW SKIN REVOLUTION"
-                visual = concept_visual or f"Góc cận cảnh macro {cam_label}, giọt tinh chất {spoken_prod} óng ánh rơi từ ống nhỏ giọt thủy tinh"
-            elif tpl.beat_type == "skin_agitation":
-                spoken = "Da xỉn màu, khô ráp và thiếu sức sống mỗi sáng thức dậy?"
-                on_screen = "DA THIẾU NƯỚC & KÉM SẮC?"
-                visual = f"Góc {cam_label} cận mặt {character_tag} chạm nhẹ lên gò má bày tỏ nỗi lo"
-            elif tpl.beat_type == "texture_macro":
-                spoken = "Chất serum mỏng nhẹ như nhung, thẩm thấu tức thì vào từng tế bào da."
-                on_screen = "VELVET TEXTURE • FAST ABSORPTION"
-                visual = f"Macro {cam_label} swatch tinh chất sánh mịn trên phiến đá pha lê bắt sáng lấp lánh"
-            elif tpl.beat_type == "application_method":
-                spoken = "Cấp ẩm tầng sâu, phục hồi hàng rào bảo vệ cho làn da căng bóng mịn màng."
-                on_screen = "MULTI-PEPTIDE • DEEP REPAIR"
-                visual = f"Góc nghiêng {cam_label}, {character_tag} thoa tinh chất nhẹ nhàng lên gò má, tạo độ bóng căng mọng"
-            elif tpl.beat_type == "transformation_proof":
-                spoken = "Hiệu ứng căng bóng chuẩn Glass Skin rạng ngời suốt 24 giờ."
-                on_screen = "RADIANT GLASS SKIN • 24H HYDRATION"
-                visual = f"Góc quay {cam_label} bắt trọn ánh sáng tự nhiên trên làn da mịn màng, nụ cười rạng rỡ của {character_tag}"
-            else:  # cta
-                spoken = f"Yêu thương làn da cùng {spoken_prod}, nhận ngay bộ quà tặng độc quyền tại link bio nhé!"
-                on_screen = "MUA 1 TẶNG 1 • LINK TẠI BIO"
-                visual = f"Chai {spoken_prod} bên cạnh hoa cỏ thanh khiết, đồ họa quà tặng cao cấp xuất hiện"
-
-        elif archetype == ProductArchetype.HOME_LIFESTYLE:
-            if tpl.beat_type == "hook":
-                spoken = concept_hook or "Muốn không gian sống luôn ấm cúng, tinh tế và gọn gàng ngăn nắp?"
-                on_screen = concept_caption or "GIẢI PHÁP CHO TỔ ẤM HIỆN ĐẠI"
-                visual = concept_visual or f"Góc quay lướt {cam_label} trong căn phòng ngập tràn ánh nắng ấm áp buổi sáng"
-            elif tpl.beat_type == "reveal":
-                spoken = f"Đây chính là mảnh ghép hoàn hảo cho ngôi nhà bạn: {spoken_prod}."
-                on_screen = f"{spoken_prod.upper()} • MINIMALIST"
-                visual = f"Camera {cam_label} hạ thấp mượt mà, hé lộ vẻ đẹp tối giản của {spoken_prod} trên bàn gỗ sồi"
-            elif tpl.beat_type == "functional_demo":
-                spoken = "Vận hành êm ái thông minh, tối ưu từng góc nhỏ trong căn nhà."
-                on_screen = "SMART OPERATION • LOW NOISE"
-                visual = f"Cận cảnh {cam_label} ngón tay chạm nhẹ nút cảm ứng, cơ chế hoạt động mượt mà tĩnh lặng"
-            elif tpl.beat_type == "lifestyle_context":
-                spoken = "Tận hưởng những giây phút thư thái thảnh thơi sau ngày dài bận rộn."
-                on_screen = "PEACE OF MIND • COZY LIVING"
-                visual = f"Toàn cảnh {cam_label}, {character_tag} ngồi thư giãn trên ghế sofa, không gian ấm cúng bình yên"
-            elif tpl.beat_type == "convenience_proof":
-                spoken = "Dễ dàng vệ sinh, cất gọn gàng ngăn nắp mà không chiếm diện tích."
-                on_screen = "EASY CLEAN • SPACE SAVING"
-                visual = f"Thao tác lau chùi nhẹ nhàng {cam_label}, thiết kế thông minh gọn gàng"
-            else:  # cta
-                spoken = f"Nâng tầm phong cách sống cùng {spoken_prod} ngay hôm nay với ưu đãi 35%!"
-                on_screen = "ƯU ĐÃI TỔ ẤM 35% • LINK ĐẶT HÀNG"
-                visual = f"{character_tag} nở nụ cười ấm áp, khung cảnh ngập tràn ánh hoàng hôn và thông điệp CTA"
-
-        else:  # GENERAL_COMMERCIAL
-            if tpl.beat_type == "hook":
-                spoken = concept_hook or "Tìm kiếm giải pháp hoàn hảo cho công việc và đời sống hàng ngày?"
-                on_screen = concept_caption or "BẠN ĐANG TÌM GIẢI PHÁP NÀY?"
-                visual = concept_visual or f"Camera {cam_label} cận cảnh biểu cảm ngạc nhiên bất lực của {character_tag}"
-            elif tpl.beat_type == "pain_agitation":
-                spoken = "Những rắc rối bất tiện khiến bạn mất quá nhiều thời gian và công sức?"
-                on_screen = "GIẢI PHÁP TIẾT KIỆM THỜI GIAN"
-                visual = f"Góc cận {cam_label} nhấn mạnh vào rắc rối thực tế xảy ra"
-            elif tpl.beat_type == "solution_reveal":
-                spoken = f"Và đây chính là cứu tinh dành cho bạn: {spoken_prod}!"
-                on_screen = f"GIẢI PHÁP TOÀN DIỆN • {spoken_prod.upper()}"
-                visual = f"Ánh sáng quét qua sản phẩm {cam_label}, xuất hiện sang trọng đầy ấn tượng"
-            elif tpl.beat_type == "feature_demo":
-                spoken = "Thiết kế thông minh đột phá, mang lại hiệu quả vượt trội ngay từ lần đầu trải nghiệm."
-                on_screen = "SMART DESIGN • HIGH EFFICIENCY"
-                visual = f"Trình diễn tính năng chi tiết {cam_label}, thao tác mượt mà chính xác"
-            elif tpl.beat_type == "social_proof":
-                spoken = "Hàng ngàn khách hàng đã tin dùng và hoàn toàn bị thuyết phục."
-                on_screen = "5 SAO TIN DÙNG • 100% HÀI LÒNG"
-                visual = f"{character_tag} mỉm cười hài lòng {cam_label}, đồ họa đánh giá 5 sao xuất hiện"
-            else:  # cta
-                spoken = "Nhấp ngay link bên dưới để nhận voucher ưu đãi độc quyền hôm nay nhé!"
-                on_screen = "NHẤP LINK BIO • VOUCHER ĐỘC QUYỀN"
-                visual = f"{character_tag} giơ cao {spoken_prod} rạng rỡ, banner kêu gọi hành động xuất hiện"
-
-        on_screen = _clean_caption(on_screen)
         beats.append(
             ScriptBeat(
                 scene_id=scene_id,
                 beat_type=tpl.beat_type,
                 spoken_text=spoken,
-                on_screen_text=on_screen,
+                on_screen_text=_clean_caption(on_screen),
                 visual_cue=visual,
+                visual_cue_en=visual_en,
                 estimated_duration=tpl.target_duration,
                 archetype=archetype,
                 character_role=tpl.recommended_role,
@@ -371,10 +643,78 @@ def _build_archetype_beats(
                 camera_choreography=tpl.camera_choreography,
                 lighting_contract=tpl.lighting_contract,
                 narrative_purpose=tpl.narrative_purpose,
+                transition=_transition_for(tpl.beat_type, idx - 1),
             )
         )
 
     return beats
+
+
+def _build_legacy_mug_beats(brief: BriefArtifact) -> List[ScriptBeat]:
+    """Legacy Lumina mug demo: 4 beats, each at most 6s (the old 12s solution beat exceeded Hailuo's 10s limit)."""
+    common = dict(archetype=ProductArchetype.GENERAL_COMMERCIAL, lighting_contract=LightingContract.STUDIO_3POINT)
+    return [
+        ScriptBeat(
+            scene_id="shot_01_hook",
+            beat_type="hook",
+            spoken_text="Ly cà phê vừa pha xong, 15 phút sau đã nguội ngắt?",
+            on_screen_text="CÀ PHÊ NGUỘI NGẮT SAU 15 PHÚT?",
+            visual_cue="Extreme close-up ly cà phê nguội, chuyển nhanh sang góc cận KOL Minh Anh lắc đầu ngạc nhiên",
+            visual_cue_en="Extreme close-up of a cold cup of coffee, quick cut to a close-up of the presenter shaking her head in surprise",
+            estimated_duration=3.5,
+            character_role=CharacterRole.PRESENTER,
+            audio_strategy=AudioStrategy.ON_CAMERA_SPEECH,
+            camera_choreography=CameraChoreography.ZOOM_IN,
+            narrative_purpose="Pattern interrupt hook questioning mundane annoyance",
+            transition=None,
+            **common,
+        ),
+        ScriptBeat(
+            scene_id="shot_02_pain",
+            beat_type="pain",
+            spoken_text="Chưa kể đá tan chảy nước lênh láng, làm ướt đẫm tài liệu và bàn phím làm việc?",
+            on_screen_text="NƯỚC ĐỌNG ƯỚT BÀN & TÀI LIỆU!",
+            visual_cue="Góc nhìn bàn làm việc nước ngưng tụ lem nhem hồ sơ, Minh Anh cau mày khó chịu",
+            visual_cue_en="Top view of a work desk where condensation drips onto paper reports, the model frowns in annoyance",
+            estimated_duration=5.0,
+            character_role=CharacterRole.MODEL,
+            audio_strategy=AudioStrategy.ON_CAMERA_SPEECH,
+            camera_choreography=CameraChoreography.ZOOM_IN,
+            narrative_purpose="Visceral pain agitation of messy workspace",
+            transition=dict(_CUT_TRANSITION),
+            **common,
+        ),
+        ScriptBeat(
+            scene_id="shot_03_solution",
+            beat_type="solution",
+            spoken_text="Giải pháp đây rồi! Ly Lumina Pro, chạm nhẹ nắp LED là biết ngay nhiệt độ!",
+            on_screen_text="LUMINA PRO • NẮP CẢM ỨNG LED",
+            visual_cue="Góc quay điện ảnh studio sang trọng, Minh Anh chạm nắp LED sáng đèn, nâng ly thưởng thức sảng khoái",
+            visual_cue_en="Luxurious cinematic studio shot, the presenter taps the glowing LED lid and lifts the mug with a refreshed smile",
+            estimated_duration=6.0,
+            character_role=CharacterRole.PRESENTER,
+            audio_strategy=AudioStrategy.ON_CAMERA_SPEECH,
+            camera_choreography=CameraChoreography.PEDESTAL,
+            narrative_purpose="Hero solution reveal of the smart lid",
+            transition=dict(_CUT_TRANSITION),
+            **common,
+        ),
+        ScriptBeat(
+            scene_id="shot_04_cta",
+            beat_type="cta",
+            spoken_text="Bảo bối công sở chống tràn tuyệt đối! Nhấp vào link bên dưới để xem chi tiết nhé!",
+            on_screen_text="XEM CHI TIẾT • NHẤP LINK BIO",
+            visual_cue="Minh Anh mỉm cười rạng rỡ, giơ cao ly Lumina Pro thanh lịch, logo thương hiệu và nút CTA xuất hiện",
+            visual_cue_en="The presenter smiles brightly and holds up the elegant Lumina Pro mug, brand logo and a call-to-action button appear",
+            estimated_duration=5.0,
+            character_role=CharacterRole.PRESENTER,
+            audio_strategy=AudioStrategy.ON_CAMERA_SPEECH,
+            camera_choreography=CameraChoreography.ZOOM_IN,
+            narrative_purpose="Direct high-trust presenter CTA",
+            transition=dict(_CTA_TRANSITION),
+            **common,
+        ),
+    ]
 
 
 def generate_commercial_script(
@@ -437,65 +777,9 @@ def generate_commercial_script(
             raise ValueError("Invalid agent-authored script: " + "; ".join(script_warnings))
         if script_warnings:
             telemetry.note("Script validation warnings: " + "; ".join(script_warnings), warnings=script_warnings)
-    elif brief.campaign_id == "campaign_lumina_mug_01" and archetype is None and selected_archetype == ProductArchetype.GENERAL_COMMERCIAL:
-        beats: List[ScriptBeat] = [
-            ScriptBeat(
-                scene_id="shot_01_hook",
-                beat_type="hook",
-                spoken_text="Bạn có phát chán khi ly cà phê vừa pha xong thì 15 phút sau đã nguội ngắt?",
-                on_screen_text="CÀ PHÊ NGUỘI NGẮT SAU 15 PHÚT?",
-                visual_cue="Extreme close-up ly cà phê nguội, chuyển nhanh sang góc cận KOL Minh Anh lắc đầu ngạc nhiên",
-                estimated_duration=3.5,
-                archetype=ProductArchetype.GENERAL_COMMERCIAL,
-                character_role=CharacterRole.PRESENTER,
-                audio_strategy=AudioStrategy.ON_CAMERA_SPEECH,
-                camera_choreography=CameraChoreography.ZOOM_IN,
-                lighting_contract=LightingContract.STUDIO_3POINT,
-                narrative_purpose="Pattern interrupt hook questioning mundane annoyance",
-            ),
-            ScriptBeat(
-                scene_id="shot_02_pain",
-                beat_type="pain",
-                spoken_text="Chưa kể đá tan chảy nước lênh láng, làm ướt đẫm tài liệu và bàn phím làm việc?",
-                on_screen_text="NƯỚC ĐỌNG ƯỚT BÀN & TÀI LIỆU!",
-                visual_cue="Góc nhìn bàn làm việc nước ngưng tụ lem nhem hồ sơ, Minh Anh cau mày khó chịu",
-                estimated_duration=5.0,
-                archetype=ProductArchetype.GENERAL_COMMERCIAL,
-                character_role=CharacterRole.MODEL,
-                audio_strategy=AudioStrategy.ON_CAMERA_SPEECH,
-                camera_choreography=CameraChoreography.ZOOM_IN,
-                lighting_contract=LightingContract.STUDIO_3POINT,
-                narrative_purpose="Visceral pain agitation of messy workspace",
-            ),
-            ScriptBeat(
-                scene_id="shot_03_solution",
-                beat_type="solution",
-                spoken_text="Giải pháp đây rồi! Ly giữ nhiệt Lumina Pro, chạm nhẹ nắp LED biết ngay nhiệt độ, giữ nóng 12 tiếng, giữ lạnh 24 tiếng!",
-                on_screen_text="LUMINA PRO • NẮP CẢM ỨNG LED • GIỮ NHIỆT 24H",
-                visual_cue="Góc quay điện ảnh studio sang trọng, Minh Anh chạm nắp LED sáng đèn 65 độ C, nâng ly thưởng thức sảng khoái",
-                estimated_duration=12.0,
-                archetype=ProductArchetype.GENERAL_COMMERCIAL,
-                character_role=CharacterRole.PRESENTER,
-                audio_strategy=AudioStrategy.ON_CAMERA_SPEECH,
-                camera_choreography=CameraChoreography.PEDESTAL,
-                lighting_contract=LightingContract.STUDIO_3POINT,
-                narrative_purpose="Comprehensive hero solution reveal and feature proof",
-            ),
-            ScriptBeat(
-                scene_id="shot_04_cta",
-                beat_type="cta",
-                spoken_text="Bảo bối công sở chống tràn tuyệt đối! Nhấp ngay link bên dưới để nhận ưu đãi 40% hôm nay nhé!",
-                on_screen_text="ƯU ĐÃI 40% ĐỘC QUYỀN • NHẤP LINK BIO",
-                visual_cue="Minh Anh mỉm cười rạng rỡ, giơ cao ly Lumina Pro thanh lịch, logo thương hiệu và nút CTA xuất hiện",
-                estimated_duration=6.5,
-                archetype=ProductArchetype.GENERAL_COMMERCIAL,
-                character_role=CharacterRole.PRESENTER,
-                audio_strategy=AudioStrategy.ON_CAMERA_SPEECH,
-                camera_choreography=CameraChoreography.ZOOM_IN,
-                lighting_contract=LightingContract.STUDIO_3POINT,
-                narrative_purpose="Direct high-trust presenter CTA with flash discount",
-            ),
-        ]
+    elif brief.campaign_id == LEGACY_MUG_CAMPAIGN_ID and archetype is None and selected_archetype == ProductArchetype.GENERAL_COMMERCIAL:
+        beats = _build_legacy_mug_beats(brief)
+        fit_beat_durations_to_speech(beats)
     else:
         beats = _build_archetype_beats(brief, selected_archetype, target_artifacts_dir)
         template_warnings = fit_beat_durations_to_speech(beats)
