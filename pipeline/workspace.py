@@ -26,12 +26,61 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Type, TypeVar, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from pipeline.archetypes import ProductArchetype
 from pipeline.config import BASE_DIR, OUTPUT_DIR, PROJECTS_DIR
 
 T = TypeVar("T", bound=BaseModel)
+
+
+def canonical_artifact_models() -> Dict[str, Type[BaseModel]]:
+    """Canonical artifacts an agent may supply itself (`--inject NAME=PATH`) instead of letting a
+    stage generate them (ADR 0001: stages advance only when prerequisite artifacts validate).
+
+    Imported lazily: pipeline.schemas pulls in pipeline.researcher, which imports this module.
+    """
+    from pipeline.schemas import AssetManifestArtifact, BriefArtifact, ScenePlanArtifact, ScriptArtifact
+
+    return {
+        "brief": BriefArtifact,
+        "script": ScriptArtifact,
+        "scene_plan": ScenePlanArtifact,
+        "asset_manifest": AssetManifestArtifact,
+    }
+
+# Stage that normally produces each injectable artifact.
+ARTIFACT_PRODUCER_STAGE: Dict[str, int] = {"brief": 1, "script": 2, "scene_plan": 3, "asset_manifest": 4}
+
+# Canonical artifacts that must exist and validate before a stage may start.
+STAGE_PREREQUISITES: Dict[int, tuple] = {
+    2: ("brief",),
+    3: ("script",),
+    4: ("script", "scene_plan"),
+    5: ("scene_plan", "asset_manifest"),
+    6: ("script", "asset_manifest"),
+    7: ("script", "asset_manifest"),
+    8: ("script", "scene_plan", "asset_manifest"),
+}
+
+
+def first_stage_after(artifact_names: List[str]) -> int:
+    """First stage that still has to run once ``artifact_names`` were supplied by the caller."""
+    return max((ARTIFACT_PRODUCER_STAGE[name] for name in artifact_names), default=0) + 1
+
+
+def _first_error(exc: ValidationError) -> str:
+    """One-line summary of the first pydantic validation error."""
+    first = exc.errors()[0]
+    where = ".".join(str(part) for part in first.get("loc", ())) or "<root>"
+    return f"{where}: {first.get('msg')}"
+
+
+def _missing_media(field: str, paths: List[str]) -> List[str]:
+    """Problems for an asset-manifest media list that is empty or names files that do not exist."""
+    if not paths:
+        return [f"asset_manifest.json lists no {field} (run the stage that produces them)"]
+    return [f"asset_manifest.json {field} file is missing: {p}" for p in paths if not Path(p).is_file()]
 
 
 def _safe_link_or_copy(src: Path, dst: Path) -> None:
@@ -259,7 +308,14 @@ class ProjectWorkspace:
             if src_artifacts.exists():
                 for art_file in src_artifacts.glob("*.json"):
                     if art_file.is_file():
-                        shutil.copy2(art_file, next_ws.artifacts_dir / art_file.name)
+                        dst_art = next_ws.artifacts_dir / art_file.name
+                        shutil.copy2(art_file, dst_art)
+                        # Manifests record absolute media paths; retarget them at this version's own
+                        # hardlinked copies so the new run stays self-contained (ADR 0007).
+                        text = dst_art.read_text(encoding="utf-8")
+                        retargeted = text.replace(str(source_dir), str(next_ws.root))
+                        if retargeted != text:
+                            dst_art.write_text(retargeted, encoding="utf-8")
 
         next_ws.update_project_meta(active_version=next_ver)
         return next_ws
@@ -295,6 +351,68 @@ class ProjectWorkspace:
             data = json.load(f)
 
         return model_cls.model_validate(data)
+
+    def inject_artifact(self, name: str, source: Union[Path, str]) -> Path:
+        """Validate an agent-supplied canonical artifact and install it in artifacts_dir.
+
+        Raises ``ValueError`` for an unknown name, unreadable JSON or a schema violation and
+        ``FileNotFoundError`` for a missing source; the workspace is untouched on any failure.
+        """
+        models = canonical_artifact_models()
+        model_cls = models.get(name)
+        if model_cls is None:
+            raise ValueError(f"Unknown artifact '{name}'; injectable artifacts: {', '.join(sorted(models))}")
+        src = Path(source)
+        if not src.is_file():
+            raise FileNotFoundError(f"Artifact file not found: {src}")
+        try:
+            raw = json.loads(src.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"{name}: {src} is not valid JSON ({exc})") from exc
+        try:
+            model_cls.model_validate(raw)
+        except ValidationError as exc:
+            raise ValueError(f"{name}: {src} violates the {model_cls.__name__} schema: {_first_error(exc)}") from exc
+
+        self.ensure_dirs()
+        target = self.artifacts_dir / f"{name}.json"
+        tmp = target.with_suffix(".json.tmp")
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(raw, f, ensure_ascii=False, indent=2)
+        os.replace(tmp, target)
+        return target
+
+    def check_prerequisites(self, stage: int) -> List[str]:
+        """Problems that would stop ``stage`` from starting; empty when it can run.
+
+        Each entry is a sentence an agent can act on: what is missing or invalid and how to supply it.
+        """
+        problems: List[str] = []
+        loaded: Dict[str, BaseModel] = {}
+        models = canonical_artifact_models()
+        for name in STAGE_PREREQUISITES.get(stage, ()):
+            path = self.artifacts_dir / f"{name}.json"
+            hint = f"run the earlier stages or supply it with --inject {name}=PATH"
+            if not path.is_file():
+                problems.append(f"{name}.json is missing from {self.artifacts_dir} ({hint})")
+                continue
+            try:
+                loaded[name] = models[name].model_validate(
+                    json.loads(path.read_text(encoding="utf-8"))
+                )
+            except (json.JSONDecodeError, ValidationError) as exc:
+                detail = _first_error(exc) if isinstance(exc, ValidationError) else str(exc)
+                problems.append(f"{name}.json is invalid: {detail} ({hint})")
+
+        manifest = loaded.get("asset_manifest")
+        if manifest is not None:
+            if stage == 6:
+                problems.extend(_missing_media("raw_video_clips", manifest.raw_video_clips))
+            if stage in (7, 8):
+                problems.extend(_missing_media("synced_video_clips", manifest.synced_video_clips))
+        if stage == 8 and not self.master_video_path.is_file():
+            problems.append(f"master video is missing at {self.master_video_path} (run stage 7)")
+        return problems
 
     def write_prompt_ledger(self, ledger_data: Dict[str, Any]) -> Path:
         """Atomically persist prompt_ledger.json inside the active run directory."""
