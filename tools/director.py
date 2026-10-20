@@ -29,7 +29,7 @@ from typing import Any, Optional
 # Add project root to sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from pipeline.archetypes import ProductArchetype
+from pipeline.archetypes import ProductArchetype, detect_product_archetype
 from pipeline.director import load_json_arg, resolve_character_path, run_pipeline
 from pipeline.workspace import ProjectWorkspace, first_stage_after
 
@@ -245,6 +245,29 @@ def main(argv: list[str] | None = None) -> int:
         version=args.version,
         base_dir=base_dir,
     )
+    # Topic resolution: explicit --topic/--archetype wins; else an existing workspace keeps its topic;
+    # else classify from product name + link/description BEFORE the workspace directory is chosen.
+    if topic:
+        archetype_source = "explicit"
+    elif workspace.project_root.is_dir():
+        archetype_source = "workspace"
+    else:
+        archetype_source = "auto"
+        detected = detect_product_archetype(args.product, args.url)
+        if detected.value != workspace.topic:
+            workspace = ProjectWorkspace.from_campaign_id(
+                campaign_id=project_id,
+                topic=detected,
+                version=args.version,
+                base_dir=base_dir,
+            )
+    topic = workspace.topic
+
+    def _res(ws: ProjectWorkspace, from_stage: int, ok: bool, exit_code: int, **extra: Any) -> dict[str, Any]:
+        extra.setdefault("archetype", ws.topic)
+        extra.setdefault("archetype_source", archetype_source)
+        return _result(ws, from_stage, ok, exit_code, **extra)
+
     if args.new_version:
         workspace = workspace.create_next_version()
 
@@ -255,13 +278,13 @@ def main(argv: list[str] | None = None) -> int:
         transitions = load_json_arg(args.transitions, "--transitions")
         character_path = resolve_character_path(args.character)
     except (OSError, ValueError) as exc:
-        return _emit(_result(workspace, args.from_stage or 1, False, EXIT_INVALID_INPUT, error=str(exc)), args.json)
+        return _emit(_res(workspace, args.from_stage or 1, False, EXIT_INVALID_INPUT, error=str(exc)), args.json)
 
     injected: list[str] = []
     for spec in args.inject:
         name, sep, source = spec.partition("=")
         if not sep or not name.strip() or not source.strip():
-            result = _result(
+            result = _res(
                 workspace,
                 args.from_stage or 1,
                 False,
@@ -272,19 +295,19 @@ def main(argv: list[str] | None = None) -> int:
         try:
             workspace.inject_artifact(name.strip(), source.strip())
         except (ValueError, FileNotFoundError) as exc:
-            return _emit(_result(workspace, args.from_stage or 1, False, EXIT_INVALID_INPUT, error=str(exc)), args.json)
+            return _emit(_res(workspace, args.from_stage or 1, False, EXIT_INVALID_INPUT, error=str(exc)), args.json)
         injected.append(name.strip())
 
     from_stage = args.from_stage or first_stage_after(injected)
     if args.pause_after_stage is not None and args.pause_after_stage < from_stage:
         error = f"--pause-after-stage {args.pause_after_stage} is before the first stage to run ({from_stage})"
-        return _emit(_result(workspace, from_stage, False, EXIT_INVALID_INPUT, error=error), args.json)
+        return _emit(_res(workspace, from_stage, False, EXIT_INVALID_INPUT, error=error), args.json)
     problems = workspace.check_prerequisites(from_stage)
     stages_to_run = list(range(from_stage, LAST_STAGE + 1))
 
     if args.check:
         ok = not problems
-        result = _result(
+        result = _res(
             workspace,
             from_stage,
             ok,
@@ -298,7 +321,7 @@ def main(argv: list[str] | None = None) -> int:
         return _emit(result, args.json)
 
     if problems:
-        result = _result(
+        result = _res(
             workspace,
             from_stage,
             False,
@@ -323,6 +346,7 @@ def main(argv: list[str] | None = None) -> int:
             product_url_or_query=args.url,
             archetype=topic,
             topic=topic,
+            archetype_source=archetype_source,
             video_mode=args.video_mode,
             resume_from_stage=from_stage,
             output_dir=base_dir,
@@ -346,7 +370,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if run_status.get("status") == "paused":
         stage = run_status.get("paused_after_stage")
-        return _finish(_result(
+        return _finish(_res(
             workspace,
             from_stage,
             False,
@@ -358,7 +382,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if ok:
         master: Optional[Path] = workspace.master_video_path if workspace.master_video_path.exists() else None
-        result = _result(
+        result = _res(
             workspace,
             from_stage,
             True,
@@ -371,7 +395,7 @@ def main(argv: list[str] | None = None) -> int:
     outcome = _run_outcome(workspace)
     code = EXIT_VERIFICATION_FAILED if outcome["failed_stage"] == VERIFICATION_STAGE else EXIT_PIPELINE_FAILED
     error = outcome["error"] or "Pipeline failed; see telemetry/state.json"
-    return _finish(_result(workspace, from_stage, False, code, **{**outcome, "error": error}))
+    return _finish(_res(workspace, from_stage, False, code, **{**outcome, "error": error}))
 
 
 if __name__ == "__main__":

@@ -1071,25 +1071,69 @@ _ARCHETYPE_KEYWORDS: Dict[ProductArchetype, Tuple[str, ...]] = {
         "dam", "vay", "ao", "quan", "ao khoac", "blazer", "jacket", "dress", "skirt", "shirt",
         "jeans", "hoodie", "sweater", "cardigan", "corset", "phom", "form dang", "thoi trang",
         "giay", "sneaker", "tui xach", "handbag", "fashion", "outfit", "lookbook", "do bo", "set do",
+        "ao thun", "ao so mi", "ao len", "ao dai", "ao phong", "ao polo", "chan vay", "quan jean",
+        "quan tay", "quan short", "quan jogger", "legging", "vest", "polo", "t shirt", "tshirt",
+        "giay the thao", "giay cao got", "giay luoi", "giay boot", "boot", "sandal", "dep", "balo",
+        "vi da", "that lung", "kinh mat", "khan choang", "bikini", "do boi", "do ngu", "do lot",
+        "tui deo cheo", "tui tote", "trang suc", "day chuyen", "bong tai", "cong so",
     ),
     ProductArchetype.TECH_GADGETS: (
         "ban phim", "keyboard", "chuot", "mouse", "tai nghe", "earbuds", "headphone", "bluetooth",
         "wireless", "khong day", "sac du phong", "power bank", "usb", "cap sac", "sac nhanh", "pin",
         "loa", "speaker", "camera", "man hinh", "laptop", "dien thoai", "smartwatch", "dong ho thong minh",
         "gadget", "rgb", "led", "cong nghe", "robot", "may chieu",
+        "anc", "tws", "airpods", "earphone", "chong on", "noise cancelling", "cu sac", "sac khong day",
+        "bo sac", "adapter", "hub", "hdmi", "type c", "tablet", "may tinh bang", "ipad", "iphone",
+        "macbook", "samsung", "xiaomi", "webcam", "micro", "microphone", "gimbal", "ssd", "o cung",
+        "the nho", "router", "wifi", "may in", "gaming", "tivi", "smart tv", "op lung", "kinh cuong luc",
+        "action cam", "may anh", "tay cam choi game",
     ),
     ProductArchetype.BEAUTY_SKINCARE: (
         "serum", "kem duong", "kem chong nang", "sunscreen", "spf", "duong da", "duong am", "skincare",
         "makeup", "trang diem", "son moi", "lipstick", "mat na", "toner", "cleanser", "sua rua mat",
         "tay trang", "collagen", "retinol", "vitamin c", "da dau", "da kho", "da mun", "lan da",
         "nuoc hoa", "perfume", "dau goi", "dau xa", "cham soc da", "lam dep",
+        "son", "lip gloss", "lip tint", "tint", "phan phu", "phan nuoc", "phan ma", "phan mat",
+        "phan nen", "cushion", "kem nen", "kem lot", "che khuyet diem", "mascara", "eyeliner", "ke mat",
+        "ke may", "ma hong", "blush", "highlighter", "sua tam", "sua duong the", "body lotion", "lotion",
+        "essence", "ampoule", "tinh chat", "nuoc hoa hong", "gel rua mat", "rua mat", "tay te bao chet",
+        "kem mat", "kem tri mun", "kem tay long", "chong lao hoa", "bong tay trang", "co trang diem",
+        "mi gia", "ngua mun", "tri nam",
     ),
     ProductArchetype.HOME_LIFESTYLE: (
         "nen thom", "tinh dau", "decor", "trang tri", "phong khach", "phong ngu", "nha bep", "nha cua",
         "ly giu nhiet", "binh giu nhiet", "coc", "binh nuoc", "noi chien", "noi com", "may xay",
         "den ngu", "den ban", "chan ga", "goi om", "tham", "ke sach", "hop dung", "do gia dung",
         "kitchen", "candle", "home", "furniture", "noi that", "ap cuc", "cozy", "am cung",
+        "may hut bui", "robot hut bui", "hut bui", "may loc khong khi", "may loc nuoc", "noi chien khong dau",
+        "may rua bat", "may giat", "tu lanh", "may pha ca phe", "am dun", "am sieu toc", "binh dun",
+        "lo vi song", "lo nuong", "chao", "may say", "may tao am", "may lanh", "dieu hoa", "ga giuong",
+        "bo ga", "ga goi", "nem", "rem", "guong", "gia dung", "bep tu", "bep ga", "hop com", "may ep",
+        "sofa", "ghe", "ban an", "giuong", "chong tro", "khan tam", "may danh trung",
     ),
+}
+
+# Short Vietnamese tokens that collapse onto common unrelated words once diacritics are stripped
+# (``đảm bảo``/``đậm`` -> "dam", ``quan trọng`` -> "quan", ``vậy`` -> "vay", ``sơn`` -> "son",
+# ``thảm`` vs ``tham khảo``, ``chào`` -> "chao"). When the text carries any Vietnamese diacritics these must match
+# in their exact accented spelling; fully unaccented text (typed without diacritics) falls back to plain matching.
+_ACCENT_STRICT: Dict[str, Tuple[str, ...]] = {
+    "dam": ("đầm",),
+    "vay": ("váy",),
+    "ao": ("áo",),
+    "quan": ("quần",),
+    "giay": ("giày",),
+    "dep": ("dép",),
+    "son": ("son",),
+    "tham": ("thảm",),
+    "chao": ("chảo",),
+    "nem": ("nệm",),
+    "rem": ("rèm",),
+    "guong": ("gương",),
+    "ghe": ("ghế",),
+    "giuong": ("giường",),
+    "coc": ("cốc",),
+    "chuot": ("chuột",),
 }
 
 
@@ -1102,6 +1146,14 @@ def _normalize_text(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", stripped).strip()
 
 
+def _keyword_hit(kw: str, haystack: str, raw: str, has_diacritics: bool) -> bool:
+    """True when ``kw`` occurs as a whole word (accent-strict for ambiguous short tokens, see ``_ACCENT_STRICT``)."""
+    strict = _ACCENT_STRICT.get(kw)
+    if strict is not None and has_diacritics:
+        return any(re.search(rf"(?<!\w){re.escape(form)}(?!\w)", raw) for form in strict)
+    return re.search(rf"(?<![a-z0-9]){re.escape(kw)}(?![a-z0-9])", haystack) is not None
+
+
 def classify_product_archetype(text: str) -> ProductArchetype:
     """Deterministically map free product text (title, copy, URL slug) to a ProductArchetype.
 
@@ -1111,12 +1163,20 @@ def classify_product_archetype(text: str) -> ProductArchetype:
     haystack = f" {_normalize_text(text or '')} "
     if haystack.strip() == "":
         return ProductArchetype.GENERAL_COMMERCIAL
+    raw = unicodedata.normalize("NFC", (text or "").lower())
+    has_diacritics = any(ord(ch) > 127 for ch in raw)
     best = ProductArchetype.GENERAL_COMMERCIAL
     best_score = 0
     for archetype, keywords in _ARCHETYPE_KEYWORDS.items():
-        score = sum(
-            1 for kw in keywords if re.search(rf"(?<![a-z0-9]){re.escape(kw)}(?![a-z0-9])", haystack)
-        )
+        score = sum(1 for kw in keywords if _keyword_hit(kw, haystack, raw, has_diacritics))
         if score > best_score:
             best, best_score = archetype, score
     return best
+
+
+def detect_product_archetype(product_name: str = "", product_text: Optional[str] = None) -> ProductArchetype:
+    """Classify a product from its name plus any accompanying URL / description text.
+
+    Single entry point shared by the Director (before the workspace exists) so the topic is chosen once.
+    """
+    return classify_product_archetype(f"{product_name or ''}\n{product_text or ''}")

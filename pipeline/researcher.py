@@ -1148,6 +1148,7 @@ def run_research_pipeline(
     output_dir: Optional[Path] = None,
     use_llm: bool = True,
     workspace: Optional[ProjectWorkspace] = None,
+    auto_detect_archetype: bool = True,
 ) -> tuple[CompetitorResearchArtifact, CreativeConceptArtifact]:
     """Autonomous entry point: analyzes affiliate link or raw product text,
 
@@ -1223,7 +1224,8 @@ def run_research_pipeline(
         )
     # An unspecified (GENERAL) archetype is auto-detected from the ingested product text so the
     # Directorial Archetype (roles, audio, lighting, beats) matches the product instead of defaulting to generic.
-    if archetype == ProductArchetype.GENERAL_COMMERCIAL:
+    # The Director decides the archetype once, up front, and passes ``auto_detect_archetype=False``.
+    if auto_detect_archetype and archetype == ProductArchetype.GENERAL_COMMERCIAL:
         detected = classify_product_archetype(raw_content)
         if detected != archetype:
             telemetry.note(
