@@ -42,6 +42,8 @@ def stages():
     }
     mocks = {}
     with ExitStack() as stack:
+        # Stage mocks write no artifacts, so resumed runs would fail the ADR 0001 prerequisite check.
+        stack.enter_context(patch("pipeline.workspace.ProjectWorkspace.check_prerequisites", return_value=[]))
         for name in STAGE_NAMES:
             mocks[name] = stack.enter_context(
                 patch(f"pipeline.director.{name}", return_value=returns.get(name, MagicMock()))
@@ -146,16 +148,25 @@ def test_strict_tts_passed(tmp_path, stages):
 
 
 def test_transitions_from_file(tmp_path, stages):
-    _run(tmp_path, transitions=_write(tmp_path / "t.json", ["cut", "dissolve"]))
-    assert stages["compose_master_commercial"].call_args.kwargs["transitions"] == ["cut", "dissolve"]
+    _run(tmp_path, transitions=_write(tmp_path / "t.json", ["cut", {"type": "dissolve", "duration": 0.4}]))
+    # Composer contract: one {type, duration?} per join; bare names are coerced.
+    assert stages["compose_master_commercial"].call_args.kwargs["transitions"] == [
+        {"type": "cut"},
+        {"type": "dissolve", "duration": 0.4},
+    ]
 
 
 def test_transitions_read_from_script_beats(tmp_path, stages):
     ws = pdirector.ProjectWorkspace(topic="tech_gadgets", project_id="wiring_camp", base_dir=tmp_path)
     ws.ensure_dirs()
-    _write(ws.artifacts_dir / "script.json", {"beats": [{"transition": "whip_pan"}, {"scene_id": "x"}]})
+    _write(ws.artifacts_dir / "script.json", {"beats": [
+        {"transition": "fade"}, {"transition": {"type": "dissolve", "duration": 0.3}}, {"transition": "fade"}]})
     _run(tmp_path, resume_from_stage=7)
-    assert stages["compose_master_commercial"].call_args.kwargs["transitions"] == ["whip_pan", None]
+    # A beat's transition is the join after it: the last beat has no following join.
+    assert stages["compose_master_commercial"].call_args.kwargs["transitions"] == [
+        {"type": "fade"},
+        {"type": "dissolve", "duration": 0.3},
+    ]
 
 
 def test_script_without_transition_fields_passes_nothing(tmp_path, stages):
@@ -169,9 +180,9 @@ def test_script_without_transition_fields_passes_nothing(tmp_path, stages):
 def test_explicit_transitions_beat_script_fields(tmp_path, stages):
     ws = pdirector.ProjectWorkspace(topic="tech_gadgets", project_id="wiring_camp", base_dir=tmp_path)
     ws.ensure_dirs()
-    _write(ws.artifacts_dir / "script.json", {"beats": [{"transition": "whip_pan"}]})
-    _run(tmp_path, resume_from_stage=7, transitions=["cut"])
-    assert stages["compose_master_commercial"].call_args.kwargs["transitions"] == ["cut"]
+    _write(ws.artifacts_dir / "script.json", {"beats": [{"transition": "fade"}, {"x": 1}]})
+    _run(tmp_path, resume_from_stage=7, transitions=["dissolve"])
+    assert stages["compose_master_commercial"].call_args.kwargs["transitions"] == [{"type": "dissolve"}]
 
 
 # ---------------------------------------------------------------- capability guard
@@ -213,8 +224,6 @@ def test_pause_after_stage_stops_and_writes_result(tmp_path, stages):
     assert result["next_stage"] == 4
 
     ws = pdirector.ProjectWorkspace(topic="tech_gadgets", project_id="wiring_camp", base_dir=tmp_path)
-    on_disk = json.loads((ws.root / pdirector.RUN_RESULT_FILENAME).read_text(encoding="utf-8"))
-    assert on_disk["status"] == "paused" and on_disk["ok"] is False
     state = json.loads((ws.root / "telemetry" / "state.json").read_text(encoding="utf-8"))
     assert state["status"] == "paused"
 
@@ -275,24 +284,47 @@ def test_cli_new_flags_forwarded(tmp_path):
     assert kw["pause_after_stage"] is None
 
 
-def test_cli_missing_json_is_usage_error(tmp_path):
-    with patch("tools.director.run_pipeline") as run, pytest.raises(SystemExit) as exc:
-        cli_main(["--beats", str(tmp_path / "missing.json"), "--out-dir", str(tmp_path)])
-    assert exc.value.code == 2
+def test_cli_missing_json_is_invalid_input(tmp_path, capsys):
+    with patch("tools.director.run_pipeline") as run:
+        code = cli_main(["--beats", str(tmp_path / "missing.json"), "--out-dir", str(tmp_path), "--json"])
+    assert code == 2
+    printed = json.loads(capsys.readouterr().out)
+    assert printed["status"] == "invalid" and "missing.json" in printed["error"]
     run.assert_not_called()
 
 
-def test_cli_pause_exit_code_4(tmp_path):
+def test_cli_pause_exit_code_4_and_unified_result(tmp_path, capsys):
     def fake_run(**kwargs):
-        kwargs["result"].update(status="paused", paused_after_stage=2)
+        kwargs["result"].update(status="paused", paused_after_stage=2, next_stage=3,
+                                resume_hint="--from-stage 3", last_completed_stage=2)
         return False
 
-    out = tmp_path / "result.json"
     with patch("tools.director.run_pipeline", side_effect=fake_run) as run:
-        code = cli_main(["--out-dir", str(tmp_path), "--pause-after-stage", "2", "--result-json", str(out)])
+        code = cli_main(["--out-dir", str(tmp_path), "--campaign", "pz", "--topic", "tech_gadgets",
+                         "--pause-after-stage", "2", "--json"])
     assert code == 4
     assert run.call_args.kwargs["pause_after_stage"] == 2
-    assert json.loads(out.read_text(encoding="utf-8"))["status"] == "paused"
+    printed = json.loads(capsys.readouterr().out)
+    assert printed["status"] == "paused" and printed["exit_code"] == 4 and printed["ok"] is False
+    assert printed["paused_after_stage"] == 2 and printed["next_stage"] == 3
+    # one format: run_result.json is exactly the --json object
+    saved = json.loads(Path(printed["workspace_root"], "run_result.json").read_text(encoding="utf-8"))
+    assert saved == printed
+
+
+def test_cli_completed_result_persisted_with_status(tmp_path, capsys):
+    with patch("tools.director.run_pipeline", return_value=True):
+        assert cli_main(["--out-dir", str(tmp_path), "--campaign", "okc", "--topic", "tech_gadgets", "--json"]) == 0
+    printed = json.loads(capsys.readouterr().out)
+    assert printed["status"] == "completed"
+    assert json.loads(Path(printed["workspace_root"], "run_result.json").read_text(encoding="utf-8")) == printed
+
+
+def test_cli_pause_before_first_stage_is_invalid(tmp_path):
+    with patch("tools.director.run_pipeline") as run:
+        code = cli_main(["--out-dir", str(tmp_path), "--from-stage", "4", "--pause-after-stage", "2"])
+    assert code == 2
+    run.assert_not_called()
 
 
 def test_cli_failure_exit_code_1(tmp_path):
@@ -318,3 +350,33 @@ def test_pipeline_director_main_delegates_to_tools(tmp_path):
         code = pdirector.main(["--out-dir", str(tmp_path), "--strict-tts"])
     assert code == 0
     assert run.call_args.kwargs["strict_tts"] is True
+
+
+def test_every_wired_parameter_exists_on_the_real_callee():
+    """Guard against signature drift: director kwargs must match the real stage functions."""
+    import inspect
+
+    from pipeline.audio_lip_sync import produce_all_audio_and_lip_sync
+    from pipeline.composer import compose_master_commercial
+    from pipeline.identity_keyframe import generate_clean_keyframes
+    from pipeline.scriptwriter import generate_commercial_script
+    from pipeline.storyboard import generate_scene_plan
+
+    expected = {
+        generate_commercial_script: {"beats", "strict"},
+        generate_scene_plan: {"shot_overrides", "character_path"},
+        generate_clean_keyframes: {"reference_overrides", "character_path", "strict_resolution"},
+        produce_all_audio_and_lip_sync: {"strict_tts"},
+        compose_master_commercial: {"transitions"},
+    }
+    for fn, names in expected.items():
+        assert names <= set(inspect.signature(fn).parameters), fn.__name__
+
+
+def test_composer_accepts_normalized_transitions():
+    from pipeline.composer import normalize_transitions
+
+    specs = pdirector.normalize_transition_specs(["dissolve", None, {"type": "cut"}])
+    assert specs == [{"type": "dissolve"}, {}, {"type": "cut"}]
+    joins = normalize_transitions(specs, [3.0, 3.0, 3.0, 3.0])
+    assert [j["type"] for j in joins] == ["dissolve", "cut", "cut"]

@@ -62,14 +62,13 @@ Mọi cờ dưới đây đều tuỳ chọn; không truyền thì pipeline ch�
 | `--character PATH_OR_ID` | 3, 4 | File/thư mục `character.json` hoặc persona id trong `assets/characters/` (vd `kol_minhanh`) |
 | `--strict-resolution` | 4 | Lỗi thay vì chấp nhận reference độ phân giải thấp |
 | `--strict-tts` | 6 | Lỗi thay vì rơi về giọng TTS suy giảm |
-| `--transitions PATH.json` | 7 | Danh sách chuyển cảnh; mặc định đọc trường `transition` của từng beat trong `script.json` (nếu có) |
+| `--transitions PATH.json` | 7 | Mỗi mối nối một `{"type", "duration"}` (hoặc tên transition); mặc định đọc trường `transition` của từng beat trong `script.json` (transition của beat là mối nối SAU beat đó) |
 | `--pause-after-stage N` | 1-7 | Dừng sạch sau stage N, trạng thái `paused`, exit code **4** |
 | `--offline` | tất cả | `KOL_OFFLINE=1` + `--video-mode ffmpeg` |
-| `--result-json PATH` | - | Sao chép kết quả máy đọc được ra PATH |
 
 Stage 1 có `--url` sẽ dùng `create_product_brief_from_concept`, nên Character Role, audio strategy của angle thắng đi thẳng vào `brief.json`.
 
-**Kết quả máy đọc được:** mỗi lần chạy ghi `projects/<topic>/<project>/runs/<vN>/run_result.json` (`status`: `completed` / `failed` / `paused`, `last_completed_stage`, `paused_after_stage`, `next_stage`, `failed_stage`...). Exit code: `0` hoàn tất, `1` lỗi, `4` tạm dừng.
+**Kết quả máy đọc được:** object `--json` của CLI cũng được lưu thành `projects/<topic>/<project>/runs/<vN>/run_result.json` (cùng một định dạng). `status`: `completed` / `failed` / `verification_failed` / `paused` / `invalid` / `checked`; khi tạm dừng có thêm `paused_after_stage`, `next_stage`, `resume_hint`. Exit code: `0` hoàn tất, `1` lỗi stage, `2` input sai, `3` Verification Gate từ chối, `4` tạm dừng. `--inject NAME=PATH`, `--check`, `--json` xem `DIRECTOR_AGENT_PROMPT.md`.
 
 ```bash
 python3 tools/director.py --campaign demo --pause-after-stage 3   # dừng sau storyboard, exit 4

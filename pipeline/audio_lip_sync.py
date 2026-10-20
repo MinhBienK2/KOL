@@ -9,6 +9,8 @@ import urllib.request
 from pathlib import Path
 from typing import List, Optional, Tuple
 
+from pydantic import BaseModel
+
 from pipeline import telemetry
 from pipeline.config import (
     AUDIO_DIR,
@@ -54,36 +56,61 @@ def probe_audio_duration(file_path: str | Path) -> float:
     return float(data["format"]["duration"])
 
 
-def synthesize_tts_stem(
+class TTSUnavailableError(RuntimeError):
+    """Neural TTS could not produce speech and the caller asked for strict behaviour."""
+
+
+class VoiceStemResult(BaseModel):
+    """A rendered voice stem plus whether it is genuine speech or a degraded placeholder."""
+
+    path: str
+    duration: float
+    fallback: bool = False  # True when TTS failed and the stem is a silent placeholder
+
+
+#: Floor for a silent (music/SFX-only) stem; never stretch a short beat to a long one.
+MIN_SILENT_STEM_SECONDS = 0.5
+
+
+def _write_silence(out_path: Path, duration: float) -> None:
+    cmd_silence = [
+        "ffmpeg",
+        "-y",
+        "-f",
+        "lavfi",
+        "-i",
+        "anullsrc=r=48000:cl=stereo",
+        "-t",
+        f"{duration:.3f}",
+        "-ar",
+        "48000",
+        str(out_path),
+    ]
+    subprocess.check_call(cmd_silence, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def synthesize_voice_stem(
     text: str,
     output_wav_path: str | Path,
     voice: str = "nova",
     model: str = "tts-1",
     target_duration: float = 4.0,
-) -> Tuple[str, float]:
-    """Generates broadcast-quality voiceover audio stem using Neural TTS.
-    If text is empty (music/SFX only beats), generates clean 48kHz stereo silence.
+    strict: bool = False,
+) -> VoiceStemResult:
+    """Generates a broadcast-quality voiceover stem using Neural TTS.
+
+    Empty text (music/SFX-only beats) yields clean 48kHz stereo silence of ``target_duration``.
+    If the TTS endpoint fails, ``strict`` raises :class:`TTSUnavailableError`; otherwise a
+    *silent* placeholder of the estimated spoken length is written and ``fallback`` is flagged
+    so the director/telemetry can surface it (a beep must never ship as a voiceover).
     """
     out_path = Path(output_wav_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     if not text or not text.strip():
-        est_duration = max(3.0, target_duration)
-        cmd_silence = [
-            "ffmpeg",
-            "-y",
-            "-f",
-            "lavfi",
-            "-i",
-            f"anullsrc=r=48000:cl=stereo",
-            "-t",
-            str(est_duration),
-            "-ar",
-            "48000",
-            str(out_path),
-        ]
-        subprocess.check_call(cmd_silence, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return str(out_path), est_duration
+        duration = max(MIN_SILENT_STEM_SECONDS, target_duration)
+        _write_silence(out_path, duration)
+        return VoiceStemResult(path=str(out_path), duration=duration)
 
     temp_mp3 = out_path.with_suffix(".temp.mp3")
     url = f"{MINIMAX_BASE_URL}/v1/audio/speech"
@@ -99,6 +126,7 @@ def synthesize_tts_stem(
     }
 
     success = False
+    failure = ""
     try:
         data = json.dumps(payload).encode("utf-8")
         req = urllib.request.Request(url, data=data, headers=headers)
@@ -106,27 +134,16 @@ def synthesize_tts_stem(
             temp_mp3.write_bytes(resp.read())
             success = True
     except Exception as exc:
-        print(f"[TTS] Neural TTS API call failed ({exc}), generating fallback synthetic audio stem...")
+        failure = str(exc)
 
     if not success or not temp_mp3.exists() or temp_mp3.stat().st_size == 0:
-        # Fallback: synthesize tone with slight modulation matching spoken syllables duration
+        temp_mp3.unlink(missing_ok=True)
+        if strict:
+            raise TTSUnavailableError(f"Neural TTS failed ({failure or 'empty response'})")
+        print(f"[TTS] Neural TTS API call failed ({failure or 'empty response'}); writing SILENT placeholder stem.")
         est_duration = max(2.5, min(12.0, len(text) * 0.08))
-        cmd_synth = [
-            "ffmpeg",
-            "-y",
-            "-f",
-            "lavfi",
-            "-i",
-            f"sine=frequency=220:duration={est_duration}",
-            "-af",
-            "volume=0.2",
-            "-ar",
-            "48000",
-            str(out_path),
-        ]
-        subprocess.check_call(cmd_synth, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        duration = probe_audio_duration(out_path)
-        return str(out_path), duration
+        _write_silence(out_path, est_duration)
+        return VoiceStemResult(path=str(out_path), duration=est_duration, fallback=True)
 
     # Convert to standard 48kHz broadcast WAV stem
     cmd_convert = [
@@ -143,8 +160,19 @@ def synthesize_tts_stem(
     subprocess.check_call(cmd_convert, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     temp_mp3.unlink(missing_ok=True)
 
-    duration = probe_audio_duration(out_path)
-    return str(out_path), duration
+    return VoiceStemResult(path=str(out_path), duration=probe_audio_duration(out_path))
+
+
+def synthesize_tts_stem(
+    text: str,
+    output_wav_path: str | Path,
+    voice: str = "nova",
+    model: str = "tts-1",
+    target_duration: float = 4.0,
+) -> Tuple[str, float]:
+    """Backwards-compatible tuple wrapper around :func:`synthesize_voice_stem`."""
+    res = synthesize_voice_stem(text, output_wav_path, voice=voice, model=model, target_duration=target_duration)
+    return res.path, res.duration
 
 
 def align_lip_sync_clip(
@@ -214,6 +242,7 @@ def produce_all_audio_and_lip_sync(
     audio_dir: Path | None = None,
     synced_clips_dir: Path | None = None,
     workspace: Optional[ProjectWorkspace] = None,
+    strict_tts: bool = False,
 ) -> Tuple[List[str], List[str]]:
     """Generates all audio stems and synchronizes each shot's video with its speech."""
     target_artifacts_dir = workspace.artifacts_dir if workspace is not None else (artifacts_dir or ARTIFACTS_DIR)
@@ -250,12 +279,20 @@ def produce_all_audio_and_lip_sync(
             spoken_text=beat.spoken_text,
         )
         print(f"[AudioEngine] [{shot_id}] Speech Mode: {lip_dec.voiceover_mix_mode} | Spoken text: '{beat.spoken_text[:30]}...'")
-        _, stem_duration = synthesize_tts_stem(
+        stem = synthesize_voice_stem(
             text=beat.spoken_text,
             output_wav_path=stem_path,
             voice="nova",
             target_duration=beat.estimated_duration,
+            strict=strict_tts,
         )
+        stem_duration = stem.duration
+        if stem.fallback:
+            telemetry.note(
+                f"[{shot_id}] TTS unavailable: silent placeholder stem written; re-run stage 6 once TTS recovers",
+                shot_id=shot_id,
+                tts_fallback=True,
+            )
         audio_stems.append(str(stem_path))
         recorder = telemetry.current()
         stem_record = (
@@ -271,7 +308,8 @@ def produce_all_audio_and_lip_sync(
             label=f"{shot_id} TTS",
             item={
                 "id": shot_id,
-                "status": "tts_synthesized",
+                "status": "tts_fallback_silent" if stem.fallback else "tts_synthesized",
+                "tts_fallback": stem.fallback,
                 "stem": (stem_record or {}).get("rel_path") or str(stem_path),
                 "duration_seconds": round(stem_duration, 2),
                 "has_speech": bool(beat.spoken_text and beat.spoken_text.strip()),

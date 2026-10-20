@@ -25,15 +25,9 @@ from pipeline.identity_keyframe import generate_clean_keyframes
 from pipeline.video_engine import render_all_video_clips
 from pipeline.audio_lip_sync import produce_all_audio_and_lip_sync
 from pipeline.composer import compose_master_commercial
-from pipeline.verification import run_all_verification_gates
+from pipeline.verification import VERIFICATION_GATE_COUNT, run_all_verification_gates
 from pipeline.config import ARTIFACTS_DIR, OUTPUT_DIR, RAW_CLIPS_DIR, SYNCED_CLIPS_DIR, AUDIO_DIR, KEYFRAMES_DIR, BASE_DIR
 
-#: Process exit codes shared with tools/director.py (machine-readable contract for agents).
-EXIT_OK = 0
-EXIT_FAILED = 1
-EXIT_PAUSED = 4
-
-RUN_RESULT_FILENAME = "run_result.json"
 LAST_PAUSABLE_STAGE = 7
 
 
@@ -90,8 +84,31 @@ def _call_stage(fn: Any, base: dict[str, Any], optional: Optional[dict[str, Any]
     return fn(**kwargs)
 
 
-def _beat_transitions(artifacts_dir: Path) -> Optional[list[Any]]:
-    """Per-beat ``transition`` values from script.json, read defensively (None if none set)."""
+def normalize_transition_specs(raw: Any) -> Optional[list[dict]]:
+    """Coerce a transitions list into the composer's ``[{"type", "duration"?}, ...]`` (one per join).
+
+    Strings become ``{"type": name}``; dicts pass through; ``None``/empty entries become ``{}``
+    (a hard cut in the composer).  Returns None when there is nothing to direct.
+    """
+    if raw is None:
+        return None
+    specs: list[dict] = []
+    for item in raw:
+        if isinstance(item, str):
+            specs.append({"type": item})
+        elif isinstance(item, dict):
+            specs.append(dict(item))
+        else:
+            specs.append({})
+    return specs if any(specs) else None
+
+
+def _beat_transitions(artifacts_dir: Path) -> Optional[list[dict]]:
+    """Joins directed by per-beat ``transition`` fields in script.json (None if none set).
+
+    A beat's ``transition`` (str or ``{"type", "duration"}``) is the join *after* that beat, so the
+    last beat's value is ignored.  Read defensively: ScriptBeat may not define the field.
+    """
     script_file = artifacts_dir / "script.json"
     if not script_file.is_file():
         return None
@@ -101,7 +118,7 @@ def _beat_transitions(artifacts_dir: Path) -> Optional[list[Any]]:
     except (OSError, ValueError, AttributeError):
         return None
     values = [b.get("transition") if isinstance(b, dict) else getattr(b, "transition", None) for b in beats]
-    return values if any(v is not None for v in values) else None
+    return normalize_transition_specs(values[:-1])
 
 
 def run_pipeline(
@@ -134,7 +151,8 @@ def run_pipeline(
       ``transitions`` -> stage 7 (default: per-beat ``transition`` in script.json).
     ``pause_after_stage`` stops cleanly after that stage (returns False, ``result["status"] ==
     "paused"``); resume with ``resume_from_stage=N+1``.  ``result`` (if given) is filled with the
-    same machine-readable dict that is written to ``run_result.json`` in the run workspace.
+    status dict (``status``, ``last_completed_stage``, ``paused_after_stage``, ``next_stage``, ``failed_stage``)
+    that tools/director.py merges into its single machine-readable result (also saved as run_result.json).
     """
     start_time = time.time()
     beats = load_json_arg(beats, "beats")
@@ -145,6 +163,7 @@ def run_pipeline(
     transitions = load_json_arg(transitions, "transitions")
     if isinstance(transitions, dict):
         transitions = transitions.get("transitions", transitions)
+    transitions = normalize_transition_specs(transitions)
     character_file = resolve_character_path(character_path)
     if pause_after_stage is not None and not 1 <= int(pause_after_stage) <= LAST_PAUSABLE_STAGE:
         raise ValueError(f"pause_after_stage must be 1-{LAST_PAUSABLE_STAGE}, got {pause_after_stage}")
@@ -173,6 +192,15 @@ def run_pipeline(
         )
     workspace.ensure_dirs()
 
+    # ADR 0001: a stage may only start when its prerequisite artifacts exist and validate.
+    prerequisite_problems = workspace.check_prerequisites(resume_from_stage)
+    if prerequisite_problems:
+        print(
+            f"[DIRECTOR ERROR] Cannot resume from stage {resume_from_stage}: " + "; ".join(prerequisite_problems),
+            file=sys.stderr,
+        )
+        return False
+
     # Extract standard paths from workspace
     target_artifacts_dir = workspace.artifacts_dir
     target_clips_dir = workspace.raw_clips_dir
@@ -193,6 +221,7 @@ def run_pipeline(
         "archetype": selected_archetype.value,
         "video_mode": video_mode,
         "resume_from_stage": resume_from_stage,
+        "failed_stage": None,  # clears a failure recorded by an earlier attempt of this run
         "project_id": workspace.project_id,
         "topic": workspace.topic,
         "version": workspace.version,
@@ -271,27 +300,13 @@ def run_pipeline(
                 telemetry.skip_stage(spec.stage, f"Skipped: resuming from stage {resume_from_stage}")
 
         def _emit_result(status: str, ok: bool, **extra: Any) -> dict:
-            """Write the machine-readable run result (run_result.json) and fill ``result``."""
+            """Fill the caller's ``result`` out-param (tools/director.py builds the final JSON from it)."""
             payload = {
                 "status": status,
                 "ok": ok,
-                "project_id": workspace.project_id,
-                "topic": workspace.topic,
-                "version": workspace.version,
-                "workspace_root": str(workspace.root),
-                "artifacts_dir": str(target_artifacts_dir),
-                "master_video_path": str(out_master_video),
-                "resume_from_stage": resume_from_stage,
                 "last_completed_stage": last_stage_done or None,
-                "elapsed_seconds": round(time.time() - start_time, 2),
                 **extra,
             }
-            try:
-                (workspace.root / RUN_RESULT_FILENAME).write_text(
-                    json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
-                )
-            except OSError:
-                pass
             if result is not None:
                 result.clear()
                 result.update(payload)
@@ -518,21 +533,23 @@ def run_pipeline(
                         artifacts_dir=target_artifacts_dir,
                         workspace=workspace,
                     ),
-                    total=4,
+                    total=VERIFICATION_GATE_COUNT,
                 )
                 # render_report.json, publish_log.json and the thumbnail are registered by
                 # pipeline.verification itself.
                 if report.overall_status != "PASSED":
                     print(f"[DIRECTOR ERROR] Pipeline failed verification: {report}")
                     elapsed = round(time.time() - start_time, 2)
+                    workspace.update_project_meta(last_status="verification_failed")
                     recorder.finish_run(
                         False,
                         summary=f"Verification gates failed (overall: {report.overall_status})",
                         elapsed_seconds=elapsed,
+                        failed_stage=8,
                     )
                     _emit_result("failed", False, failed_stage=8, error=f"Verification gates failed ({report.overall_status})")
                     return False
-                print(f"[Director] All 4 Quality Verification Gates PASSED!")
+                print(f"[Director] All {VERIFICATION_GATE_COUNT} Quality Verification Gates PASSED!")
 
             elapsed = round(time.time() - start_time, 2)
             print("\n" + "=" * 80)

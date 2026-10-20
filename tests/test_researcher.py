@@ -74,7 +74,8 @@ def test_extract_product_intel_deterministic():
     assert len(intel.features) >= 3
     assert len(intel.dramatic_benefits) >= 3
     assert len(intel.objection_matrix) >= 2
-    assert intel.pricing.current_price > 0
+    # Heuristic fallback must not invent a price when the input has none
+    assert intel.pricing.current_price == 0
 
 
 def test_synthesize_competitor_and_hooks_deterministic():

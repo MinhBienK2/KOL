@@ -21,3 +21,4 @@ projects/**/*.png
 !projects/**/prompt_ledger.json
 !projects/**/artifacts/
 !projects/**/telemetry/
+.venv/
