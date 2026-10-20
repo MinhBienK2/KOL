@@ -189,3 +189,88 @@ def determine_lip_sync_strategy(
         prompt_articulation_directive=articulation_prompt,
         voiceover_mix_mode="sync_mouth",
     )
+
+
+# ---------------------------------------------------------------------------
+# Per-shot timeline planning (composition timing)
+# ---------------------------------------------------------------------------
+
+#: Video models return fixed 6s/10s clips while beats last 1.5-6s. The planner trims real motion
+#: from the clip; only when a clip is genuinely shorter than the shot is it slowed (never above this).
+MAX_SLOWDOWN = 1.25
+
+_EPS = 0.05
+
+
+class ShotTimingPlan(BaseModel):
+    """On-timeline duration decision for one shot and the in/out cut taken from its generated clip."""
+
+    shot_id: str
+    beat_estimated_seconds: float
+    voice_seconds: float
+    clip_seconds: float
+    target_seconds: float  # duration the shot occupies on the master timeline
+    in_point: float  # source clip seconds
+    out_point: float  # source clip seconds
+    slowdown_factor: float = 1.0  # >1 stretches the clip (setpts=F*PTS); 1.0 means real-time
+    held_tail_seconds: float = 0.0  # frozen final frame, used only when slowdown cannot cover the voice
+    voice_padded_seconds: float = 0.0  # trailing silence appended to the voice stem
+    action: str  # "exact" | "trim" | "slowdown" | "slowdown_and_hold"
+
+
+def plan_shot_timing(
+    shot_id: str,
+    beat_estimated: float,
+    voice_seconds: float,
+    clip_seconds: float,
+    max_slowdown: float = MAX_SLOWDOWN,
+    in_point: float = 0.0,
+) -> ShotTimingPlan:
+    """Decide how long a shot lasts and how its generated clip is cut or stretched to fit.
+
+    ``target = max(beat estimate, voice stem)``. The voice stem is a hard minimum (speech is never cut);
+    the beat estimate is a soft target that is capped by what the clip can cover with a gentle slow-down.
+    """
+    available = float(clip_seconds) - float(in_point)
+    if available <= 0:
+        raise ValueError(f"{shot_id}: clip has no playable footage (duration={clip_seconds}, in={in_point})")
+
+    voice = max(0.0, float(voice_seconds))
+    desired = max(float(beat_estimated), voice)
+
+    held = 0.0
+    factor = 1.0
+    if desired <= available + 1e-6:
+        target = desired
+        out_point = in_point + desired
+        action = "exact" if abs(available - desired) <= _EPS else "trim"
+    else:
+        out_point = in_point + available
+        max_target = available * max_slowdown
+        if desired <= max_target:
+            target = desired
+            factor = desired / available
+            action = "slowdown"
+        elif voice <= max_target:
+            target = max_target  # soft estimate capped by the clip
+            factor = max_slowdown
+            action = "slowdown"
+        else:
+            target = voice  # speech must be fully covered
+            factor = max_slowdown
+            held = target - max_target
+            action = "slowdown_and_hold"
+
+    return ShotTimingPlan(
+        shot_id=shot_id,
+        beat_estimated_seconds=round(float(beat_estimated), 3),
+        voice_seconds=round(voice, 3),
+        clip_seconds=round(float(clip_seconds), 3),
+        target_seconds=round(target, 3),
+        in_point=round(in_point, 3),
+        out_point=round(out_point, 3),
+        slowdown_factor=round(factor, 4),
+        held_tail_seconds=round(held, 3),
+        voice_padded_seconds=round(max(0.0, target - voice), 3),
+        action=action,
+    )

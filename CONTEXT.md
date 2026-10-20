@@ -172,3 +172,11 @@ _Avoid_: Expression sheets, baked-in smiles, emotion swapping
 **Character Sheet Integrity Gate**:
 A two-tier verification gate enforcing strict pre-flight asset validation (minimum 2K/4K resolution, dual-anchor completeness) and post-flight telemetry lineage auditing across all character shots.
 _Avoid_: Asset checklist, image sanity check, manual inspection
+
+**Shot Timing Plan**:
+The composer's per-shot decision that a shot lasts `max(beat estimated duration, voice stem length)`, is cut from the start of the generated 6s/10s clip, is slowed at most 1.25x only when the clip is genuinely shorter, and is recorded under `shots` in `edit_decisions.json`. Frozen frames are a last resort, never the default padding.
+_Avoid_: Clip padding, freeze-frame fill, tpad
+
+**Draft Master**:
+A complete master whose only failing gate is the Prompt Ledger Audit Gate, meaning it contains placeholders (a degraded generation mode, a local ffmpeg stand-in or silent TTS fallback). Reported as `overall_status: DRAFT`: watchable as a preview, never published.
+_Avoid_: Partial pass, soft fail, warning-only release

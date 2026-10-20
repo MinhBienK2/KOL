@@ -10,11 +10,12 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from pipeline import telemetry
 from pipeline.config import (
@@ -23,6 +24,7 @@ from pipeline.config import (
     OUTPUT_DIR,
     TARGET_RESOLUTION,
 )
+from pipeline.lip_sync_engine import ShotTimingPlan, plan_shot_timing
 from pipeline.schemas import (
     AssetManifestArtifact,
     AudioTrackConfig,
@@ -313,6 +315,75 @@ def measure_loudness(path: str | Path) -> Dict[str, float]:
     }
 
 
+# -- Per-shot timing --------------------------------------------------------------------------
+
+
+class TimedEditDecisionsArtifact(EditDecisionsArtifact):
+    """EditDecisionsArtifact plus the per-shot in/out/slow-down decisions (backward-compatible superset)."""
+
+    shots: List[Dict[str, Any]] = Field(default_factory=list)
+    total_duration_seconds: float = 0.0
+
+
+def _match_by_shot(paths: Sequence[str], shot_id: str, idx: int) -> Optional[Path]:
+    for raw in paths:
+        if shot_id in Path(raw).name:
+            return Path(raw)
+    return Path(paths[idx]) if idx < len(paths) else None
+
+
+def resolve_shot_sources(
+    script: ScriptArtifact, manifest: AssetManifestArtifact
+) -> Optional[Tuple[List[Path], List[Path]]]:
+    """(raw clip, voice stem) for every beat, or None unless each beat has both on disk."""
+    if not manifest.raw_video_clips or not manifest.audio_stems:
+        return None
+    clips: List[Path] = []
+    stems: List[Path] = []
+    for idx in range(len(script.beats)):
+        shot_id = f"shot_{idx + 1:02d}"
+        clip = _match_by_shot(manifest.raw_video_clips, shot_id, idx)
+        stem = _match_by_shot(manifest.audio_stems, shot_id, idx)
+        if clip is None or stem is None or not clip.exists() or not stem.exists():
+            return None
+        clips.append(clip)
+        stems.append(stem)
+    return (clips, stems) if clips else None
+
+
+def render_shot_segment(raw_clip: Path, stem: Path, plan: ShotTimingPlan, out_path: Path) -> Path:
+    """Render one shot: cut/slow the generated clip per ``plan`` and fit the voice stem to its length.
+
+    Segments are lossless-audio mkv so per-shot AAC priming cannot accumulate drift across the join.
+    """
+    width, height = TARGET_RESOLUTION
+    vf = (
+        f"[0:v]scale={width}:{height}:force_original_aspect_ratio=decrease,"
+        f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps={TIMELINE_FPS}"
+    )
+    if plan.slowdown_factor != 1.0:
+        vf += f",setpts={plan.slowdown_factor:.6f}*(PTS-STARTPTS),fps={TIMELINE_FPS}"
+    if plan.held_tail_seconds > 0:
+        vf += f",tpad=stop_mode=clone:stop_duration={plan.held_tail_seconds:.3f}"
+    vf += f",trim=end={plan.target_seconds:.3f},setpts=PTS-STARTPTS,format=yuv420p[v]"
+    af = (
+        "[1:a]aresample=48000,aformat=channel_layouts=stereo,apad,"
+        f"atrim=end={plan.target_seconds:.3f},asetpts=PTS-STARTPTS[a]"
+    )
+    cmd = [
+        "ffmpeg", "-y",
+        "-ss", f"{plan.in_point:.3f}", "-t", f"{plan.out_point - plan.in_point:.3f}", "-i", str(raw_clip),
+        "-i", str(stem),
+        "-filter_complex", f"{vf};{af}",
+        "-map", "[v]", "-map", "[a]",
+        "-c:v", "libx264", "-preset", "veryfast", "-crf", "14",
+        "-c:a", "pcm_s16le", "-ar", "48000",
+        str(out_path),
+    ]
+    _run_ffmpeg(cmd, f"shot segment {plan.shot_id}")
+    return out_path
+
+
 def compose_master_commercial(
     script: ScriptArtifact | None = None,
     manifest: AssetManifestArtifact | None = None,
@@ -349,9 +420,42 @@ def compose_master_commercial(
         with open(target_artifacts_dir / "asset_manifest.json", "r", encoding="utf-8") as f:
             manifest = AssetManifestArtifact.model_validate(json.load(f))
 
-    synced_clips = [Path(p) for p in manifest.synced_video_clips]
-    if not synced_clips:
-        raise ValueError("No synchronized video clips found in asset_manifest.json")
+    # Per-shot timing. Generated clips are a fixed 6s/10s while beats last 1.5-6s, and the pre-muxed synced
+    # clip freezes its last frame whenever the voice outlasts the footage. So when every beat has its raw
+    # clip and voice stem, each shot is re-cut here: duration = max(beat estimate, voice), taken from real
+    # motion, slowed gently only when the clip is genuinely short. Otherwise the synced clips are used as-is.
+    sources = resolve_shot_sources(script, manifest)
+    segments_dir = target_artifacts_dir / "_segments"
+    shot_plans: List[Optional[ShotTimingPlan]] = []
+    if sources is not None:
+        raw_clips, stems = sources
+        segments_dir.mkdir(parents=True, exist_ok=True)
+        synced_clips = []
+        for idx, beat in enumerate(script.beats):
+            shot_id = f"shot_{idx + 1:02d}"
+            plan = plan_shot_timing(
+                shot_id,
+                beat_estimated=float(beat.estimated_duration),
+                voice_seconds=get_clip_duration(stems[idx]),
+                clip_seconds=get_clip_duration(raw_clips[idx]),
+            )
+            synced_clips.append(render_shot_segment(raw_clips[idx], stems[idx], plan, segments_dir / f"{shot_id}.mkv"))
+            shot_plans.append(plan)
+            if plan.action in ("slowdown", "slowdown_and_hold"):
+                telemetry.note(
+                    f"[{shot_id}] generated clip {plan.clip_seconds:.2f}s is shorter than the {plan.target_seconds:.2f}s "
+                    f"shot: {plan.action} x{plan.slowdown_factor:.2f}, held tail {plan.held_tail_seconds:.2f}s",
+                    shot_id=shot_id,
+                    action=plan.action,
+                    slowdown_factor=plan.slowdown_factor,
+                    held_tail_seconds=plan.held_tail_seconds,
+                )
+        source_clips = [str(c) for c in raw_clips]
+    else:
+        synced_clips = [Path(p) for p in manifest.synced_video_clips]
+        if not synced_clips:
+            raise ValueError("No synchronized video clips found in asset_manifest.json")
+        source_clips = [str(c) for c in synced_clips]
 
     bgm = Path(bgm_path or (BASE_DIR / "assets" / "audio" / "music" / "commercial_bgm.mp3"))
     pop_sfx = Path(pop_sfx_path or (BASE_DIR / "assets" / "audio" / "sfx" / "pop.mp3"))
@@ -489,6 +593,7 @@ def compose_master_commercial(
         temp_voice.unlink(missing_ok=True)
         for f in caption_files:
             f.unlink(missing_ok=True)
+        shutil.rmtree(segments_dir, ignore_errors=True)
 
     output = measure_loudness(out_master)
     compliant = abs(output["integrated_lufs"] - TARGET_LUFS) <= 1.0 and output["true_peak_db"] <= -1.0
@@ -525,12 +630,35 @@ def compose_master_commercial(
     )
     telemetry.register_artifact(out_master, stage=STAGE_COMPOSITION, label="Final commercial master")
 
+    # Per-shot in/out decisions (timeline positions already account for transition overlaps)
+    shot_decisions: List[Dict[str, Any]] = []
+    for idx, (start_t, end_t) in enumerate(timecodes):
+        plan = shot_plans[idx] if idx < len(shot_plans) else None
+        if plan is not None:
+            decision = plan.model_dump()
+            decision.update(source="raw_clip+voice_stem", clip=source_clips[idx])
+        else:
+            decision = {
+                "shot_id": f"shot_{idx + 1:02d}",
+                "source": "synced_clip",
+                "clip": source_clips[idx],
+                "action": "passthrough",
+                "target_seconds": round(clip_durations[idx], 3),
+                "clip_seconds": round(clip_durations[idx], 3),
+                "in_point": 0.0,
+                "out_point": round(clip_durations[idx], 3),
+                "slowdown_factor": 1.0,
+                "held_tail_seconds": 0.0,
+            }
+        decision.update(timeline_start=round(start_t, 3), timeline_end=round(end_t, 3))
+        shot_decisions.append(decision)
+
     # Emit edit_decisions.json
-    edit_decisions = EditDecisionsArtifact(
+    edit_decisions = TimedEditDecisionsArtifact(
         campaign_id=script.campaign_id,
         render_runtime="ffmpeg",
         target_aspect_ratio="9:16",
-        timeline_clips=[str(c) for c in synced_clips],
+        timeline_clips=source_clips,
         audio_tracks=[
             AudioTrackConfig(
                 track_id="track_voiceover",
@@ -553,6 +681,8 @@ def compose_master_commercial(
         transitions=edl_transitions,
         captions=captions_manifest,
         output_master_path=str(out_master),
+        shots=shot_decisions,
+        total_duration_seconds=round(total_timeline_duration, 3),
     )
 
     out_file = target_artifacts_dir / "edit_decisions.json"
