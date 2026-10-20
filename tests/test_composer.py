@@ -204,6 +204,21 @@ def test_compose_honours_requested_crossfade_and_records_it(tmp_path: Path):
     assert edl.captions[2]["start"] == pytest.approx(3.6, abs=0.01)
 
 
+def test_compose_crossfade_after_hard_cut(tmp_path: Path):
+    """A cut (concat) followed by an xfade must not mix timebases (real LLM scripts do this)."""
+    clips = [_voiced_clip(tmp_path / f"c{i}.mp4", 2.0) for i in range(3)]
+    manifest = AssetManifestArtifact(campaign_id="test_comp", keyframes=[], synced_video_clips=clips)
+    master = tmp_path / "master.mp4"
+    compose_master_commercial(
+        script=_script(3),
+        manifest=manifest,
+        output_master_path=master,
+        artifacts_dir=tmp_path,
+        transitions=[{"type": "cut"}, {"type": "fade", "duration": 0.4}],
+    )
+    assert _duration(master) == pytest.approx(5.6, abs=0.15)
+
+
 # -- Hard-to-escape caption text --------------------------------------------------------------
 
 

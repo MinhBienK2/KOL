@@ -22,7 +22,10 @@ from __future__ import annotations
 import json
 import mimetypes
 import re
+import subprocess
+import tempfile
 import unicodedata
+import urllib.error
 import urllib.request
 import uuid
 from pathlib import Path
@@ -41,6 +44,8 @@ __all__ = [
 ]
 
 ASR_MODEL = "whisper-1"
+#: Transport failures (timeouts, resets) are retried; HTTP error responses are not.
+UPLOAD_ATTEMPTS = 2
 #: Maximum character error rate (primary metric) for a voice stem to count as intelligible.
 SPEECH_CER_THRESHOLD = 0.35
 
@@ -59,29 +64,41 @@ def transcribe(audio_path: str | Path, language: str = "vi", *, timeout: float =
     if not path.is_file():
         raise ASRError(f"audio file not found: {path}")
     url = f"{config.MINIMAX_BASE_URL}/v1/audio/transcriptions"
-    boundary = f"----kol{uuid.uuid4().hex}"
-    body = _multipart(
-        boundary,
-        fields={"model": ASR_MODEL, "language": language, "response_format": "json"},
-        file_field="file",
-        file_path=path,
-    )
-    req = urllib.request.Request(
-        url,
-        data=body,
-        headers={
-            "Authorization": f"Bearer {config.MINIMAX_API_KEY}",
-            "Content-Type": f"multipart/form-data; boundary={boundary}",
-            "User-Agent": "Mozilla/5.0",
-        },
-    )
-    try:
-        with guarded_urlopen(req, operation="asr.transcribe", timeout=timeout) as resp:
-            raw = resp.read()
-    except OfflineNetworkError:
-        raise
-    except Exception as exc:
-        raise ASRError(f"transcription request failed: {exc}") from exc
+    with tempfile.TemporaryDirectory() as tmp:
+        # 48kHz stereo WAV stems are ~10x larger than needed and time out on upload; Whisper wants 16kHz mono.
+        upload = _compact_for_upload(path, Path(tmp))
+        boundary = f"----kol{uuid.uuid4().hex}"
+        body = _multipart(
+            boundary,
+            fields={"model": ASR_MODEL, "language": language, "response_format": "json"},
+            file_field="file",
+            file_path=upload,
+        )
+    raw = b""
+    last_exc: Exception | None = None
+    for _attempt in range(UPLOAD_ATTEMPTS):
+        req = urllib.request.Request(
+            url,
+            data=body,
+            headers={
+                "Authorization": f"Bearer {config.MINIMAX_API_KEY}",
+                "Content-Type": f"multipart/form-data; boundary={boundary}",
+                "User-Agent": "Mozilla/5.0",
+            },
+        )
+        try:
+            with guarded_urlopen(req, operation="asr.transcribe", timeout=timeout) as resp:
+                raw = resp.read()
+            last_exc = None
+            break
+        except OfflineNetworkError:
+            raise
+        except urllib.error.HTTPError as exc:  # the server answered: retrying will not help
+            raise ASRError(f"transcription request failed: {exc}") from exc
+        except Exception as exc:
+            last_exc = exc
+    if last_exc is not None:
+        raise ASRError(f"transcription request failed: {last_exc}") from last_exc
     try:
         text = json.loads(raw.decode("utf-8")).get("text")
     except (ValueError, AttributeError, UnicodeDecodeError) as exc:
@@ -90,6 +107,16 @@ def transcribe(audio_path: str | Path, language: str = "vi", *, timeout: float =
         raise ASRError("transcription response has no 'text' field")
     return text.strip()
 
+
+
+def _compact_for_upload(path: Path, tmp_dir: Path) -> Path:
+    """Re-encode to 16kHz mono MP3 for upload; fall back to the original file if ffmpeg fails."""
+    out = tmp_dir / f"{path.stem}.mp3"
+    res = subprocess.run(
+        ["ffmpeg", "-y", "-v", "error", "-i", str(path), "-ac", "1", "-ar", "16000", "-b:a", "48k", str(out)],
+        capture_output=True,
+    )
+    return out if res.returncode == 0 and out.is_file() and out.stat().st_size > 0 else path
 
 def _multipart(boundary: str, fields: Dict[str, str], file_field: str, file_path: Path) -> bytes:
     parts: list[bytes] = []

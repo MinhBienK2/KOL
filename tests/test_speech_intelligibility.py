@@ -105,7 +105,7 @@ def test_transcribe_posts_multipart_to_whisper(tmp_path, monkeypatch):
     assert seen["headers"]["Content-type"].startswith("multipart/form-data; boundary=")
     assert b'name="model"\r\n\r\nwhisper-1' in seen["body"]
     assert b'name="language"\r\n\r\nvi' in seen["body"]
-    assert b'name="file"; filename="a.wav"' in seen["body"]
+    assert b'name="file"; filename="a.mp3"' in seen["body"]  # compacted to 16kHz mono MP3 for upload
     assert seen["operation"] == "asr.transcribe"
 
 
@@ -122,6 +122,20 @@ def test_transcribe_wraps_transport_and_format_errors(tmp_path, monkeypatch):
         transcribe(wav)
     with pytest.raises(ASRError):
         transcribe(tmp_path / "missing.wav")
+
+
+def test_transcribe_retries_one_transport_timeout(tmp_path, monkeypatch):
+    calls = []
+
+    def flaky(req, *, operation, **kwargs):
+        calls.append(operation)
+        if len(calls) == 1:
+            raise TimeoutError("The write operation timed out")
+        return _Resp(json.dumps({"text": "xin chào"}).encode())
+
+    monkeypatch.setattr(asr, "guarded_urlopen", flaky)
+    assert transcribe(_wav(tmp_path)) == "xin chào"
+    assert len(calls) == asr.UPLOAD_ATTEMPTS == 2
 
 
 def test_transcribe_refused_offline_through_the_real_guard(tmp_path, monkeypatch):

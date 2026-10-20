@@ -515,7 +515,7 @@ def compose_master_commercial(
         dur = clip_durations[i]
         graph.append(
             f"[{i}:v]settb=AVTB,fps={TIMELINE_FPS},scale={width}:{height}:force_original_aspect_ratio=decrease,"
-            f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,setsar=1,format=yuv420p[v{i}]"
+            f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,setsar=1,format=yuv420p,settb=AVTB[v{i}]"
         )
         src = f"[{i}:a]aresample=48000," if has_audio else "anullsrc=r=48000:cl=stereo,"
         graph.append(
@@ -528,13 +528,15 @@ def compose_master_commercial(
         trans = edl_transitions[i - 1]
         nxt_v, nxt_a = f"cv{i}", f"ca{i}"
         if trans["type"] == "cut":
-            graph.append(f"[{cur_v}][v{i}]concat=n=2:v=1:a=0[{nxt_v}]")
+            # concat and xfade both need matching timebases; keep every join on AVTB
+            graph.append(f"[{cur_v}][v{i}]concat=n=2:v=1:a=0,settb=AVTB[{nxt_v}]")
             graph.append(f"[{cur_a}][a{i}]concat=n=2:v=0:a=1[{nxt_a}]")
             timeline_len += clip_durations[i]
         else:
             d = trans["duration"]
             graph.append(
-                f"[{cur_v}][v{i}]xfade=transition={trans['type']}:duration={d}:offset={timeline_len - d:.3f}[{nxt_v}]"
+                f"[{cur_v}][v{i}]xfade=transition={trans['type']}:duration={d}:offset={timeline_len - d:.3f},"
+                f"settb=AVTB[{nxt_v}]"
             )
             graph.append(f"[{cur_a}][a{i}]acrossfade=d={d}:c1=tri:c2=tri[{nxt_a}]")
             timeline_len += clip_durations[i] - d
