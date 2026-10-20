@@ -299,6 +299,25 @@ def align_lip_sync_clip(
     return str(out_p)
 
 
+def _flag_ledger_tts_fallback(shot_id: str, stem: VoiceStemResult) -> None:
+    """Record ``tts_fallback`` on the shot's Prompt Ledger entry so verification sees it.
+
+    ``record_prompt`` replaces the entry's prompt/stage, so the existing ones are passed back.
+    """
+    recorder = telemetry.current()
+    if recorder is None:
+        return
+    existing = (recorder.snapshot().get("prompts") or {}).get(shot_id) or {}
+    telemetry.record_prompt(
+        shot_id,
+        existing.get("prompt") or "",
+        stage=int(existing.get("stage") or 5),
+        tts_fallback=True,
+        tts_engine=stem.engine,
+        tts_placeholder=True,
+    )
+
+
 def produce_all_audio_and_lip_sync(
     script: ScriptArtifact | None = None,
     manifest: AssetManifestArtifact | None = None,
@@ -387,6 +406,8 @@ def produce_all_audio_and_lip_sync(
                 tts_engine=stem.engine,
                 placeholder=True,
             )
+        if tts_fallback:
+            _flag_ledger_tts_fallback(shot_id, stem)
         audio_stems.append(str(stem_path))
         recorder = telemetry.current()
         stem_record = (
@@ -468,6 +489,10 @@ def produce_all_audio_and_lip_sync(
                     "needs_mouth_articulation": bool(lip_dec.needs_mouth_articulation),
                     "placeholder_video": Path(f"{matching_raw}.placeholder.json").exists(),
                     "placeholder_audio": stem.placeholder,
+                    # Same id as the TTS item above: progress items are keyed by id, so the
+                    # fallback flag must be repeated here or it is overwritten.
+                    "tts_fallback": tts_fallback,
+                    "tts_engine": stem.engine,
                     "duration_seconds": round(stem_duration, 2),
                 },
             )

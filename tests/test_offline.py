@@ -34,6 +34,7 @@ from pipeline.video_engine import (
     render_single_video_clip,
     resolve_video_mode,
 )
+from pipeline.verification import verify_prompt_ledger_gate
 from pipeline.workspace import ProjectWorkspace
 from tools import dramaclaw_shot_builder, generate_video
 
@@ -207,7 +208,7 @@ def test_stage5_ffmpeg_and_stage6_offline_never_touch_network(tmp_path, monkeypa
             assert Path(stem).exists()
             assert probe_audio_duration(stem) > 1.0
 
-    state = json.loads(recorder.state_path.read_text(encoding="utf-8"))
+    state = recorder.snapshot()
     ledger = state["prompts"]
     assert ledger and all(p["mode"] == "LOCAL_FFMPEG" and p["placeholder"] is True for p in ledger.values())
     assert all("minimax" not in c.get("name", "") for c in state.get("api_calls", []))
@@ -215,10 +216,30 @@ def test_stage5_ffmpeg_and_stage6_offline_never_touch_network(tmp_path, monkeypa
     tts_items = [
         e["payload"]["item"]
         for e in events
-        if e.get("type") == "stage_progress" and "tts_engine" in ((e.get("payload") or {}).get("item") or {})
+        if e.get("type") == "stage_progress" and "stem" in ((e.get("payload") or {}).get("item") or {})
     ]
     assert tts_items, "stage 6 emitted no TTS progress items"
     assert all(item["placeholder"] and item["tts_fallback"] for item in tts_items)
+
+    # Lip-sync items reuse the TTS item's id; they must repeat the flag or it is overwritten.
+    sync_items = [
+        e["payload"]["item"]
+        for e in events
+        if e.get("type") == "stage_progress" and (e.get("payload") or {}).get("item", {}).get("status") == "lip_sync_aligned"
+    ]
+    assert sync_items and all(i["tts_fallback"] and i["placeholder_video"] and i["placeholder_audio"] for i in sync_items)
+    final_items = {i["id"]: i for i in next(st for st in state["stages"] if st["stage"] == 6)["items"]}
+    assert final_items and all(i.get("tts_fallback") for i in final_items.values())
+
+    # The Prompt Ledger keeps the placeholder video mode AND now carries tts_fallback + the prompt.
+    assert all(p["tts_fallback"] is True and p["mode"] == "LOCAL_FFMPEG" and p["prompt"] for p in ledger.values())
+    assert all(p["stage"] == 5 for p in ledger.values())
+    gate = verify_prompt_ledger_gate(ledger)
+    assert not gate.passed
+    assert all(
+        "tts_fallback" in reasons and "mode=LOCAL_FFMPEG" in reasons
+        for reasons in gate.details["flagged_shots"].values()
+    )
 
 
 def test_ffmpeg_mode_works_without_kol_offline_env_and_scopes_guard(tmp_path, monkeypatch, network_explodes):
