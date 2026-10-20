@@ -6,7 +6,7 @@ spatial scene staging contracts, competitor viral research, and independent veri
 
 from __future__ import annotations
 
-import argparse
+import inspect
 import json
 import os
 import sys
@@ -17,7 +17,7 @@ from typing import Any, Optional, Union
 from pipeline import telemetry
 from pipeline.archetypes import ProductArchetype
 from pipeline.workspace import ProjectWorkspace
-from pipeline.briefing import create_product_brief
+from pipeline.briefing import create_product_brief, create_product_brief_from_concept
 from pipeline.researcher import run_research_pipeline
 from pipeline.scriptwriter import generate_commercial_script
 from pipeline.storyboard import generate_scene_plan
@@ -26,7 +26,99 @@ from pipeline.video_engine import render_all_video_clips
 from pipeline.audio_lip_sync import produce_all_audio_and_lip_sync
 from pipeline.composer import compose_master_commercial
 from pipeline.verification import VERIFICATION_GATE_COUNT, run_all_verification_gates
-from pipeline.config import ARTIFACTS_DIR, OUTPUT_DIR, RAW_CLIPS_DIR, SYNCED_CLIPS_DIR, AUDIO_DIR, KEYFRAMES_DIR
+from pipeline.config import ARTIFACTS_DIR, OUTPUT_DIR, RAW_CLIPS_DIR, SYNCED_CLIPS_DIR, AUDIO_DIR, KEYFRAMES_DIR, BASE_DIR
+
+LAST_PAUSABLE_STAGE = 7
+
+
+class StageCapabilityError(RuntimeError):
+    """A stage function cannot honour an explicit director instruction."""
+
+
+def load_json_arg(value: Any, label: str) -> Any:
+    """Return ``value`` as loaded JSON: pass-through objects, read ``str``/``Path`` files."""
+    if value is None or isinstance(value, (list, dict)):
+        return value
+    path = Path(value)
+    if not path.is_file():
+        raise FileNotFoundError(f"{label}: JSON file not found: {path}")
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def resolve_character_path(value: Any) -> Optional[Path]:
+    """Resolve a character file, a character directory, or a persona id under assets/characters/."""
+    if value is None:
+        return None
+    path = Path(value)
+    candidates = [path, path / "character.json"]
+    if not path.is_absolute() and len(path.parts) == 1:
+        candidates.append(BASE_DIR / "assets" / "characters" / path.name / "character.json")
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate
+    raise FileNotFoundError(f"Character not found (file, directory or persona id): {value}")
+
+
+def _call_stage(fn: Any, base: dict[str, Any], optional: Optional[dict[str, Any]] = None) -> Any:
+    """Call a stage function, adding only the director instructions that were actually given.
+
+    ``None``/``False`` optional values are omitted so default behaviour is untouched.  An explicit
+    instruction the callee cannot accept fails loudly instead of being silently ignored.
+    """
+    kwargs = dict(base)
+    supplied = {k: v for k, v in (optional or {}).items() if v is not None and v is not False}
+    if supplied:
+        try:
+            params = inspect.signature(fn).parameters
+            accepts_any = any(p.kind is inspect.Parameter.VAR_KEYWORD for p in params.values())
+        except (TypeError, ValueError):
+            params, accepts_any = {}, True
+        for key in supplied:
+            if not accepts_any and key not in params:
+                raise StageCapabilityError(
+                    f"{getattr(fn, '__name__', fn)!s} does not accept '{key}'; "
+                    f"cannot honour this director instruction"
+                )
+        kwargs.update(supplied)
+    return fn(**kwargs)
+
+
+def normalize_transition_specs(raw: Any) -> Optional[list[dict]]:
+    """Coerce a transitions list into the composer's ``[{"type", "duration"?}, ...]`` (one per join).
+
+    Strings become ``{"type": name}``; dicts pass through; ``None``/empty entries become ``{}``
+    (a hard cut in the composer).  Returns None when there is nothing to direct.
+    """
+    if raw is None:
+        return None
+    specs: list[dict] = []
+    for item in raw:
+        if isinstance(item, str):
+            specs.append({"type": item})
+        elif isinstance(item, dict):
+            specs.append(dict(item))
+        else:
+            specs.append({})
+    return specs if any(specs) else None
+
+
+def _beat_transitions(artifacts_dir: Path) -> Optional[list[dict]]:
+    """Joins directed by per-beat ``transition`` fields in script.json (None if none set).
+
+    A beat's ``transition`` (str or ``{"type", "duration"}``) is the join *after* that beat, so the
+    last beat's value is ignored.  Read defensively: ScriptBeat may not define the field.
+    """
+    script_file = artifacts_dir / "script.json"
+    if not script_file.is_file():
+        return None
+    try:
+        with open(script_file, "r", encoding="utf-8") as f:
+            beats = (json.load(f) or {}).get("beats") or []
+    except (OSError, ValueError, AttributeError):
+        return None
+    values = [b.get("transition") if isinstance(b, dict) else getattr(b, "transition", None) for b in beats]
+    return normalize_transition_specs(values[:-1])
 
 
 def run_pipeline(
@@ -40,10 +132,41 @@ def run_pipeline(
     workspace: Optional[ProjectWorkspace] = None,
     topic: Optional[Union[str, ProductArchetype]] = None,
     project_id: Optional[str] = None,
+    beats: Any = None,
+    shot_overrides: Any = None,
+    reference_overrides: Any = None,
+    character_path: Any = None,
+    strict_resolution: bool = False,
+    transitions: Any = None,
+    strict_tts: bool = False,
+    pause_after_stage: Optional[int] = None,
+    result: Optional[dict] = None,
     **kwargs: Any,
 ) -> bool:
-    """Executes the complete 8-stage commercial production pipeline."""
+    """Executes the complete 8-stage commercial production pipeline.
+
+    Agent direction (all optional; objects or JSON file paths where noted):
+      ``beats`` -> stage 2 (strict), ``shot_overrides`` -> stage 3, ``reference_overrides`` /
+      ``character_path`` / ``strict_resolution`` -> stage 4, ``strict_tts`` -> stage 6,
+      ``transitions`` -> stage 7 (default: per-beat ``transition`` in script.json).
+    ``pause_after_stage`` stops cleanly after that stage (returns False, ``result["status"] ==
+    "paused"``); resume with ``resume_from_stage=N+1``.  ``result`` (if given) is filled with the
+    status dict (``status``, ``last_completed_stage``, ``paused_after_stage``, ``next_stage``, ``failed_stage``)
+    that tools/director.py merges into its single machine-readable result (also saved as run_result.json).
+    """
     start_time = time.time()
+    beats = load_json_arg(beats, "beats")
+    if isinstance(beats, dict):
+        beats = beats.get("beats", beats)
+    shot_overrides = load_json_arg(shot_overrides, "shot_overrides")
+    reference_overrides = load_json_arg(reference_overrides, "reference_overrides")
+    transitions = load_json_arg(transitions, "transitions")
+    if isinstance(transitions, dict):
+        transitions = transitions.get("transitions", transitions)
+    transitions = normalize_transition_specs(transitions)
+    character_file = resolve_character_path(character_path)
+    if pause_after_stage is not None and not 1 <= int(pause_after_stage) <= LAST_PAUSABLE_STAGE:
+        raise ValueError(f"pause_after_stage must be 1-{LAST_PAUSABLE_STAGE}, got {pause_after_stage}")
 
     # Resolve project_id / campaign_id
     effective_project_id = project_id or (workspace.project_id if workspace is not None else campaign_id)
@@ -120,6 +243,7 @@ def run_pipeline(
     stages = telemetry.STAGE_CATALOG
 
     running_stage: int = 0
+    last_stage_done: int = 0
     failed_stage: Optional[int] = None
 
     def _safe_len(value: Any) -> int:
@@ -175,6 +299,45 @@ def run_pipeline(
             if resume_from_stage > spec.stage:
                 telemetry.skip_stage(spec.stage, f"Skipped: resuming from stage {resume_from_stage}")
 
+        def _emit_result(status: str, ok: bool, **extra: Any) -> dict:
+            """Fill the caller's ``result`` out-param (tools/director.py builds the final JSON from it)."""
+            payload = {
+                "status": status,
+                "ok": ok,
+                "last_completed_stage": last_stage_done or None,
+                **extra,
+            }
+            if result is not None:
+                result.clear()
+                result.update(payload)
+            return payload
+
+        def _pause_check(stage: int) -> bool:
+            """Record stage completion; True when the run must stop cleanly after ``stage``."""
+            nonlocal last_stage_done
+            last_stage_done = stage
+            if pause_after_stage is None or int(pause_after_stage) != stage:
+                return False
+            next_stage = stage + 1
+            elapsed = round(time.time() - start_time, 2)
+            print(f"\n[Director] PAUSED after stage {stage} for human review. "
+                  f"Resume with --from-stage {next_stage}.")
+            workspace.update_project_meta(last_status="paused")
+            with recorder._lock:
+                recorder.state["status"] = "paused"
+                recorder.state["finished_at"] = telemetry.now_iso()
+                recorder.state["elapsed_seconds"] = elapsed
+            telemetry.stage_message(stage, f"Paused after stage {stage}; resume from stage {next_stage}")
+            recorder.flush()
+            _emit_result(
+                "paused",
+                False,
+                paused_after_stage=stage,
+                next_stage=next_stage,
+                resume_hint=f"--from-stage {next_stage}",
+            )
+            return True
+
         try:
             # Step 1: Competitor Research & Briefing
             if resume_from_stage <= 1:
@@ -198,15 +361,10 @@ def run_pipeline(
                             (a for a in creative_concept.concept_options if a.angle_id == winning_sel.selected_angle_id),
                             creative_concept.concept_options[0],
                         )
-                        actual_product_name = research_artifact.product_intel.title or product_name
-                        create_product_brief(
-                            campaign_id=campaign_id,
-                            product_name=actual_product_name,
-                            target_persona=research_artifact.primary_persona,
-                            pain_points=research_artifact.product_intel.features[:3] or None,
-                            usps=research_artifact.product_intel.dramatic_benefits[:3] or None,
-                            visual_tone=f"{winning_angle.title} | {winning_sel.directorial_directives.lighting_mood}",
-                            archetype=selected_archetype,
+                        # Bridge the winning angle (character role, audio strategy, directives) into the brief.
+                        create_product_brief_from_concept(
+                            creative_concept,
+                            research_artifact,
                             output_dir=target_artifacts_dir,
                             workspace=workspace,
                         )
@@ -225,29 +383,37 @@ def run_pipeline(
                 telemetry.register_artifact(target_artifacts_dir / "brief.json", stage=1)
                 telemetry.complete_stage(1, message=str(stage_1_summary))
 
+            if resume_from_stage <= 1 and _pause_check(1):
+                return False
+
             # Step 2: Scriptwriting
             if resume_from_stage <= 2:
                 print(f"\n[Stage 2/8] {stages[1].title}...")
                 script = _run_stage(
                     2,
-                    lambda: generate_commercial_script(
-                        output_dir=target_artifacts_dir,
-                        archetype=selected_archetype,
-                        workspace=workspace,
+                    lambda: _call_stage(
+                        generate_commercial_script,
+                        dict(output_dir=target_artifacts_dir, archetype=selected_archetype, workspace=workspace),
+                        # Directed beats are authoritative: validate them strictly.
+                        {"beats": beats, "strict": True if beats else None},
                     ),
                 )
                 telemetry.register_artifact(target_artifacts_dir / "script.json", stage=2)
                 print(f"[Director] Script generated with {_safe_len(script.beats)} structured commercial beats.")
                 telemetry.complete_stage(2, message=f"Script ready: {_safe_len(script.beats)} beats")
 
+            if resume_from_stage <= 2 and _pause_check(2):
+                return False
+
             # Step 3: Storyboard & Spatial Staging
             if resume_from_stage <= 3:
                 print(f"\n[Stage 3/8] {stages[2].title}...")
                 scene_plan = _run_stage(
                     3,
-                    lambda: generate_scene_plan(
-                        output_dir=target_artifacts_dir,
-                        workspace=workspace,
+                    lambda: _call_stage(
+                        generate_scene_plan,
+                        dict(output_dir=target_artifacts_dir, workspace=workspace),
+                        {"shot_overrides": shot_overrides, "character_path": character_file},
                     ),
                 )
                 telemetry.register_artifact(target_artifacts_dir / "scene_plan.json", stage=3)
@@ -262,20 +428,30 @@ def run_pipeline(
                     ),
                 )
 
+            if resume_from_stage <= 3 and _pause_check(3):
+                return False
+
             # Step 4: Keyframe Staging & Identity Locking
             if resume_from_stage <= 4:
                 print(f"\n[Stage 4/8] {stages[3].title}...")
                 manifest = _run_stage(
                     4,
-                    lambda: generate_clean_keyframes(
-                        output_dir=target_artifacts_dir,
-                        keyframes_dir=target_keyframes_dir,
-                        workspace=workspace,
+                    lambda: _call_stage(
+                        generate_clean_keyframes,
+                        dict(output_dir=target_artifacts_dir, keyframes_dir=target_keyframes_dir, workspace=workspace),
+                        {
+                            "reference_overrides": reference_overrides,
+                            "character_path": character_file,
+                            "strict_resolution": strict_resolution,
+                        },
                     ),
                 )
                 telemetry.register_artifact(target_artifacts_dir / "asset_manifest.json", stage=4)
                 print(f"[Director] Keyframes and first frames staged: {_safe_len(manifest.keyframes)} items.")
                 telemetry.complete_stage(4, message=f"{_safe_len(manifest.keyframes)} identity-locked keyframes staged")
+
+            if resume_from_stage <= 4 and _pause_check(4):
+                return False
 
             # Step 5: Video Generation (pipeline.video_engine owns the stage-5 completion).
             if resume_from_stage <= 5:
@@ -293,31 +469,45 @@ def run_pipeline(
                     telemetry.register_artifact(clip, stage=5)
                 print(f"[Director] Rendered {_safe_len(rendered_clips)} genuine diffusion video clips.")
 
+            if resume_from_stage <= 5 and _pause_check(5):
+                return False
+
             # Step 6: Audio & Lip-Sync
             if resume_from_stage <= 6:
                 print(f"\n[Stage 6/8] {stages[5].title}...")
                 stems, synced = _run_stage(
                     6,
-                    lambda: produce_all_audio_and_lip_sync(
-                        artifacts_dir=target_artifacts_dir,
-                        audio_dir=target_audio_dir,
-                        synced_clips_dir=target_synced_dir,
-                        workspace=workspace,
+                    lambda: _call_stage(
+                        produce_all_audio_and_lip_sync,
+                        dict(
+                            artifacts_dir=target_artifacts_dir,
+                            audio_dir=target_audio_dir,
+                            synced_clips_dir=target_synced_dir,
+                            workspace=workspace,
+                        ),
+                        {"strict_tts": strict_tts},
                     ),
                 )
                 # Voice stems and synced clips are registered by pipeline.audio_lip_sync itself.
                 print(f"[Director] Generated {_safe_len(stems)} audio stems and aligned {_safe_len(synced)} synced clips.")
                 telemetry.complete_stage(6, message=f"{_safe_len(stems)} voice stems, {_safe_len(synced)} lip-synced clips")
 
+            if resume_from_stage <= 6 and _pause_check(6):
+                return False
+
             # Step 7: Composition & Multi-track Audio Ducking
             if resume_from_stage <= 7:
                 print(f"\n[Stage 7/8] {stages[6].title}...")
                 edit_decisions = _run_stage(
                     7,
-                    lambda: compose_master_commercial(
-                        artifacts_dir=target_artifacts_dir,
-                        output_master_path=out_master_video,
-                        workspace=workspace,
+                    lambda: _call_stage(
+                        compose_master_commercial,
+                        dict(
+                            artifacts_dir=target_artifacts_dir,
+                            output_master_path=out_master_video,
+                            workspace=workspace,
+                        ),
+                        {"transitions": transitions if transitions is not None else _beat_transitions(target_artifacts_dir)},
                     ),
                 )
                 # edit_decisions.json + master video are registered by pipeline.composer itself.
@@ -329,6 +519,9 @@ def run_pipeline(
                         f"({_safe_len(getattr(edit_decisions, 'timeline_clips', None))} timeline clips)"
                     ),
                 )
+
+            if resume_from_stage <= 7 and _pause_check(7):
+                return False
 
             # Step 8: Quality Verification Gates (pipeline.verification owns the completion).
             if resume_from_stage <= 8:
@@ -354,6 +547,7 @@ def run_pipeline(
                         elapsed_seconds=elapsed,
                         failed_stage=8,
                     )
+                    _emit_result("failed", False, failed_stage=8, error=f"Verification gates failed ({report.overall_status})")
                     return False
                 print(f"[Director] All {VERIFICATION_GATE_COUNT} Quality Verification Gates PASSED!")
 
@@ -386,6 +580,7 @@ def run_pipeline(
                 summary=f"Commercial master published in {elapsed}s: {out_master_video.name}",
                 elapsed_seconds=elapsed,
             )
+            _emit_result("completed", True, last_completed_stage=8)
             return True
 
         except Exception as exc:
@@ -401,38 +596,19 @@ def run_pipeline(
                 elapsed_seconds=elapsed,
                 failed_stage=running_stage or None,
             )
+            _emit_result("failed", False, failed_stage=running_stage or None, error=str(exc))
             return False
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Chief AI Commercial Director Autonomous Pipeline")
-    parser.add_argument("--campaign", default="campaign_lumina_mug_01", help="Campaign ID")
-    parser.add_argument("--project-id", default=None, help="Project ID (alias for campaign ID)")
-    parser.add_argument("--product", default="Ly Giữ Nhiệt Thông Minh Lumina Pro", help="Product name")
-    parser.add_argument("--url", default=None, help="Affiliate link or raw product description")
-    parser.add_argument("--topic", default=None, help="Domain topic or product archetype")
-    parser.add_argument("--archetype", default=None, choices=[a.value for a in ProductArchetype], help="Directorial archetype")
-    parser.add_argument("--video-mode", default="api", choices=["ffmpeg", "api", "auto"], help="Video generator mode")
-    parser.add_argument("--from-stage", type=int, default=1, choices=range(1, 9), help="Resume from stage (1-8)")
-    parser.add_argument("--out-dir", default=None, help="Output directory root")
-    args = parser.parse_args()
+def main(argv: Optional[list[str]] = None) -> int:
+    """Delegate to the single canonical CLI in ``tools/director.py`` (``python -m pipeline.director``)."""
+    root = str(Path(__file__).resolve().parent.parent)
+    if root not in sys.path:
+        sys.path.insert(0, root)
+    from tools.director import main as tools_main
 
-    project_id = args.project_id or args.campaign
-    topic = args.topic or args.archetype
-
-    ok = run_pipeline(
-        campaign_id=project_id,
-        project_id=project_id,
-        product_name=args.product,
-        product_url_or_query=args.url,
-        archetype=topic,
-        topic=topic,
-        video_mode=args.video_mode,
-        resume_from_stage=args.from_stage,
-        output_dir=Path(args.out_dir) if args.out_dir else None,
-    )
-    sys.exit(0 if ok else 1)
+    return tools_main(argv)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
