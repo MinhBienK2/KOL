@@ -21,7 +21,7 @@
 ## 4. BỘ 8 CỔNG KIỂM ĐỊNH NGHIỆM THU ĐỘC LẬP (VERIFICATION GATES - ADR 0004)
 1. `technical_integrity_gate`: Chạy `ffprobe` kiểm tra container MP4, codec h264/aac, độ phân giải 1080x1920, sample rate 48kHz.
 2. `media_quality_gate`: Chạy ffmpeg `blackdetect` + `freezedetect` + `ebur128` kiểm tra loudness, câm tiếng và giật đứng hình.
-3. `character_sheet_integrity_gate`: Kiểm định mỏ neo nhận diện đa góc, ảnh chân dung, bust turnaround, expressions grid.
+3. `character_sheet_integrity_gate`: Kiểm định Face Anchor và character sheet của từng trang phục (đủ file, đủ độ phân giải).
 4. `character_consistency_gate`: Soi chiếu sự đồng nhất diện mạo nhân vật và kiểm tra sạch watermark AI.
 5. `continuity_gate`: Kiểm tra tính liền mạch nhịp điệu giữa các shot kề nhau và bảo đảm số lượng clip đã sync khớp 1:1 với số beat kịch bản.
 6. `slideshow_risk_gate`: Phân tích điểm nguy cơ slideshow trên 6 chiều kích chuyển động camera và hành động chủ thể.

@@ -789,7 +789,6 @@ class ContextualWardrobeRule(BaseModel):
     archetype: ProductArchetype
     wardrobe_directive: str
     environment_directive: str
-    expression_mapping: Dict[str, str]  # maps emotion keyword to reference expression asset
 
 
 WARDROBE_RULES: Dict[ProductArchetype, ContextualWardrobeRule] = {
@@ -800,13 +799,6 @@ WARDROBE_RULES: Dict[ProductArchetype, ContextualWardrobeRule] = {
             "jewelry, sleek footwear, editorial hair and makeup tailored to the garment aesthetics."
         ),
         environment_directive="Architectural runway corridor, minimal concrete urban plaza, dramatic studio cyclorama with directional spotlights.",
-        expression_mapping={
-            "hook": "06_profile_90deg.jpg",
-            "reveal": "05_three_quarter.jpg",
-            "movement": "01_neutral.jpg",
-            "cta": "02_smiling.jpg",
-            "neutral": "01_neutral.jpg",
-        },
     ),
     ProductArchetype.TECH_GADGETS: ContextualWardrobeRule(
         archetype=ProductArchetype.TECH_GADGETS,
@@ -815,14 +807,6 @@ WARDROBE_RULES: Dict[ProductArchetype, ContextualWardrobeRule] = {
             "minimalist dark navy tailored overshirt, clean smart watch, tidy styling."
         ),
         environment_directive="Modern minimalist desk studio, walnut wood accents, soft matte gray acoustic felt walls, subtle cyan LED rim lighting.",
-        expression_mapping={
-            "hook": "04_looking_down.jpg",
-            "pain": "04_looking_down.jpg",
-            "unbox": "05_three_quarter.jpg",
-            "solution": "03_surprised.jpg",
-            "cta": "02_smiling.jpg",
-            "neutral": "01_neutral.jpg",
-        },
     ),
     ProductArchetype.BEAUTY_SKINCARE: ContextualWardrobeRule(
         archetype=ProductArchetype.BEAUTY_SKINCARE,
@@ -831,14 +815,6 @@ WARDROBE_RULES: Dict[ProductArchetype, ContextualWardrobeRule] = {
             "with minimalist silk headband, clean bare skin with zero heavy makeup, pure organic elegance."
         ),
         environment_directive="Sun-drenched luxury marble bathroom vanity, soft pastel linen accents, fresh eucalyptus branch in fluted glass vase.",
-        expression_mapping={
-            "hook": "05_three_quarter.jpg",
-            "pain": "04_looking_down.jpg",
-            "glow": "02_smiling.jpg",
-            "transformation": "02_smiling.jpg",
-            "cta": "02_smiling.jpg",
-            "neutral": "01_neutral.jpg",
-        },
     ),
     ProductArchetype.HOME_LIFESTYLE: ContextualWardrobeRule(
         archetype=ProductArchetype.HOME_LIFESTYLE,
@@ -847,13 +823,6 @@ WARDROBE_RULES: Dict[ProductArchetype, ContextualWardrobeRule] = {
             "hair in a loose effortless low bun, cozy effortless lifestyle aesthetic."
         ),
         environment_directive="Warm Scandinavian-Japandi living room, light oak furniture, cream bouclé sofa, sunbeams filtering through linen curtains.",
-        expression_mapping={
-            "hook": "04_looking_down.jpg",
-            "reveal": "05_three_quarter.jpg",
-            "enjoy": "02_smiling.jpg",
-            "cta": "02_smiling.jpg",
-            "neutral": "01_neutral.jpg",
-        },
     ),
     ProductArchetype.GENERAL_COMMERCIAL: ContextualWardrobeRule(
         archetype=ProductArchetype.GENERAL_COMMERCIAL,
@@ -862,13 +831,6 @@ WARDROBE_RULES: Dict[ProductArchetype, ContextualWardrobeRule] = {
             "approachable smart-casual presenter look."
         ),
         environment_directive="Clean contemporary studio setting with balanced warm and cool lighting accents.",
-        expression_mapping={
-            "hook": "03_surprised.jpg",
-            "pain": "04_looking_down.jpg",
-            "solution": "03_surprised.jpg",
-            "cta": "02_smiling.jpg",
-            "neutral": "01_neutral.jpg",
-        },
     ),
 }
 
@@ -896,8 +858,7 @@ class DynamicPromptBuilder:
     ) -> CharacterPersona:
         """Build a persona from a character.json so a chosen KOL drives the prompts.
 
-        persona_id is the character directory name so expression reference paths
-        (assets/characters/<persona_id>/expressions) keep resolving.
+        persona_id is the character directory name (assets/characters/<persona_id>/).
         """
         import json
 
@@ -979,18 +940,6 @@ class DynamicPromptBuilder:
             f"Lighting: {LIGHTING_PHRASES.get(active_lighting.value, active_lighting.value)}, studio portrait quality, crystal clear 8k resolution",
         ]
         return ". ".join(parts)
-
-    @staticmethod
-    def get_reference_expression_path(
-        persona: CharacterPersona,
-        archetype: ProductArchetype,
-        emotion_intent: str,
-    ) -> str:
-        """Resolve the relative path to the best reference expression image."""
-        rule = WARDROBE_RULES.get(archetype, WARDROBE_RULES[ProductArchetype.GENERAL_COMMERCIAL])
-        filename = rule.expression_mapping.get(emotion_intent, "01_neutral.jpg")
-        base_dir = Path("assets/characters") / persona.persona_id / "expressions"
-        return str(base_dir / filename)
 
 
 # ==============================================================================

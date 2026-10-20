@@ -44,9 +44,10 @@ def resolve_canonical_identity_reference(
     """Binds character shots uniformly to the campaign's archetype identity sheet."""
     identities = {ident["identity_id"]: ident for ident in char_data.get("identities", [])}
     ident_id = ARCHETYPE_IDENTITY_MAP.get(archetype, "kol_main_office")
-    ident = identities.get(ident_id)
-    if ident and ident.get("reference_sheet"):
-        sheet_path = BASE_DIR / ident["reference_sheet"]
+    ident = identities.get(ident_id, {})
+    sheet_rel = ident.get("character_sheet") or ident.get("reference_sheet") or char_data.get("character_sheet")
+    if sheet_rel:
+        sheet_path = BASE_DIR / sheet_rel
         if sheet_path.exists():
             return sheet_path
     return default_portrait
@@ -120,7 +121,7 @@ def resolve_product_hero_reference(
     """Resolves a pure product visual reference free of character facial features.
 
     Product Isolation (ADR 0006): never falls back to a human portrait. Priority: input
-    image named like product/hero, any input image, then the repo default product asset.
+    image named like product/hero, then any input image.
     """
     if workspace and hasattr(workspace, "input_dir") and workspace.input_dir.exists():
         candidates: List[Path] = []
@@ -130,9 +131,6 @@ def resolve_product_hero_reference(
         named = [c for c in candidates if any(k in c.stem.lower() for k in ("product", "hero"))]
         if named or candidates:
             return (named or candidates)[0]
-    default_prod = BASE_DIR / "assets" / "products" / "default_product.jpg"
-    if default_prod.exists():
-        return default_prod
     raise IdentityReferenceError(
         "No product reference available for product_only shots: drop a product image in the "
         "project input/ directory or pass reference_overrides={'product_hero': <path>}. "
@@ -352,21 +350,15 @@ def generate_clean_keyframes(
     # Resolve active wardrobe and staging profile from script.json
     script_file = target_artifacts_dir / "script.json"
     archetype_val = ProductArchetype.GENERAL_COMMERCIAL
-    custom_costume = None
-    custom_env = None
     if script_file.exists():
         try:
             with open(script_file, "r", encoding="utf-8") as f:
                 s_data = json.load(f)
                 archetype_val = ProductArchetype(s_data.get("archetype", "general_commercial"))
-                p_name = s_data.get("product_name", "").lower()
-                if "cherry" in p_name or "đầm xòe" in p_name:
-                    custom_costume = "costume_french_cherry_dress"
-                    custom_env = "env_paris_cafe_terrace"
         except Exception:
             pass
 
-    wardrobe, environment = resolve_wardrobe_and_environment(archetype_val, custom_costume, custom_env)
+    wardrobe, environment = resolve_wardrobe_and_environment(archetype_val)
 
     # ---- Resolve every reference the plan needs up front (agent overrides win) -----------------
     overrides = load_reference_overrides(target_artifacts_dir, reference_overrides, workspace)

@@ -12,66 +12,14 @@
   "appearance_details": "Chic off-shoulder matte black long-sleeve top, tailored charcoal grey slim trousers, minimalist black flats",
   "portrait_image": "assets/characters/kol_main/portrait.png",
   "face_anchor": "assets/characters/kol_main/portrait.png",
-  "character_sheet": "assets/characters/kol_main/character_sheet_default.png",
+  "character_sheet": "assets/characters/kol_main/outfits/studio_chic_black.png",
   "identities": [
     {
       "identity_id": "kol_main_office",
       "identity_name": "Modern Studio Chic",
       "character_tag": "[KOL_MAIN_OFFICE]",
-      "appearance_details": "Chic off-shoulder matte black long-sleeve top, tailored charcoal grey slim trousers",
-      "face_anchor": "assets/characters/kol_main/portrait.png",
-      "character_sheet": "assets/characters/kol_main/character_sheet_default.png",
-      "reference_sheet": "assets/characters/kol_main/character_sheet_default.png"
-    },
-    {
-      "identity_id": "kol_main_fashion",
-      "identity_name": "Haute Chic Evening",
-      "character_tag": "[KOL_MAIN_FASHION]",
-      "appearance_details": "Chic off-shoulder matte black long-sleeve top, tailored charcoal grey slim trousers, elegant drop earrings",
-      "face_anchor": "assets/characters/kol_main/portrait.png",
-      "character_sheet": "assets/characters/kol_main/character_sheet_default.png",
-      "reference_sheet": "assets/characters/kol_main/character_sheet_default.png"
-    },
-    {
-      "identity_id": "kol_main_techwear",
-      "identity_name": "Creative Studio Techwear",
-      "character_tag": "[KOL_MAIN_TECH]",
-      "appearance_details": "Chic off-shoulder matte black long-sleeve top, tailored charcoal grey slim trousers",
-      "face_anchor": "assets/characters/kol_main/portrait.png",
-      "character_sheet": "assets/characters/kol_main/character_sheet_default.png",
-      "reference_sheet": "assets/characters/kol_main/character_sheet_default.png"
-    },
-    {
-      "identity_id": "kol_main_spa",
-      "identity_name": "Dewy Minimalist Glow",
-      "character_tag": "[KOL_MAIN_SPA]",
-      "appearance_details": "Chic off-shoulder matte black top, radiant dewy bare glass skin",
-      "face_anchor": "assets/characters/kol_main/portrait.png",
-      "character_sheet": "assets/characters/kol_main/character_sheet_default.png",
-      "reference_sheet": "assets/characters/kol_main/character_sheet_default.png"
-    },
-    {
-      "identity_id": "kol_main_cozy",
-      "identity_name": "Minimalist Warm Lifestyle",
-      "character_tag": "[KOL_MAIN_COZY]",
-      "appearance_details": "Chic off-shoulder matte black long-sleeve top, relaxed charcoal trousers",
-      "face_anchor": "assets/characters/kol_main/portrait.png",
-      "character_sheet": "assets/characters/kol_main/character_sheet_default.png",
-      "reference_sheet": "assets/characters/kol_main/character_sheet_default.png"
+      "appearance_details": "Chic off-shoulder matte black long-sleeve top, tailored charcoal grey slim trousers, minimalist black flats",
+      "character_sheet": "assets/characters/kol_main/outfits/studio_chic_black.png"
     }
-  ],
-  "expressions": {
-    "grid": "assets/characters/kol_main/character_sheet_default.png",
-    "neutral": "assets/characters/kol_main/expressions/01_neutral.jpg",
-    "smiling": "assets/characters/kol_main/expressions/02_smiling.jpg",
-    "surprised": "assets/characters/kol_main/expressions/03_surprised.jpg",
-    "thoughtful": "assets/characters/kol_main/expressions/04_looking_down.jpg",
-    "three_quarter": "assets/characters/kol_main/expressions/05_three_quarter.jpg",
-    "profile_90deg": "assets/characters/kol_main/expressions/06_profile_90deg.jpg"
-  },
-  "full_body_standings": {
-    "front": "assets/characters/kol_main/full_body/01_standing_front_0deg.jpg",
-    "side": "assets/characters/kol_main/full_body/02_standing_side_90deg.jpg",
-    "back": "assets/characters/kol_main/full_body/03_standing_back_180deg.jpg"
-  }
+  ]
 }

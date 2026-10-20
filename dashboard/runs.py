@@ -85,7 +85,7 @@ SHARED_MEDIA_DIRNAME = {
 }
 
 #: Input trees that generated assets legitimately live in (identity anchors, wardrobe refs).
-INPUT_DIRNAMES: Tuple[str, ...] = ("assets", "archive_raw")
+INPUT_DIRNAMES: Tuple[str, ...] = ("assets",)
 
 
 class RunNotFound(LookupError):
@@ -709,8 +709,8 @@ def file_ref_for_reference(
 ) -> Optional[Dict[str, Any]]:
     """``fileRef`` for an artifact-declared path; ``None`` when nothing is declared.
 
-    With ``allow_inputs`` the file may come from the repository input trees (``assets/``,
-    ``archive_raw/``); otherwise it is only exposed when it is servable for this run.
+    With ``allow_inputs`` the file may come from the repository input tree (``assets/``);
+    otherwise it is only exposed when it is servable for this run.
     """
     text = _as_str(reference)
     if not text:

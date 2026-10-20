@@ -11,7 +11,8 @@ Commercial TVC production requires consistent character identity across disparat
    - Each character identity/wardrobe state is defined by strictly two canonical assets:
      - `face_anchor`: An isolated high-resolution close-up portrait locking facial geometry and eye details.
      - `character_sheet`: A multi-panel turnaround grid (5–6 panels: front, 3/4, side profile, rear, close-up, half-body) with empty hands and uniform wardrobe, rendered at 2K/4K resolution.
-   - Deprecate legacy fragmented crops (`turnaround_bust`, `turnaround_body`, `full_body_standings`).
+   - One sheet per outfit: each outfit is a single sheet at `assets/characters/<persona_id>/outfits/<outfit_id>.png`, declared as one `identities` entry in `character.json`; the top-level `character_sheet` names the default outfit.
+   - Deprecate legacy fragmented crops (`turnaround_bust`, `turnaround_body`, `full_body_standings`) and expression reference images.
 2. **Expression Neutrality**:
    - Both `face_anchor` and `character_sheet` strictly remain emotionally neutral.
    - Facial acting and emotional intensity are exclusively delegated to kinetic prompt descriptions, preventing baked-in expression bias from distorting neutral scenes.

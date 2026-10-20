@@ -1,6 +1,7 @@
 from pathlib import Path
 import json
 import cv2
+from PIL import Image
 
 from pipeline.briefing import create_product_brief
 from pipeline.scriptwriter import generate_commercial_script
@@ -58,11 +59,14 @@ def test_product_isolation_and_wardrobe_consistency(tmp_path: Path):
     )
     script = generate_commercial_script(brief=brief, output_dir=tmp_path)
     plan = generate_scene_plan(script=script, output_dir=tmp_path)
+    product = tmp_path / "product_hero.jpg"
+    Image.new("RGB", (1200, 1200), (200, 180, 160)).save(product)
 
     manifest = generate_clean_keyframes(
         scene_plan=plan,
         output_dir=tmp_path,
         keyframes_dir=tmp_path / "keyframes",
+        reference_overrides={"product_hero": str(product)},
     )
 
     kf_map = {kf.shot_id: kf for kf in manifest.keyframes}
@@ -73,7 +77,7 @@ def test_product_isolation_and_wardrobe_consistency(tmp_path: Path):
             assert "portrait.png" not in kf.image_path
             assert "ref_10" not in kf.image_path
         else:
-            # Character shot: bound to canonical fashion identity reference, character sheet, or expression asset
-            assert any(k in kf.image_path for k in ("character_sheet", "01_standing_front_0deg.jpg", "portrait.png", "expressions"))
+            # Character shot: framed from the face anchor; the outfit sheet is a reference, never the frame
+            assert "portrait.png" in kf.image_path
             assert kf.generation_mode in ("i2v", "r2v")
             assert kf.reference_assets is not None
