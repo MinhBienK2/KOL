@@ -73,13 +73,13 @@ def upload_reference_image(image_path: str | Path) -> str:
     body.extend(file_bytes)
     body.extend(f"\r\n--{boundary}--\r\n".encode("utf-8"))
 
-    url = f"{API_BASE_URL.rstrip('/')}/v1/media/storage/upload"
+    url = f"{MINIMAX_BASE_URL.rstrip('/')}/v1/media/storage/upload"
     req = urllib.request.Request(
         url,
         data=bytes(body),
         headers={
             "User-Agent": "Mozilla/5.0",
-            "Authorization": f"Bearer {API_KEY}",
+            "Authorization": f"Bearer {MINIMAX_API_KEY}",
             "Content-Type": f"multipart/form-data; boundary={boundary}",
         },
     )
@@ -90,11 +90,18 @@ def upload_reference_image(image_path: str | Path) -> str:
         return file_url
 
 
-def clean_watermark_inpaint(img_path: str | Path, out_path: str | Path) -> None:
-    """Seamlessly inpaint and remove the MiniMax bottom-right watermark using OpenCV."""
-    img = cv2.imread(str(img_path))
-    if img is None:
-        raise ValueError(f"Could not open image for watermark cleaning: {img_path}")
+# A real watermark is a thin text/logo stroke. If the bright mask covers more than this
+# share of the corner ROI the corner is bright *content* (white product, studio backdrop),
+# and inpainting it would smear the subject, so we leave it untouched.
+WATERMARK_MAX_ROI_COVERAGE = 0.25
+
+
+def inpaint_watermark_array(img: np.ndarray) -> tuple[np.ndarray, int]:
+    """Telea-inpaint the bottom-right watermark of a BGR image.
+
+    Returns (image, inpainted_pixel_count). Count is 0 when no watermark-like mark is
+    found or when the corner is bright content rather than a thin overlay.
+    """
     h, w = img.shape[:2]
 
     # Watermark box in bottom-right corner (approx 950px wide, 200px high on 2048x2048)
@@ -104,9 +111,13 @@ def clean_watermark_inpaint(img_path: str | Path, out_path: str | Path) -> None:
     box_y2 = h
     corner_roi = img[box_y1:box_y2, box_x1:box_x2]
     gray_roi = cv2.cvtColor(corner_roi, cv2.COLOR_BGR2GRAY)
-    
+
     # White text threshold
     _, mask_roi = cv2.threshold(gray_roi, 205, 255, cv2.THRESH_BINARY)
+    if mask_roi.size == 0 or not mask_roi.any():
+        return img, 0
+    if (mask_roi > 0).mean() > WATERMARK_MAX_ROI_COVERAGE:
+        return img, 0
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
     dilated_mask_roi = cv2.dilate(mask_roi, kernel, iterations=2)
 
@@ -115,7 +126,20 @@ def clean_watermark_inpaint(img_path: str | Path, out_path: str | Path) -> None:
 
     # Inpaint using Telea algorithm
     clean_img = cv2.inpaint(img, full_mask, inpaintRadius=5, flags=cv2.INPAINT_TELEA)
+    return clean_img, int((full_mask > 0).sum())
+
+
+def clean_watermark_inpaint(img_path: str | Path, out_path: str | Path) -> int:
+    """Seamlessly inpaint and remove the bottom-right watermark using OpenCV.
+
+    Returns the number of inpainted pixels (0 = nothing watermark-like found).
+    """
+    img = cv2.imread(str(img_path))
+    if img is None:
+        raise ValueError(f"Could not open image for watermark cleaning: {img_path}")
+    clean_img, pixels = inpaint_watermark_array(img)
     cv2.imwrite(str(out_path), clean_img)
+    return pixels
 
 
 def generate_first_frame(
