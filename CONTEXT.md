@@ -180,3 +180,7 @@ _Avoid_: Clip padding, freeze-frame fill, tpad
 **Draft Master**:
 A complete master whose only failing gate is the Prompt Ledger Audit Gate, meaning it contains placeholders (a degraded generation mode, a local ffmpeg stand-in or silent TTS fallback). Reported as `overall_status: DRAFT`: watchable as a preview, never published.
 _Avoid_: Partial pass, soft fail, warning-only release
+
+**Face Identity Gate**:
+A verification gate that compares the face in each presenter/model shot's keyframe and sampled raw-clip frames against the Face Anchor using YuNet detection and SFace embedding cosine similarity (threshold 0.363, `KOL_FACE_SIMILARITY_THRESHOLD` to override). Fails on a mismatching face or a missing face on a presenter shot; product-only shots are skipped; reports `unverified` (passes) when the models cannot be downloaded offline.
+_Avoid_: Keyframe file check, manual likeness review, insightface

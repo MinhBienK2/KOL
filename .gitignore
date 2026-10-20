@@ -22,3 +22,7 @@ projects/**/*.png
 !projects/**/artifacts/
 !projects/**/telemetry/
 .venv/
+
+# Face Identity Gate ONNX models (downloaded on demand; default cache is ~/.cache/kol/models)
+assets/models/
+*.onnx
