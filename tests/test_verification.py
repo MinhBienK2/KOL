@@ -265,3 +265,175 @@ def test_run_all_gates_survives_sub_second_master(tmp_path: Path, monkeypatch: p
     _stub_gates(monkeypatch, technical_passes=True, duration=0.5)
     report = run_all_verification_gates(master_video_path=master, artifacts_dir=tmp_path / "artifacts")
     assert report.overall_status == "PASSED"
+
+
+# --------------------------------------------------------------------------------------
+# Round 2: audio_mix_report loudness authority, identity pre-flight audit, placeholder audit
+# --------------------------------------------------------------------------------------
+import os
+
+from pipeline.verification import (
+    STATUS_DRAFT,
+    load_run_ledger,
+    silent_voice_stems,
+    verify_identity_preflight_gate,
+    verify_prompt_ledger_gate,
+)
+
+
+def _write_report(path: Path, newer_than: Path, *, output_lufs: float, compliant: bool, age: float = 5.0) -> Path:
+    path.write_text(json.dumps({"output_lufs": output_lufs, "compliant": compliant, "target_lufs": -14.0}))
+    stamp = newer_than.stat().st_mtime + age
+    os.utime(path, (stamp, stamp))
+    return path
+
+
+@needs_ffmpeg
+def test_media_quality_gate_uses_fresh_mix_report_verdict(tmp_path: Path):
+    clip = _make_clip(tmp_path / "good.mp4", "testsrc2", _SPEECH_LEVEL)
+    measured = verify_media_quality_gate(clip).details["integrated_lufs"]
+
+    ok = _write_report(tmp_path / "ok.json", clip, output_lufs=measured, compliant=True)
+    gate = verify_media_quality_gate(clip, ok)
+    assert gate.passed is True, gate.error_message
+    assert gate.details["loudness_source"] == "audio_mix_report"
+
+    bad = _write_report(tmp_path / "bad.json", clip, output_lufs=measured, compliant=False)
+    gate = verify_media_quality_gate(clip, bad)
+    assert gate.passed is False
+    assert "audio_mix_report" in gate.error_message and "not compliant" in gate.error_message
+
+
+@needs_ffmpeg
+def test_media_quality_gate_rejects_mix_report_that_does_not_describe_the_master(tmp_path: Path):
+    clip = _make_clip(tmp_path / "good.mp4", "testsrc2", _SPEECH_LEVEL)
+    measured = verify_media_quality_gate(clip).details["integrated_lufs"]
+    liar = _write_report(tmp_path / "liar.json", clip, output_lufs=measured - 4.0, compliant=True)
+    gate = verify_media_quality_gate(clip, liar)
+    assert gate.passed is False
+    assert "does not describe this master" in gate.error_message
+
+
+@needs_ffmpeg
+def test_media_quality_gate_ignores_stale_or_malformed_mix_report(tmp_path: Path):
+    clip = _make_clip(tmp_path / "good.mp4", "testsrc2", _SPEECH_LEVEL)
+    stale = _write_report(tmp_path / "stale.json", clip, output_lufs=-30.0, compliant=False, age=-60.0)
+    gate = verify_media_quality_gate(clip, stale)
+    assert gate.details["loudness_source"] == "measured" and gate.passed is True
+
+    junk = tmp_path / "junk.json"
+    junk.write_text("{not json")
+    assert verify_media_quality_gate(clip, junk).details["loudness_source"] == "measured"
+
+
+def test_identity_preflight_gate_missing_report_warns_but_passes(tmp_path: Path):
+    gate = verify_identity_preflight_gate(tmp_path / "identity_preflight.json")
+    assert gate.passed is True
+    assert gate.details["found"] is False and gate.details["warnings"]
+
+
+def test_identity_preflight_gate_surfaces_warnings_without_failing(tmp_path: Path):
+    path = tmp_path / "identity_preflight.json"
+    path.write_text(json.dumps({
+        "ok": True, "assets": {"face_anchor": {}}, "errors": [],
+        "warnings": [{"asset": "character_sheet", "issue": "long edge 900px below minimum resolution 1024px"}],
+    }))
+    gate = verify_identity_preflight_gate(path)
+    assert gate.passed is True
+    assert gate.details["warnings"] == ["character_sheet: long edge 900px below minimum resolution 1024px"]
+
+
+def test_identity_preflight_gate_fails_on_errors_or_unreadable_report(tmp_path: Path):
+    path = tmp_path / "identity_preflight.json"
+    path.write_text(json.dumps({"ok": False, "errors": [{"asset": "face_anchor", "issue": "missing"}], "warnings": []}))
+    gate = verify_identity_preflight_gate(path)
+    assert gate.passed is False and "face_anchor: missing" in gate.error_message
+
+    path.write_text("[[")
+    assert verify_identity_preflight_gate(path).passed is False
+
+
+def test_prompt_ledger_gate_passes_clean_ledger():
+    ledger = {"shot_01": {"mode": "I2V"}, "shot_02": {"mode": "R2V", "degraded_from": None}}
+    gate = verify_prompt_ledger_gate(ledger)
+    assert gate.passed is True and gate.details["placeholder_count"] == 0
+
+
+def test_prompt_ledger_gate_flags_degraded_placeholder_and_tts_fallback_shots():
+    ledger = {
+        "shot_01": {"mode": "I2V", "degraded_from": "R2V"},
+        "shot_02": {"mode": "local_ffmpeg"},
+        "shot_03": {"mode": "I2V", "tts_fallback": True},
+        "shot_04": {"mode": "T2V"},
+    }
+    gate = verify_prompt_ledger_gate(ledger, tts_fallback_shots=["shot_04"])
+    assert gate.passed is False
+    flagged = gate.details["flagged_shots"]
+    assert set(flagged) == {"shot_01", "shot_02", "shot_03", "shot_04"}
+    assert flagged["shot_01"] == ["degraded_from=R2V"]
+    assert flagged["shot_02"] == ["mode=local_ffmpeg"]
+
+
+def test_load_run_ledger_reads_file_and_prefers_live_telemetry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    run = tmp_path / "run"
+    (run / "artifacts").mkdir(parents=True)
+    (run / "prompt_ledger.json").write_text(json.dumps({"shot_01": {"mode": "I2V"}, "shot_02": {"mode": "I2V"}}))
+    assert load_run_ledger(run / "artifacts")["shot_02"]["mode"] == "I2V"
+
+    class FakeRecorder:
+        def snapshot(self):
+            return {"prompts": {"shot_02": {"mode": "I2V", "degraded_from": "R2V"}}}
+
+    monkeypatch.setattr(verification.telemetry, "current", lambda: FakeRecorder())
+    assert load_run_ledger(run / "artifacts")["shot_02"]["degraded_from"] == "R2V"
+
+
+@needs_ffmpeg
+def test_silent_voice_stems_flags_only_spoken_beats_with_digital_silence(tmp_path: Path):
+    def stem(name: str, src: str) -> str:
+        out = tmp_path / name
+        subprocess.check_call(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i", src, str(out)])
+        return str(out)
+
+    stems = [
+        stem("a.wav", "sine=f=300:d=1"),
+        stem("b.wav", "anullsrc=r=48000:cl=stereo:d=1"),
+        stem("c.wav", "anullsrc=r=48000:cl=stereo:d=1"),
+    ]
+    script = tmp_path / "script.json"
+    script.write_text(json.dumps({"beats": [{"spoken_text": "hi"}, {"spoken_text": "hello"}, {"spoken_text": ""}]}))
+    manifest = tmp_path / "asset_manifest.json"
+    manifest.write_text(json.dumps({"audio_stems": stems}))
+    assert silent_voice_stems(script, manifest) == ["shot_02"]
+
+
+@needs_ffmpeg
+def test_run_all_gates_marks_master_with_placeholders_as_draft_and_withholds_publish(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    master = _make_clip(tmp_path / "master.mp4", "testsrc2", _SPEECH_LEVEL)
+    artifacts = tmp_path / "run" / "artifacts"
+    artifacts.mkdir(parents=True)
+    (tmp_path / "run" / "prompt_ledger.json").write_text(
+        json.dumps({"shot_01": {"mode": "I2V", "degraded_from": "R2V"}})
+    )
+    (artifacts / "publish_log.json").write_text("{}")  # stale log from an earlier PASSED run
+    _stub_gates(monkeypatch, technical_passes=True)
+
+    report = run_all_verification_gates(master_video_path=master, artifacts_dir=artifacts)
+
+    assert report.overall_status == STATUS_DRAFT == "DRAFT"
+    names = [g.gate_name for g in report.verification_gates]
+    assert "identity_preflight_gate" in names and "prompt_ledger_audit_gate" in names
+    assert (artifacts / "render_report.json").exists()
+    assert not (artifacts / "publish_log.json").exists()
+
+
+@needs_ffmpeg
+def test_run_all_gates_hard_failure_outranks_draft(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    master = _make_clip(tmp_path / "master.mp4", "testsrc2", _SPEECH_LEVEL)
+    artifacts = tmp_path / "run" / "artifacts"
+    artifacts.mkdir(parents=True)
+    (tmp_path / "run" / "prompt_ledger.json").write_text(json.dumps({"shot_01": {"mode": "LOCAL_FFMPEG"}}))
+    _stub_gates(monkeypatch, technical_passes=False)
+    assert run_all_verification_gates(master_video_path=master, artifacts_dir=artifacts).overall_status == "FAILED"
