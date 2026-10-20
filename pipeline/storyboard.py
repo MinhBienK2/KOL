@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from pipeline import telemetry
 from pipeline.config import ARTIFACTS_DIR, CHARACTER_PATH
@@ -23,8 +23,12 @@ from pipeline.cinematography import (
     CameraLens,
     ShotScale,
     build_framing_directive,
+    camera_phrase,
+    compact_video_prompt,
     generate_storyboard_contact_sheet,
+    plan_shot_scales,
 )
+from pipeline.spatial_staging import SpatialContinuityContract
 from pipeline.lip_sync_engine import determine_lip_sync_strategy
 
 def build_6part_prompt(
@@ -48,14 +52,49 @@ def build_6part_prompt(
     return " ".join(parts)
 
 
+def _coerce_enum(enum_cls, raw: Any, field: str):
+    """Accept an enum member, its value, or its name (case-insensitive) for an override."""
+    if isinstance(raw, enum_cls):
+        return raw
+    text = str(raw).strip().lower()
+    for member in enum_cls:
+        if text in (member.value.lower(), member.name.lower()):
+            return member
+    valid = ", ".join(m.value for m in enum_cls)
+    raise ValueError(f"Invalid {field} override '{raw}'. Valid values: {valid}")
+
+
+def _shot_override(overrides: Dict[str, Dict[str, Any]], shot_id: str, scene_id: str) -> Dict[str, Any]:
+    """Merge overrides addressed by shot_id and/or scene_id (scene_id wins)."""
+    merged: Dict[str, Any] = {}
+    merged.update(overrides.get(shot_id, {}))
+    merged.update(overrides.get(scene_id, {}))
+    return merged
+
+
+def _shot_intent(beat: Any) -> str:
+    """Explicit commercial intent for the Slideshow Risk Gate and contact sheet."""
+    purpose = (beat.narrative_purpose or "").strip()
+    return f"{beat.beat_type}: {purpose}" if purpose else beat.beat_type
+
+
 def generate_scene_plan(
     script: ScriptArtifact | None = None,
     script_path: Path | None = None,
     character_path: Path | None = None,
     output_dir: Path | None = None,
     workspace: Optional[ProjectWorkspace] = None,
+    shot_overrides: Optional[Dict[str, Dict[str, Any]]] = None,
 ) -> ScenePlanArtifact:
-    """Generates the cinematic scene plan artifact."""
+    """Generates the cinematic scene plan artifact.
+
+    ``shot_overrides`` lets an orchestrating agent direct individual shots. Keys are a
+    ``shot_id`` ("shot_02") or a script ``scene_id``; values may contain ``shot_scale``
+    (ShotScale value/name), ``lens`` (CameraLens), ``angle`` (CameraAngle) and
+    ``extra_direction`` (free text appended to the generation prompt). Unknown scale,
+    lens or angle values raise ``ValueError``.
+    """
+    shot_overrides = shot_overrides or {}
     target_artifacts_dir = workspace.artifacts_dir if workspace is not None else (output_dir or ARTIFACTS_DIR)
     target_artifacts_dir.mkdir(parents=True, exist_ok=True)
 
@@ -83,21 +122,28 @@ def generate_scene_plan(
         custom_env = "env_paris_cafe_terrace" if "cherry" in script.product_name.lower() or "đầm xòe" in script.product_name.lower() else None
         wardrobe, environment = resolve_wardrobe_and_environment(script.archetype, custom_costume, custom_env)
 
-        # Dynamic Framing Scale cycle: Wide -> Cowboy -> Macro -> Medium -> Medium Close-Up -> Close-Up
-        scale_cycle = [
-            ShotScale.WS,
-            ShotScale.MWS,
-            ShotScale.ECU,
-            ShotScale.MS,
-            ShotScale.MCU,
-            ShotScale.CU,
-        ]
+        # Beat-aware framing: presenter faces stay readable, macro for texture beats, varied rhythm.
+        planned_scales = plan_shot_scales(script.beats)
+
+        # Spatial continuity contract: one environment, one colour temperature, one key-light side.
+        spatial_contract = SpatialContinuityContract(
+            environment_name=environment.name,
+            nominal_kelvin=environment.nominal_color_temp_kelvin,
+        )
+        framing_meta: Dict[str, Dict[str, str]] = {}
 
         shots: List[StoryboardShot] = []
         for idx, beat in enumerate(script.beats, start=1):
             shot_id = f"shot_{idx:02d}"
             is_prod_only = beat.character_role == CharacterRole.PRODUCT_ONLY
-            shot_scale = scale_cycle[(idx - 1) % len(scale_cycle)]
+            override = _shot_override(shot_overrides, shot_id, beat.scene_id)
+            shot_scale = (
+                _coerce_enum(ShotScale, override["shot_scale"], "shot_scale")
+                if "shot_scale" in override
+                else planned_scales[idx - 1]
+            )
+            lens_override = _coerce_enum(CameraLens, override["lens"], "lens") if "lens" in override else None
+            angle_override = _coerce_enum(CameraAngle, override["angle"], "angle") if "angle" in override else None
             shot_type_label = f"{shot_scale.value.upper()} • {beat.beat_type.capitalize()}"
             telemetry.stage_progress(
                 3,
@@ -107,7 +153,13 @@ def generate_scene_plan(
                 label=f"Planning {shot_id}",
                 item={"id": shot_id, "label": shot_type_label, "status": "planned", "beat_type": beat.beat_type},
             )
-            framing = build_framing_directive(scale=shot_scale, focal_point=script.product_name if is_prod_only else persona.name)
+            framing = build_framing_directive(
+                scale=shot_scale,
+                lens=lens_override,
+                angle=angle_override,
+                focal_point=script.product_name if is_prod_only else persona.name,
+            )
+            framing_meta[shot_id] = {"shot_scale": shot_scale.name, "lens": framing.lens.value}
             lip_decision = determine_lip_sync_strategy(
                 shot_id=shot_id,
                 character_role=beat.character_role,
@@ -125,8 +177,9 @@ def generate_scene_plan(
                 lighting=beat.lighting_contract,
                 camera=beat.camera_choreography,
             )
+            framing_clause = framing.to_natural_clause()
             prompt_parts = [
-                framing.prompt_optics_directive,
+                framing_clause,
                 base_prompt,
                 environment.prompt_set_directive,
             ]
@@ -135,7 +188,12 @@ def generate_scene_plan(
                 if lip_decision.prompt_articulation_directive:
                     prompt_parts.append(lip_decision.prompt_articulation_directive)
 
-            full_cinematic_prompt = " ".join(prompt_parts)
+            extra_direction = str(override.get("extra_direction", "")).strip()
+            if extra_direction:
+                prompt_parts.append(extra_direction.rstrip(".") + ".")
+
+            # Model-ready: plain camera/lighting wording, no duplicate/filler sentences, word budget.
+            full_cinematic_prompt = compact_video_prompt(" ".join(prompt_parts))
 
             # Prompt ledger: the supervisor must see the exact cinematic prompt before rendering.
             telemetry.record_prompt(
@@ -150,7 +208,7 @@ def generate_scene_plan(
                 lighting=beat.lighting_contract.value if beat.lighting_contract else arch_config.default_lighting.value,
                 estimated_duration=beat.estimated_duration,
                 segments=[
-                    {"label": "Framing & optics", "text": framing.prompt_optics_directive},
+                    {"label": "Framing & optics", "text": framing_clause},
                     {"label": "Subject & action", "text": base_prompt},
                     {"label": "Set & environment", "text": environment.prompt_set_directive},
                     *([{"label": "Wardrobe", "text": wardrobe.prompt_wear_directive}] if not is_prod_only else []),
@@ -190,6 +248,11 @@ def generate_scene_plan(
                     lighting_contract=beat.lighting_contract.value if beat.lighting_contract else None,
                     narrative_purpose=beat.narrative_purpose,
                     color_temp_kelvin=environment.nominal_color_temp_kelvin,
+                    shot_intent=_shot_intent(beat),
+                    spatial_staging=(
+                        f"{environment.name} @ {environment.nominal_color_temp_kelvin}K, "
+                        f"key light locked to {spatial_contract.locked_key_light_azimuth} degrees camera-left"
+                    ),
                     is_hero_moment=idx in (2, 3) or "solution" in beat.beat_type or "reveal" in beat.beat_type,
                 )
             )
@@ -199,6 +262,7 @@ def generate_scene_plan(
         sheet_shot_dicts = []
         for s in shots:
             d = s.model_dump()
+            d.update(framing_meta.get(s.shot_id, {}))
             matching_beat = next((b for b in script.beats if b.scene_id == s.scene_id), None)
             if matching_beat:
                 d["spoken_text"] = matching_beat.spoken_text
@@ -221,10 +285,21 @@ def generate_scene_plan(
             passed=risk_report.passed,
             hard_reject_reasons=risk_report.hard_reject_reasons,
         )
+        continuity_ok, continuity_issues = spatial_contract.validate_shot_continuity(
+            [(s.shot_id, s.color_temp_kelvin or spatial_contract.nominal_kelvin) for s in shots]
+        )
         scene_plan = ScenePlanArtifact(
             campaign_id=script.campaign_id,
             shots=shots,
             slideshow_risk=risk_report.model_dump(),
+            spatial_staging_contract={
+                "environment_name": spatial_contract.environment_name,
+                "nominal_kelvin": spatial_contract.nominal_kelvin,
+                "max_kelvin_drift": spatial_contract.max_kelvin_drift,
+                "locked_key_light_azimuth": spatial_contract.locked_key_light_azimuth,
+                "continuity_ok": continuity_ok,
+                "issues": continuity_issues,
+            },
             storyboard_contact_sheet=str(contact_sheet_path),
         )
         out_file = target_artifacts_dir / "scene_plan.json"
