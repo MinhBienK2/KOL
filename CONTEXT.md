@@ -78,6 +78,10 @@ _Avoid_: Edit script, cut plan
 An automated deterministic or perceptual check validating video format, character consistency, or continuity before final release.
 _Avoid_: Manual QA, eyeball test
 
+**Media Quality Gate**:
+The Verification Gate that scans the master with one ffmpeg pass (`blackdetect`, `freezedetect`, `ebur128`) and rejects black picture, frozen/held still frames, silence, off-target loudness (-14 LUFS ± 3) and clipping.
+_Avoid_: Loudness check, black frame check
+
 ### Directorial Strategy & Market Intelligence
 
 **Competitor Research & Whitespace Analysis**:

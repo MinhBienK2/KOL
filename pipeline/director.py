@@ -25,7 +25,7 @@ from pipeline.identity_keyframe import generate_clean_keyframes
 from pipeline.video_engine import render_all_video_clips
 from pipeline.audio_lip_sync import produce_all_audio_and_lip_sync
 from pipeline.composer import compose_master_commercial
-from pipeline.verification import run_all_verification_gates
+from pipeline.verification import VERIFICATION_GATE_COUNT, run_all_verification_gates
 from pipeline.config import ARTIFACTS_DIR, OUTPUT_DIR, RAW_CLIPS_DIR, SYNCED_CLIPS_DIR, AUDIO_DIR, KEYFRAMES_DIR
 
 
@@ -69,6 +69,15 @@ def run_pipeline(
         )
     workspace.ensure_dirs()
 
+    # ADR 0001: a stage may only start when its prerequisite artifacts exist and validate.
+    prerequisite_problems = workspace.check_prerequisites(resume_from_stage)
+    if prerequisite_problems:
+        print(
+            f"[DIRECTOR ERROR] Cannot resume from stage {resume_from_stage}: " + "; ".join(prerequisite_problems),
+            file=sys.stderr,
+        )
+        return False
+
     # Extract standard paths from workspace
     target_artifacts_dir = workspace.artifacts_dir
     target_clips_dir = workspace.raw_clips_dir
@@ -89,6 +98,7 @@ def run_pipeline(
         "archetype": selected_archetype.value,
         "video_mode": video_mode,
         "resume_from_stage": resume_from_stage,
+        "failed_stage": None,  # clears a failure recorded by an earlier attempt of this run
         "project_id": workspace.project_id,
         "topic": workspace.topic,
         "version": workspace.version,
@@ -330,20 +340,22 @@ def run_pipeline(
                         artifacts_dir=target_artifacts_dir,
                         workspace=workspace,
                     ),
-                    total=4,
+                    total=VERIFICATION_GATE_COUNT,
                 )
                 # render_report.json, publish_log.json and the thumbnail are registered by
                 # pipeline.verification itself.
                 if report.overall_status != "PASSED":
                     print(f"[DIRECTOR ERROR] Pipeline failed verification: {report}")
                     elapsed = round(time.time() - start_time, 2)
+                    workspace.update_project_meta(last_status="verification_failed")
                     recorder.finish_run(
                         False,
                         summary=f"Verification gates failed (overall: {report.overall_status})",
                         elapsed_seconds=elapsed,
+                        failed_stage=8,
                     )
                     return False
-                print(f"[Director] All 4 Quality Verification Gates PASSED!")
+                print(f"[Director] All {VERIFICATION_GATE_COUNT} Quality Verification Gates PASSED!")
 
             elapsed = round(time.time() - start_time, 2)
             print("\n" + "=" * 80)

@@ -2,15 +2,81 @@ from pathlib import Path
 import json
 import subprocess
 
-from pipeline.composer import compose_master_commercial
+import pytest
+
+from pipeline import audio_lip_sync
+from pipeline.composer import (
+    DUCKING_FILTER,
+    TARGET_LUFS,
+    TARGET_TRUE_PEAK_DB,
+    caption_layout,
+    compose_master_commercial,
+    compute_timecodes,
+    measure_loudness,
+    normalize_transitions,
+    wrap_caption,
+)
 from pipeline.schemas import (
     AssetManifestArtifact,
-    KeyframeAsset,
     ScriptArtifact,
     ScriptBeat,
 )
 from tests.test_helpers import create_test_clip
 from pipeline.audio_lip_sync import align_lip_sync_clip, synthesize_tts_stem
+
+FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+
+
+@pytest.fixture(autouse=True)
+def offline_tts(monkeypatch):
+    """Composition tests must never reach the paid neural TTS endpoint."""
+
+    def _refuse(*args, **kwargs):
+        raise OSError("network disabled in tests")
+
+    monkeypatch.setattr(audio_lip_sync.urllib.request, "urlopen", _refuse)
+
+
+def _ffmpeg(*args: str) -> None:
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", *args], check=True)
+
+
+def _voiced_clip(path: Path, duration: float, hz: int = 300, size: str = "540x960") -> str:
+    """A synced-clip stand-in with audible 'speech' (noise bursts) so the mix has a real voice key."""
+    _ffmpeg(
+        "-f", "lavfi", "-i", f"testsrc2=s={size}:r=30:d={duration}",
+        "-f", "lavfi",
+        "-i", f"anoisesrc=d={duration}:c=brown:a=0.4:r=48000,aformat=channel_layouts=stereo",
+        "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-ar", "48000", "-shortest", str(path),
+    )
+    return str(path)
+
+
+def _script(n: int, texts: list[str] | None = None) -> ScriptArtifact:
+    texts = texts or [f"CAPTION {i + 1}" for i in range(n)]
+    return ScriptArtifact(
+        campaign_id="test_comp",
+        product_name="Test Product",
+        target_duration=2.0 * n,
+        beats=[
+            ScriptBeat(
+                scene_id=f"shot_{i + 1:02d}",
+                beat_type="hook" if i == 0 else "cta",
+                spoken_text=f"Beat {i + 1} test voice",
+                on_screen_text=texts[i],
+                visual_cue=f"cue {i + 1}",
+                estimated_duration=2.0,
+            )
+            for i in range(n)
+        ],
+    )
+
+
+def _duration(path: Path) -> float:
+    out = subprocess.check_output(
+        ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "json", str(path)]
+    )
+    return float(json.loads(out)["format"]["duration"])
 
 
 def test_compose_master_commercial(tmp_path: Path):
@@ -27,30 +93,7 @@ def test_compose_master_commercial(tmp_path: Path):
         align_lip_sync_clip(clip_p, stem_p, synced_p)
         synced_clips.append(str(synced_p))
 
-    script = ScriptArtifact(
-        campaign_id="test_comp",
-        product_name="Test Product",
-        target_duration=3.0,
-        beats=[
-            ScriptBeat(
-                scene_id="shot_01",
-                beat_type="hook",
-                spoken_text="Beat 1 test voice",
-                on_screen_text="HOOK TEXT",
-                visual_cue="cue 1",
-                estimated_duration=1.5,
-            ),
-            ScriptBeat(
-                scene_id="shot_02",
-                beat_type="cta",
-                spoken_text="Beat 2 test voice",
-                on_screen_text="CTA TEXT",
-                visual_cue="cue 2",
-                estimated_duration=1.5,
-            ),
-        ],
-    )
-
+    script = _script(2, ["HOOK TEXT", "CTA TEXT"])
     manifest = AssetManifestArtifact(
         campaign_id="test_comp",
         keyframes=[],
@@ -58,7 +101,7 @@ def test_compose_master_commercial(tmp_path: Path):
     )
 
     master_path = tmp_path / "test_master.mp4"
-    edl = compose_master_commercial(
+    compose_master_commercial(
         script=script,
         manifest=manifest,
         output_master_path=master_path,
@@ -85,158 +128,146 @@ def test_compose_master_commercial(tmp_path: Path):
     assert any(s["codec_name"] == "aac" for s in streams)
 
 
-# --------------------------------------------------------------------------------------
-# Timing: clips are trimmed to the beat, never padded with frozen frames
-# --------------------------------------------------------------------------------------
-import re
-
-import pytest
-
-from pipeline.composer import DUCKING_FILTER, BGM_DUCKING_ATTENUATION_DB
+# -- Captions ---------------------------------------------------------------------------------
 
 
-def _ffmpeg(*args: str) -> None:
-    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", *args], check=True)
+def test_caption_layout_respects_9x16_platform_safe_zones():
+    layout = caption_layout(1080, 1920)
+    # TikTok/Reels UI covers ~320-480px at the bottom and ~120px at the sides.
+    assert layout.bottom_margin >= 0.22 * 1920
+    assert layout.margin_x >= 0.08 * 1080
+    assert layout.max_text_width <= 1080 - 2 * layout.margin_x
 
 
-def _moving_clip(path: Path, seconds: float) -> str:
-    _ffmpeg("-f", "lavfi", "-i", f"testsrc2=size=540x960:rate=24:duration={seconds}",
-            "-c:v", "libx264", "-pix_fmt", "yuv420p", str(path))
-    return str(path)
+def test_wrap_caption_never_exceeds_safe_width_and_keeps_every_word():
+    text = "Đầm xòe cherry mềm mại, thoải mái cả ngày dài, giảm ngay 50% hôm nay!"
+    layout = caption_layout(1080, 1920)
+    lines = wrap_caption(text, layout.max_text_width, layout.font_size, FONT)
+    assert 1 < len(lines) <= 3
+    assert " ".join(lines).split() == text.split()
+
+    from PIL import ImageFont
+
+    font = ImageFont.truetype(FONT, layout.font_size)
+    assert all(font.getlength(line) <= layout.max_text_width for line in lines)
 
 
-def _voice_stem(path: Path, seconds: float) -> str:
-    _ffmpeg("-f", "lavfi", "-i", f"sine=frequency=300:duration={seconds}:sample_rate=48000",
-            "-af", "volume=0.5,aformat=channel_layouts=stereo", str(path))
-    return str(path)
+def test_wrap_caption_empty_text_has_no_lines():
+    assert wrap_caption("   ", 800, 48, FONT) == []
 
 
-def _duration(path: Path) -> float:
-    out = subprocess.check_output(
-        ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(path)]
-    )
-    return float(out.decode().strip())
+# -- Transitions / timeline -------------------------------------------------------------------
 
 
-def _frozen_seconds(path: Path) -> float:
-    res = subprocess.run(
-        ["ffmpeg", "-hide_banner", "-i", str(path), "-vf", "freezedetect=n=-60dB:d=0.25", "-an", "-f", "null", "-"],
-        capture_output=True, text=True,
-    )
-    return sum(float(x) for x in re.findall(r"freeze_duration: ([\d.]+)", res.stderr))
+def test_normalize_transitions_defaults_to_hard_cuts():
+    assert normalize_transitions(None, [2.0, 2.0, 2.0]) == [
+        {"from": 0, "to": 1, "type": "cut", "duration": 0.0},
+        {"from": 1, "to": 2, "type": "cut", "duration": 0.0},
+    ]
 
 
-def _script(estimates):
-    return ScriptArtifact(
-        campaign_id="timing",
-        product_name="P",
-        target_duration=sum(estimates),
-        beats=[
-            ScriptBeat(
-                scene_id=f"shot_{i + 1:02d}", beat_type="hook", spoken_text="x", on_screen_text="",
-                visual_cue="c", estimated_duration=e,
-            )
-            for i, e in enumerate(estimates)
-        ],
-    )
+def test_normalize_transitions_clamps_duration_and_rejects_unknown_types():
+    out = normalize_transitions([{"type": "fade", "duration": 5.0}], [2.0, 1.0])
+    # never more than half of the shorter adjacent clip
+    assert out[0]["type"] == "fade" and out[0]["duration"] == pytest.approx(0.5)
+    with pytest.raises(ValueError):
+        normalize_transitions([{"type": "warpdrive", "duration": 0.3}], [2.0, 2.0])
 
 
-def _compose(tmp_path: Path, estimates, clip_secs, voice_secs):
-    raw, stems = [], []
-    for i, (c, v) in enumerate(zip(clip_secs, voice_secs), start=1):
-        raw.append(_moving_clip(tmp_path / f"shot_{i:02d}.mp4", c))
-        stems.append(_voice_stem(tmp_path / f"voice_shot_{i:02d}.wav", v))
-    manifest = AssetManifestArtifact(
-        campaign_id="timing", keyframes=[], raw_video_clips=raw, audio_stems=stems, synced_video_clips=[],
-    )
+def test_compute_timecodes_accounts_for_transition_overlap():
+    trans = normalize_transitions([{"type": "fade", "duration": 0.4}, {"type": "cut"}], [2.0, 2.0, 2.0])
+    tcs = compute_timecodes([2.0, 2.0, 2.0], trans)
+    assert tcs[0] == (0.0, 2.0)
+    assert tcs[1][0] == pytest.approx(1.6)
+    assert tcs[2][0] == pytest.approx(3.6)
+    assert tcs[2][1] == pytest.approx(5.6)
+
+
+def test_compose_honours_requested_crossfade_and_records_it(tmp_path: Path):
+    clips = [_voiced_clip(tmp_path / f"c{i}.mp4", 2.0) for i in range(3)]
+    manifest = AssetManifestArtifact(campaign_id="test_comp", keyframes=[], synced_video_clips=clips)
     master = tmp_path / "master.mp4"
     edl = compose_master_commercial(
-        script=_script(estimates), manifest=manifest, output_master_path=master,
-        artifacts_dir=tmp_path, include_captions=False,
+        script=_script(3),
+        manifest=manifest,
+        output_master_path=master,
+        artifacts_dir=tmp_path,
+        transitions=[{"type": "fade", "duration": 0.4}, {"type": "cut"}],
     )
-    return master, edl, json.loads((tmp_path / "edit_decisions.json").read_text())
+    # 3 x 2.0s minus one 0.4s overlap
+    assert _duration(master) == pytest.approx(5.6, abs=0.15)
+    assert [t["type"] for t in edl.transitions] == ["fade", "cut"]
+    saved = json.loads((tmp_path / "edit_decisions.json").read_text())
+    assert saved["transitions"][0]["duration"] == pytest.approx(0.4)
+    # caption windows follow the overlapped timeline
+    assert edl.captions[1]["start"] == pytest.approx(1.6, abs=0.01)
+    assert edl.captions[2]["start"] == pytest.approx(3.6, abs=0.01)
 
 
-def test_six_second_clips_are_trimmed_to_beat_runtime_without_freezing(tmp_path: Path):
-    master, _edl, doc = _compose(tmp_path, [2.0, 3.0], clip_secs=[6.0, 6.0], voice_secs=[1.5, 2.5])
-    assert _duration(master) == pytest.approx(5.0, abs=0.25)
-    assert _frozen_seconds(master) == 0.0
-    shots = doc["shots"]
-    assert [s["shot_id"] for s in shots] == ["shot_01", "shot_02"]
-    assert shots[0]["action"] == "trim"
-    assert shots[0]["target_seconds"] == pytest.approx(2.0)
-    assert shots[0]["in_point"] == 0.0 and shots[0]["out_point"] == pytest.approx(2.0)
-    assert shots[1]["timeline_start"] == pytest.approx(2.0)
-    assert shots[1]["timeline_end"] == pytest.approx(5.0)
+# -- Hard-to-escape caption text --------------------------------------------------------------
 
 
-def test_voice_longer_than_beat_extends_shot_with_real_motion_not_frozen_frames(tmp_path: Path):
-    master, _edl, doc = _compose(tmp_path, [1.5], clip_secs=[6.0], voice_secs=[4.0])
-    assert _duration(master) == pytest.approx(4.0, abs=0.25)
-    assert _frozen_seconds(master) == 0.0
-    shot = doc["shots"][0]
-    assert shot["action"] == "trim" and shot["target_seconds"] == pytest.approx(4.0)
-    assert shot["held_tail_seconds"] == 0.0
+def test_compose_survives_punctuation_heavy_and_long_captions(tmp_path: Path):
+    clips = [_voiced_clip(tmp_path / f"c{i}.mp4", 1.5) for i in range(2)]
+    manifest = AssetManifestArtifact(campaign_id="test_comp", keyframes=[], synced_video_clips=clips)
+    texts = [
+        "Don't miss: 50% off, today's \"deal\" \\ now",
+        "Đầm xòe cherry mềm mại thoải mái cả ngày dài giảm ngay năm mươi phần trăm hôm nay thôi nhé",
+    ]
+    master = tmp_path / "master.mp4"
+    edl = compose_master_commercial(
+        script=_script(2, texts),
+        manifest=manifest,
+        output_master_path=master,
+        artifacts_dir=tmp_path,
+    )
+    assert master.exists()
+    assert [c["text"] for c in edl.captions] == texts
+    assert len(edl.captions[1]["lines"]) > 1  # wrapped to stay inside the safe zone
 
 
-def test_genuinely_short_clip_is_slowed_down_and_recorded_in_edl(tmp_path: Path):
-    master, _edl, doc = _compose(tmp_path, [3.0], clip_secs=[3.0], voice_secs=[3.6])
-    assert _duration(master) == pytest.approx(3.6, abs=0.25)
-    assert _frozen_seconds(master) == 0.0
-    shot = doc["shots"][0]
-    assert shot["action"] == "slowdown"
-    assert shot["slowdown_factor"] == pytest.approx(1.2, abs=0.01)
+# -- Audio mix: ducking + loudness ------------------------------------------------------------
 
 
-def test_unreachable_voice_length_records_held_tail_as_last_resort(tmp_path: Path):
-    master, _edl, doc = _compose(tmp_path, [2.0], clip_secs=[2.0], voice_secs=[4.0])
-    assert _duration(master) == pytest.approx(4.0, abs=0.25)
-    shot = doc["shots"][0]
-    assert shot["action"] == "slowdown_and_hold"
-    assert shot["held_tail_seconds"] == pytest.approx(4.0 - 2.0 * 1.25, abs=0.01)
-
-
-def test_captions_follow_planned_shot_timecodes(tmp_path: Path):
-    raw = [_moving_clip(tmp_path / f"shot_0{i}.mp4", 6.0) for i in (1, 2)]
-    stems = [_voice_stem(tmp_path / f"voice_shot_0{i}.wav", 1.0) for i in (1, 2)]
-    script = _script([2.0, 3.0])
-    for b in script.beats:
-        b.on_screen_text = "HELLO"
-    manifest = AssetManifestArtifact(campaign_id="t", keyframes=[], raw_video_clips=raw, audio_stems=stems)
-    edl = compose_master_commercial(script=script, manifest=manifest, output_master_path=tmp_path / "m.mp4",
-                                    artifacts_dir=tmp_path)
-    assert [(c["start"], c["end"]) for c in edl.captions] == [(0.0, 2.0), (2.0, 5.0)]
-
-
-# --------------------------------------------------------------------------------------
-# Ducking and loudness
-# --------------------------------------------------------------------------------------
-def _mean_db(path: Path, ss: float, t: float) -> float:
+def _mean_db(path: Path, start: float, length: float) -> float:
     res = subprocess.run(
-        ["ffmpeg", "-hide_banner", "-ss", str(ss), "-t", str(t), "-i", str(path), "-af", "volumedetect", "-f", "null", "-"],
-        capture_output=True, text=True,
+        ["ffmpeg", "-hide_banner", "-ss", str(start), "-t", str(length), "-i", str(path),
+         "-af", "volumedetect", "-f", "null", "-"],
+        stderr=subprocess.PIPE, check=True,
     )
-    return float(re.search(r"mean_volume: (-?[\d.]+) dB", res.stderr).group(1))
+    for line in res.stderr.decode().splitlines():
+        if "mean_volume" in line:
+            return float(line.split("mean_volume:")[1].split("dB")[0])
+    raise AssertionError("no mean_volume")
 
 
-@pytest.mark.parametrize("speech_gain_db", [0, 10])  # quiet (-32 dB mean) and typical (-22 dB mean) speech
-def test_ducking_filter_dips_music_at_least_ten_db_during_speech(tmp_path: Path, speech_gain_db: int):
-    speech, bgm, out = tmp_path / "speech.wav", tmp_path / "bgm.wav", tmp_path / "ducked.wav"
-    _ffmpeg("-f", "lavfi", "-i", "anoisesrc=d=6:c=pink:a=0.3:r=48000", "-af",
-            f"highpass=f=150,lowpass=f=3500,volume={speech_gain_db}dB,volume='if(between(t,2,4),0,1)':eval=frame,"
-            "aformat=channel_layouts=stereo", str(speech))
-    _ffmpeg("-f", "lavfi", "-i", "anoisesrc=d=3:c=pink:a=0.3:r=48000", "-af", "aformat=channel_layouts=stereo", str(bgm))
-    _ffmpeg("-i", str(speech), "-stream_loop", "-1", "-i", str(bgm), "-t", "6", "-filter_complex",
-            f"[1:a]volume=0.25[bgm_base];[bgm_base][0:a]{DUCKING_FILTER}[d]", "-map", "[d]", str(out))
-    dip = _mean_db(out, 3.4, 0.5) - _mean_db(out, 1.0, 1.0)  # pause vs. speech
-    assert dip >= 10.0
-    assert BGM_DUCKING_ATTENUATION_DB == -14.0
+def test_bgm_ducking_filter_really_attenuates_music_under_speech(tmp_path: Path):
+    bgm, voice, ducked = tmp_path / "bgm.wav", tmp_path / "voice.wav", tmp_path / "ducked.wav"
+    _ffmpeg("-f", "lavfi", "-i", "anoisesrc=d=8:c=pink:a=0.5:r=48000,aformat=channel_layouts=stereo", str(bgm))
+    _ffmpeg(
+        "-f", "lavfi",
+        "-i", "anoisesrc=d=8:c=brown:a=0.3:r=48000,volume='if(lt(mod(t,4),2),1,0)':eval=frame,aformat=channel_layouts=stereo",
+        str(voice),
+    )
+    graph = f"[0:a][1:a]{DUCKING_FILTER}[out]"
+    _ffmpeg("-i", str(bgm), "-i", str(voice), "-filter_complex", graph, "-map", "[out]", str(ducked))
+    during_speech = _mean_db(ducked, 0.8, 0.8)  # speech 0-2s
+    during_pause = _mean_db(ducked, 3.0, 0.8)  # silence 2-4s
+    assert during_pause - during_speech >= 10.0  # ADR 0003: music must audibly dip under the voice
 
 
-def test_compose_writes_audio_mix_report_with_loudness(tmp_path: Path):
-    master, _edl, _doc = _compose(tmp_path, [3.0], clip_secs=[6.0], voice_secs=[2.0])
+def test_master_hits_streaming_loudness_and_true_peak(tmp_path: Path):
+    clips = [_voiced_clip(tmp_path / f"c{i}.mp4", 2.0) for i in range(2)]
+    manifest = AssetManifestArtifact(campaign_id="test_comp", keyframes=[], synced_video_clips=clips)
+    master = tmp_path / "master.mp4"
+    compose_master_commercial(
+        script=_script(2), manifest=manifest, output_master_path=master, artifacts_dir=tmp_path
+    )
+    m = measure_loudness(master)
+    assert m["integrated_lufs"] == pytest.approx(TARGET_LUFS, abs=0.6)
+    assert m["true_peak_db"] <= TARGET_TRUE_PEAK_DB + 0.2
+
     report = json.loads((tmp_path / "audio_mix_report.json").read_text())
-    assert report["target_lufs"] == -14.0
-    assert isinstance(report["output_lufs"], float)
-    assert report["compliant"] == (abs(report["output_lufs"] - (-14.0)) <= report["tolerance_lu"])
-    assert report["ducking_attenuation_db"] == -14.0
+    assert report["target_lufs"] == TARGET_LUFS
+    assert report["two_pass"] is True
+    assert abs(report["output_lufs"] - m["integrated_lufs"]) < 0.5

@@ -176,10 +176,20 @@ Bạn sẽ kết hợp sức mạnh kiến trúc của OpenMontage và kỹ thu�
   - **Kiểm định kỹ thuật:** Chạy `ffprobe` kiểm tra độ phân giải (1080x1920 cho 9:16), chuẩn mã hóa (H.264, AAC 48kHz), bitrate mượt mà, không giật lag.
   - **Kiểm định danh tính (Consistency Gate):** So sánh khuôn mặt KOL ở shot đầu và shot cuối với `character.json` (đạt độ tương đồng thị giác cao).
   - **Kiểm định liền mạch (Continuity Gate):** Đảm bảo chuyển động giữa các cảnh không bị nhảy hình (jump cut) gắt vô lý.
+  - **Kiểm định chất lượng hình/tiếng (Media Quality Gate):** Một lượt `ffmpeg` chạy `blackdetect` + `freezedetect` + `ebur128`: không có hình đen quá 1s, không có đoạn hình đứng yên liên tục >= 2s (hoặc > 20% thời lượng bị giữ khung hình tĩnh), loudness tích hợp -14 LUFS ± 3, không clipping (true peak <= 0 dBTP), không câm.
 - Đóng gói xuất bản:
   - Tạo file Video Master chính (9:16).
   - Tạo thumbnail/poster frame ấn tượng khoe rõ sản phẩm và nụ cười của KOL.
-  - Xuất báo cáo nghiệm thu sản xuất: `output/artifacts/render_report.json` và `output/artifacts/publish_log.json`.
+  - Xuất báo cáo nghiệm thu sản xuất: `render_report.json` (luôn ghi) và `publish_log.json` (chỉ ghi khi TẤT CẢ gate PASSED; master hỏng không được vào danh mục xuất bản) trong `projects/{topic}/{project_id}/runs/{version}/artifacts/`.
+
+### Hợp đồng CLI cho Agent (`tools/director.py`)
+Đạo diễn (agent) điều khiển pipeline qua CLI, không đọc stdout dạng văn bản để đoán kết quả:
+- `--json`: stdout chỉ in đúng MỘT object JSON (`ok`, `exit_code`, `version`, `from_stage`, `artifacts_dir`, `failed_stage`, `failed_gates`, `error`, `problems`); log pipeline chuyển sang stderr.
+- Exit code: `0` thành công · `1` một stage lỗi · `2` input sai / thiếu tiền đề · `3` Verification Gate từ chối master (đã có media, cần render lại phần lỗi rồi verify lại).
+- `--check`: chỉ kiểm tra kế hoạch (stage sẽ chạy, artifact tiền đề còn thiếu/sai schema), không chạy, không ghi gì.
+- `--inject NAME=PATH` (lặp được; `brief|script|scene_plan|asset_manifest`): đạo diễn tự viết artifact, CLI validate theo schema rồi cài vào `artifacts/`, và tự resume ở stage kế tiếp (`--inject script=my_script.json` → chạy từ stage 3). `--from-stage` tường minh luôn thắng suy luận.
+- Resume: lỗi kỹ thuật → `--from-stage N` trong cùng version; chỉnh sửa sáng tạo → `--new-version` (media hardlink, đường dẫn trong manifest được trỏ lại vào version mới).
+- Mọi stage N>=2 từ chối khởi động nếu artifact tiền đề không tồn tại/không hợp lệ (exit 2), thay vì chết giữa chừng.
 
 ---
 
@@ -280,4 +290,4 @@ Ngay khi người dùng gửi thông tin hoặc link sản phẩm:
 2. **Khảo sát cấu trúc thực tế** của repo `OpenMontage` và `dramaclaw` tại máy local để nắm chắc các script/tool có thể tận dụng.
 3. **Phân rã thành cây tickets tuần tự** (Kịch bản -> Storyboard -> Keyframe & Khóa KOL -> Render Video -> Xử lý Âm thanh/Lip-sync -> Dựng & Master -> Kiểm định nghiệm thu).
 4. **Kích hoạt Vòng lặp Loop-Until-Done**: Tự động bốc ticket, tự `/grill-with-docs`, tự code, tự render, tự kiểm thử, tự đóng ticket.
-5. **Bàn giao thành phẩm**: Xuất đường dẫn video hoàn chỉnh tại `output/final_commercial_master.mp4` kèm bản Báo cáo Nghiệm thu Tổng Đạo diễn (Director's Production & Verification Report).
+5. **Bàn giao thành phẩm**: Xuất đường dẫn video hoàn chỉnh (`master_video_path` trong kết quả `--json`, dưới `projects/{topic}/{project_id}/runs/{version}/`) kèm bản Báo cáo Nghiệm thu Tổng Đạo diễn (Director's Production & Verification Report).
