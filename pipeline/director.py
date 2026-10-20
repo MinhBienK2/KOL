@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any, Optional, Union
 
 from pipeline import telemetry
-from pipeline.archetypes import ProductArchetype
+from pipeline.archetypes import ProductArchetype, detect_product_archetype
 from pipeline.workspace import ProjectWorkspace
 from pipeline.briefing import create_product_brief, create_product_brief_from_concept
 from pipeline.researcher import run_research_pipeline
@@ -141,6 +141,7 @@ def run_pipeline(
     strict_tts: bool = False,
     pause_after_stage: Optional[int] = None,
     result: Optional[dict] = None,
+    archetype_source: Optional[str] = None,
     **kwargs: Any,
 ) -> bool:
     """Executes the complete 8-stage commercial production pipeline.
@@ -172,9 +173,18 @@ def run_pipeline(
     effective_project_id = project_id or (workspace.project_id if workspace is not None else campaign_id)
 
     # Resolve topic / archetype
-    effective_topic = topic or archetype or (workspace.topic if workspace is not None else None)
+    # Explicit topic/archetype always wins, then an existing workspace's topic; only when neither is
+    # given is the archetype auto-detected from the product name + link/description (before the workspace
+    # is created).  ``archetype_source`` lets a caller (tools/director.py) report how it already decided.
+    effective_topic = topic or archetype
+    resolved_source = "explicit"
+    if effective_topic is None and workspace is not None:
+        effective_topic, resolved_source = workspace.topic, "workspace"
     selected_archetype: ProductArchetype = ProductArchetype.GENERAL_COMMERCIAL
-    if effective_topic is not None:
+    if effective_topic is None:
+        selected_archetype = detect_product_archetype(product_name, product_url_or_query)
+        resolved_source = "auto"
+    else:
         if isinstance(effective_topic, ProductArchetype):
             selected_archetype = effective_topic
         elif isinstance(effective_topic, str):
@@ -182,6 +192,8 @@ def run_pipeline(
                 selected_archetype = ProductArchetype(effective_topic)
             except ValueError:
                 selected_archetype = ProductArchetype.GENERAL_COMMERCIAL
+
+    archetype_source = archetype_source or resolved_source
 
     # Resolve workspace
     if workspace is None:
@@ -219,6 +231,7 @@ def run_pipeline(
         "product_name": product_name,
         "product_url_or_query": product_url_or_query,
         "archetype": selected_archetype.value,
+        "archetype_source": archetype_source,
         "video_mode": video_mode,
         "resume_from_stage": resume_from_stage,
         "failed_stage": None,  # clears a failure recorded by an earlier attempt of this run
@@ -288,11 +301,18 @@ def run_pipeline(
         print(f"Topic:             {workspace.topic}")
         print(f"Campaign ID:       {campaign_id}")
         print(f"Product Name:      {product_name}")
-        print(f"Archetype:         {selected_archetype.value}")
+        print(f"Archetype:         {selected_archetype.value} ({archetype_source})")
         print(f"Video Mode:        {video_mode}")
         print(f"Project Workspace: {workspace.root}")
         print(f"Artifacts Dir:     {target_artifacts_dir}")
         print("=" * 80)
+
+        if archetype_source == "auto":
+            telemetry.note(
+                f"Auto-detected archetype '{selected_archetype.value}' from product name/description",
+                archetype=selected_archetype.value,
+                archetype_source="auto",
+            )
 
         # Resumed runs mark earlier stages as intentionally skipped (never "pending").
         for spec in stages:
@@ -305,6 +325,8 @@ def run_pipeline(
                 "status": status,
                 "ok": ok,
                 "last_completed_stage": last_stage_done or None,
+                "archetype": selected_archetype.value,
+                "archetype_source": archetype_source,
                 **extra,
             }
             if result is not None:
@@ -353,6 +375,7 @@ def run_pipeline(
                             output_dir=target_artifacts_dir,
                             workspace=workspace,
                             use_llm=True,
+                            auto_detect_archetype=False,  # decided once, up front, by the Director
                         )
                         telemetry.register_artifact(target_artifacts_dir / "competitor_research.json", stage=1)
                         telemetry.register_artifact(target_artifacts_dir / "creative_concept.json", stage=1)
