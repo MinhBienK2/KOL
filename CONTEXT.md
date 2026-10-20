@@ -41,7 +41,7 @@ A composite visual sheet combining portrait, turnaround panels, and expression g
 _Avoid_: Single reference photo, style guide
 
 **Character Sheet**:
-A multi-panel turnaround image capturing a character's physical proportions, hairstyle, and wardrobe across multiple viewing angles with empty hands.
+A multi-panel turnaround image capturing a character's physical proportions, hairstyle, and wardrobe across multiple viewing angles with empty hands. One sheet per outfit: each outfit of a character is its own sheet (`assets/characters/<persona_id>/outfits/<outfit_id>.png`), declared as one identity in `character.json`.
 _Avoid_: Model sheet, mood board, all-in-one style guide
 
 **Face Anchor**:

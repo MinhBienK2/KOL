@@ -366,8 +366,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="DramaClaw Image-to-Video Generator")
     parser.add_argument(
         "--image",
-        default="assets/characters/kol_main/expressions/02_smiling.jpg",
-        help="First Frame image path (e.g. assets/characters/kol_main/expressions/02_smiling.jpg)",
+        default="assets/characters/kol_main/portrait.png",
+        help="First Frame image path (e.g. assets/characters/kol_main/portrait.png)",
     )
     parser.add_argument(
         "--prompt",

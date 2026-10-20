@@ -27,12 +27,6 @@ from pipeline.storyboard import generate_scene_plan
 
 CAMPAIGNS = [
     {
-        "campaign_id": "campaign_cherry_dress_01",
-        "archetype": ProductArchetype.FASHION_APPAREL,
-        "product_name": "Đầm Xòe Nơ Quả Cherry Vintage Kiểu Pháp",
-        "category": "fashion_apparel",
-    },
-    {
         "campaign_id": "campaign_blazer_minhanh_master",
         "archetype": ProductArchetype.FASHION_APPAREL,
         "product_name": "Áo Khoác Blazer Nữ Form Rộng Phong Cách Hàn Quốc Vải Tuyết Mưa",

@@ -141,9 +141,7 @@ def generate_scene_plan(
     if not is_legacy_mug:
         persona = explicit_persona or DynamicPromptBuilder.resolve_persona(script.archetype)
         arch_config = get_archetype_config(script.archetype)
-        custom_costume = "costume_french_cherry_dress" if "cherry" in script.product_name.lower() or "đầm xòe" in script.product_name.lower() else None
-        custom_env = "env_paris_cafe_terrace" if "cherry" in script.product_name.lower() or "đầm xòe" in script.product_name.lower() else None
-        wardrobe, environment = resolve_wardrobe_and_environment(script.archetype, custom_costume, custom_env)
+        wardrobe, environment = resolve_wardrobe_and_environment(script.archetype)
 
         # Beat-aware framing: presenter faces stay readable, macro for texture beats, varied rhythm.
         planned_scales = plan_shot_scales(script.beats)
@@ -249,14 +247,6 @@ def generate_scene_plan(
                 ],
             )
 
-            expr_path = None
-            if not is_prod_only:
-                expr_path = DynamicPromptBuilder.get_reference_expression_path(
-                    persona=persona,
-                    archetype=script.archetype,
-                    emotion_intent=beat.beat_type,
-                )
-
             shots.append(
                 StoryboardShot(
                     shot_id=shot_id,
@@ -271,7 +261,6 @@ def generate_scene_plan(
                     scene_description=scene_action,
                     prompt_6part=full_cinematic_prompt,
                     estimated_duration=beat.estimated_duration,
-                    reference_expression=expr_path,
                     character_role=beat.character_role,
                     camera_choreography=beat.camera_choreography.value if beat.camera_choreography else None,
                     lighting_contract=beat.lighting_contract.value if beat.lighting_contract else None,
@@ -347,7 +336,6 @@ def generate_scene_plan(
             "lighting": "Cool corporate morning daylight with soft rim light",
             "scene_action": f"{char_tag} sitting at a modern wooden office desk looking at a cold cup of coffee, touching the cold mug and shaking her head with an expressive surprised and disappointed look",
             "camera_choreography": "Camera motion: slow push-in, shallow depth of field, 4k 60fps feel",
-            "reference_expression": "assets/characters/kol_main/expressions/03_surprised.jpg",
             "duration": 3.5,
         },
         {
@@ -359,7 +347,6 @@ def generate_scene_plan(
             "lighting": "Contrasty office daylight highlighting liquid condensation",
             "scene_action": f"Close-up of workspace where melting water droplets drip from a cold cup onto important paper reports and laptop keyboard, {char_tag} hands gently wiping the droplets with a tissue with frustrated gesture",
             "camera_choreography": "Camera motion: steady tracking pan, crisp macro focus on droplets, dynamic commercial pacing",
-            "reference_expression": "assets/characters/kol_main/expressions/04_looking_down.jpg",
             "duration": 5.0,
         },
         {
@@ -371,7 +358,6 @@ def generate_scene_plan(
             "lighting": "Warm studio luxury backlight, soft beauty key light",
             "scene_action": f"{char_tag} holding the sleek matte-finish Lumina Smart Mug with both hands, gently tapping the glossy touch LED lid that lights up, taking a warm sip and smiling with immense satisfaction",
             "camera_choreography": "Camera motion: slow cinematic orbit zoom-in, smooth floating stabilizer movement, high luxury commercial feel",
-            "reference_expression": "assets/characters/kol_main/expressions/02_smiling.jpg",
             "duration": 6.0,
         },
         {
@@ -383,7 +369,6 @@ def generate_scene_plan(
             "lighting": "Bright radiant commercial key lighting, vibrant and trustworthy",
             "scene_action": f"{char_tag} standing upright in professional tailored office attire, holding up the Lumina Smart Mug toward the camera, smiling warmly and gesturing with invitation to check the link below",
             "camera_choreography": "Camera motion: gentle push-in, perfect centering for bottom CTA badge and promo graphic",
-            "reference_expression": "assets/characters/kol_main/expressions/02_smiling.jpg",
             "duration": 5.0,
         },
     ]
@@ -438,7 +423,6 @@ def generate_scene_plan(
                 scene_description=cfg["scene_action"],
                 prompt_6part=prompt_6,
                 estimated_duration=cfg["duration"],
-                reference_expression=cfg["reference_expression"],
                 transition=script_transitions.get(cfg["scene_id"]),
             )
         )

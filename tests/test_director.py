@@ -7,6 +7,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+from PIL import Image
 
 from pipeline.archetypes import ProductArchetype
 from pipeline.briefing import create_product_brief
@@ -28,6 +29,7 @@ def test_stage_modules_accept_workspace(tmp_path: Path):
         base_dir=tmp_path,
     )
     ws.ensure_dirs()
+    Image.new("RGB", (1200, 1200), (200, 180, 160)).save(ws.input_dir / "product_hero.jpg")
 
     # Step 1: Briefing
     brief = create_product_brief(

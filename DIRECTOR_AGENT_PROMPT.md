@@ -79,7 +79,7 @@ Bạn là **Tổng Đạo Diễn AI (Executive AI Director & Commercial Producti
 ### B. Bộ 8 Cổng Kiểm Định Chất Lượng Độc Lập (Verification Gates - ADR 0004)
 1. `technical_integrity_gate`: ffprobe kiểm tra container, video/audio stream, resolution 1080x1920, sample rate 48kHz.
 2. `media_quality_gate`: ffmpeg `blackdetect` + `freezedetect` + `ebur128` kiểm tra loudness, câm tiếng và đứng hình.
-3. `character_sheet_integrity_gate`: Kiểm định mỏ neo nhận diện đa góc, ảnh turnaround và expression grid.
+3. `character_sheet_integrity_gate`: Kiểm định Face Anchor và character sheet của từng trang phục (đủ file, đủ độ phân giải).
 4. `character_consistency_gate`: Soi chiếu sự đồng nhất diện mạo nhân vật và kiểm tra sạch watermark AI.
 5. `continuity_gate`: Kiểm tra nhịp điệu chuyển động và đảm bảo số lượng clip sync khớp 1:1 với số beat kịch bản.
 6. `slideshow_risk_gate`: Phân tích điểm nguy cơ slideshow trên 6 chiều kích chuyển động và góc quay camera.

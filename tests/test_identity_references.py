@@ -108,7 +108,7 @@ def test_presenter_first_frame_is_single_view_not_multi_panel_sheet(tmp_path):
         s.reference_expression = None
     manifest = _run(tmp_path, plan)
     for k in manifest.keyframes:
-        assert "character_sheet" not in k.image_path
+        assert "/outfits/" not in k.image_path
         assert k.generation_mode == "i2v"
 
 
@@ -118,9 +118,9 @@ def test_r2v_keeps_dual_anchor_references_but_clean_frame_is_single_view(tmp_pat
     manifest = _run(tmp_path, plan)
     k = manifest.keyframes[0]
     assert k.generation_mode == "r2v"
-    assert any("character_sheet" in r for r in k.reference_assets)
+    assert any("/outfits/" in r for r in k.reference_assets)
     assert len(k.reference_assets) == 2
-    assert "character_sheet" not in k.image_path
+    assert "/outfits/" not in k.image_path
 
 
 def test_preflight_missing_sheet_blocks_before_any_output(tmp_path):

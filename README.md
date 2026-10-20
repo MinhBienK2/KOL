@@ -154,7 +154,7 @@ Với mỗi shot, ledger lưu: nội dung prompt đầy đủ (đúng chuỗi đ
 ### 4.6. Bảo mật & Vận hành
 
 - Mọi credential (`Authorization`, `api_key`, token, giá trị `sk-...`) được **che tự động** (`***REDACTED***`) trước khi ghi vào `state.json`/`events.jsonl`.
-- API file chỉ phục vụ file **nằm trong run workspace** (hoặc trong `output/`, `assets/`, `archive_raw/` khi artifact trỏ tới đó); yêu cầu vượt ranh giới (path traversal) trả `403`.
+- API file chỉ phục vụ file **nằm trong run workspace** (hoặc trong `output/`, `assets/` khi artifact trỏ tới đó); yêu cầu vượt ranh giới (path traversal) trả `403`.
 - Muốn một run bắt đầu lại "sạch" về mặt giám sát: xoá thư mục `telemetry/` của run đó (artifact và media giữ nguyên, dashboard tự chuyển sang chế độ suy từ artifact).
 - Telemetry là **fail-safe**: mọi lỗi ghi log đều được nuốt và đếm vào `counters.errors`, không bao giờ làm hỏng render.
 
@@ -168,7 +168,7 @@ KOL/
 ├── docs/adr/                        # Hồ sơ quyết định kiến trúc (ADR 0001 - 0007)
 ├── projects/                        # Không gian dự án sản xuất (ADR 0007)
 │   └── {topic}/                     # Ngành hàng: fashion_apparel, tech_gadgets, beauty_skincare...
-│       └── {project_id}/            # ID dự án: lumina_mug_pro, cherry_dress_01...
+│       └── {project_id}/            # ID dự án: lumina_mug_pro...
 │           ├── project.json         # Metadata dự án (active_version, versions)
 │           ├── input/               # Tư liệu đầu vào do user cung cấp
 │           └── runs/                # Các phiên bản sản xuất (v1, v2...)
@@ -180,10 +180,10 @@ KOL/
 │                   ├── keyframes/             # Ảnh First Frame 9:16 sạch đã khử watermark
 │                   ├── media/                 # raw_clips/, synced_clips/, audio/
 │                   └── telemetry/             # state.json & events.jsonl
-├── assets/characters/kol_main/      # Hồ sơ và mỏ neo danh tính KOL Minh Anh ([KOL_MA])
-│   ├── portrait.png
-│   ├── identities/
-│   └── expressions/
+├── assets/characters/{persona_id}/  # kol_main (Mai Ly), kol_minhanh (Minh Anh)
+│   ├── character.json               # Hồ sơ nhân vật; mỗi identity = 1 trang phục
+│   ├── portrait.png                 # Face Anchor
+│   └── outfits/{outfit_id}.png      # 1 character sheet cho mỗi trang phục (ADR 0008)
 ├── assets/audio/                    # Nhạc nền BGM & hiệu ứng âm thanh SFX
 │   ├── music/commercial_bgm.mp3
 │   └── sfx/pop.mp3, chime.mp3

@@ -9,6 +9,7 @@ import urllib.request
 from pathlib import Path
 
 import pytest
+from PIL import Image
 
 from pipeline import audio_lip_sync, researcher, telemetry, video_engine
 from pipeline.archetypes import ProductArchetype
@@ -175,6 +176,7 @@ def test_research_pipeline_offline_uses_deterministic_fallbacks(tmp_path, monkey
 def _build_workspace(tmp_path: Path):
     ws = ProjectWorkspace(topic=ProductArchetype.FASHION_APPAREL, project_id="offline_run", base_dir=tmp_path)
     ws.ensure_dirs()
+    Image.new("RGB", (1200, 1200), (200, 180, 160)).save(ws.input_dir / "product_hero.jpg")
     brief = create_product_brief(product_name="Váy Satin Lụa Pháp", workspace=ws)
     script = generate_commercial_script(brief=brief, workspace=ws)
     plan = generate_scene_plan(script=script, workspace=ws)
