@@ -45,6 +45,35 @@ python3 tools/director.py --video-mode api
 
 # Phục hồi / chạy tiếp từ một bước cụ thể (ví dụ Step 6):
 python3 tools/director.py --from-stage 6
+
+# Chạy offline hoàn toàn (KOL_OFFLINE=1, ép --video-mode ffmpeg):
+python3 tools/director.py --offline
+```
+
+### Chỉ đạo của Agent (tuỳ chọn) và Checkpoint con người
+
+Mọi cờ dưới đây đều tuỳ chọn; không truyền thì pipeline chạy hành vi mặc định. Cũng dùng được qua `python -m pipeline.director`.
+
+| Cờ | Stage | Tác dụng |
+|---|---|---|
+| `--beats PATH.json` | 2 | Danh sách beat do agent viết, truyền `generate_commercial_script(beats=..., strict=True)` |
+| `--shot-overrides PATH.json` | 3 | Ghi đè từng shot cho `generate_scene_plan(shot_overrides=...)` |
+| `--references PATH.json` | 4 | `reference_overrides` cho `generate_clean_keyframes` |
+| `--character PATH_OR_ID` | 3, 4 | File/thư mục `character.json` hoặc persona id trong `assets/characters/` (vd `kol_minhanh`) |
+| `--strict-resolution` | 4 | Lỗi thay vì chấp nhận reference độ phân giải thấp |
+| `--strict-tts` | 6 | Lỗi thay vì rơi về giọng TTS suy giảm |
+| `--transitions PATH.json` | 7 | Danh sách chuyển cảnh; mặc định đọc trường `transition` của từng beat trong `script.json` (nếu có) |
+| `--pause-after-stage N` | 1-7 | Dừng sạch sau stage N, trạng thái `paused`, exit code **4** |
+| `--offline` | tất cả | `KOL_OFFLINE=1` + `--video-mode ffmpeg` |
+| `--result-json PATH` | - | Sao chép kết quả máy đọc được ra PATH |
+
+Stage 1 có `--url` sẽ dùng `create_product_brief_from_concept`, nên Character Role, audio strategy của angle thắng đi thẳng vào `brief.json`.
+
+**Kết quả máy đọc được:** mỗi lần chạy ghi `projects/<topic>/<project>/runs/<vN>/run_result.json` (`status`: `completed` / `failed` / `paused`, `last_completed_stage`, `paused_after_stage`, `next_stage`, `failed_stage`...). Exit code: `0` hoàn tất, `1` lỗi, `4` tạm dừng.
+
+```bash
+python3 tools/director.py --campaign demo --pause-after-stage 3   # dừng sau storyboard, exit 4
+python3 tools/director.py --campaign demo --from-stage 4          # người duyệt xong -> chạy tiếp
 ```
 
 ---

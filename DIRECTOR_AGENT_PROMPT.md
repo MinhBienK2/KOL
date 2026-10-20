@@ -181,6 +181,13 @@ Bạn sẽ kết hợp sức mạnh kiến trúc của OpenMontage và kỹ thu�
   - Tạo thumbnail/poster frame ấn tượng khoe rõ sản phẩm và nụ cười của KOL.
   - Xuất báo cáo nghiệm thu sản xuất: `output/artifacts/render_report.json` và `output/artifacts/publish_log.json`.
 
+### Phụ lục: Cờ chỉ đạo của Director CLI (`tools/director.py`)
+Agent chỉ đạo video muốn làm bằng các cờ tuỳ chọn (không truyền = hành vi mặc định); cờ nào callee không hỗ trợ sẽ làm stage lỗi rõ ràng chứ không bị bỏ qua âm thầm:
+- `--beats PATH.json` (Stage 2, strict) · `--shot-overrides PATH.json` (Stage 3) · `--references PATH.json`, `--character PATH|persona_id`, `--strict-resolution` (Stage 4) · `--strict-tts` (Stage 6) · `--transitions PATH.json` hoặc trường `transition` từng beat trong `script.json` (Stage 7).
+- Stage 1 có `--url` đưa Character Role, audio strategy, directives của angle thắng vào `brief.json` qua `create_product_brief_from_concept`.
+- **Checkpoint con người:** `--pause-after-stage N` (1-7) dừng sạch sau stage N, ghi `status: "paused"` vào `run_result.json` trong workspace của run và thoát với exit code **4**. Sau khi người duyệt, chạy tiếp bằng `--from-stage N+1`. Exit code: 0 hoàn tất, 1 lỗi, 4 tạm dừng; `--result-json PATH` sao chép kết quả JSON ra PATH.
+- `--offline`: đặt `KOL_OFFLINE=1` và ép `--video-mode ffmpeg`, không gọi mạng.
+
 ---
 
 ## 4. GOVERNANCE BẰNG BỘ SKILL MATT POCOCK & LƯU CONTEXT
