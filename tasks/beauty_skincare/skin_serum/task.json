@@ -1,0 +1,32 @@
+{
+  "task_id": "beauty_skincare/skin_serum",
+  "domain": "beauty_skincare",
+  "product_name": "Serum Dưỡng Sáng Phục Hồi Da GlowSkin",
+  "product_url_or_query": "Serum dưỡng sáng mờ thâm phục hồi da Niacinamide 10% HA 30ml",
+  "archetype": "beauty_skincare",
+  "title": "Commercial Campaign: Serum Dưỡng Sáng Phục Hồi Da GlowSkin",
+  "instructions": "Orchestrate an autonomous commercial video production run for Serum Dưỡng Sáng Phục Hồi Da GlowSkin using tools/director.py. Ensure all 8 stages execute properly, canonical artifacts are generated, and all quality verification gates pass.",
+  "acceptance_criteria": {
+    "exit_code": 0,
+    "required_artifacts": [
+      "brief.json",
+      "script.json",
+      "scene_plan.json",
+      "asset_manifest.json",
+      "edit_decisions.json",
+      "render_report.json"
+    ],
+    "verification_gates": [
+      "technical_integrity_gate",
+      "media_quality_gate",
+      "character_sheet_integrity_gate",
+      "character_consistency_gate",
+      "continuity_gate",
+      "slideshow_risk_gate",
+      "identity_preflight_gate",
+      "prompt_ledger_audit_gate"
+    ],
+    "master_aspect_ratio": "9:16",
+    "master_resolution": [1080, 1920]
+  }
+}

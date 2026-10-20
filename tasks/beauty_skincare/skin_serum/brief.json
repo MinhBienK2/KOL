@@ -1,0 +1,28 @@
+{
+  "campaign_id": "skin_serum",
+  "product_name": "Serum Dưỡng Sáng Phục Hồi Da GlowSkin",
+  "target_persona": "Phụ nữ 20–35 tuổi quan tâm chăm sóc da khoa học, nhân viên văn phòng tiếp xúc máy lạnh và ánh sáng xanh nhiều",
+  "pain_points": [
+    "Làn da xỉn màu, thiếu sức sống sau những đêm tăng ca thức khuya",
+    "Vết thâm mụn dai dẳng mãi không mờ dù đã dùng nhiều loại kem dưỡng",
+    "Serum thông thường bết dính khó chịu, dễ gây bít tắc lỗ chân lông sinh mụn"
+  ],
+  "usps": [
+    "Phức hợp Niacinamide 10% tinh khiết kết hợp HA đa tầng dưỡng sáng căng bóng sau 14 ngày",
+    "Kết cấu mỏng nhẹ thẩm thấu tức thì sau 3 giây, hoàn toàn không gây nhờn rít",
+    "Chiết xuất rau má lên men làm dịu da nhạy cảm và củng cố hàng rào bảo vệ tự nhiên"
+  ],
+  "visual_tone": "Trong trẻo, thanh khiết, ánh sáng ban ngày tự nhiên kết hợp macro giọt serum óng ánh",
+  "target_duration": 30.0,
+  "aspect_ratio": "9:16",
+  "has_kol": true,
+  "kol_persona": "Minh Anh",
+  "character_role": "presenter",
+  "audio_strategy": "on_camera_speech",
+  "creative_directives": [
+    "Nhịp 1 (Hook): Macro cực cận giọt serum rơi chậm óng ánh trong suốt vỡ nhẹ trên nền cánh hoa",
+    "Nhịp 2 (Pain): KOL chạm nhẹ làn da mệt mỏi trước gương với ánh nhìn trăn trở",
+    "Nhịp 3 (USP): Thoa giọt serum lên má, tinh chất tan nhanh tạo hiệu ứng da ngậm nước căng bóng (Glass Skin)",
+    "Nhịp 4 (CTA): Minh Anh cười rạng rỡ dưới ánh nắng tự nhiên, giơ chai serum và nhắn gửi lời kêu gọi trải nghiệm"
+  ]
+}

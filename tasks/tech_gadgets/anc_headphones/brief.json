@@ -1,0 +1,28 @@
+{
+  "campaign_id": "anc_headphones",
+  "product_name": "Tai Nghe Chống Ồn Sonic Air Pro",
+  "target_persona": "Lập trình viên, designer, game thủ và người sáng tạo nội dung cần không gian tập trung cao độ giữa môi trường ồn ào",
+  "pain_points": [
+    "Tiếng ồn đường phố, tiếng nói chuyện ồn ào nơi quán cafe làm đứt gãy luồng tư duy",
+    "Tai nghe đeo lâu gây đau vành tai, đệm mút bí bách đổ mồ hôi",
+    "Đang họp online hoặc nghe nhạc thì pin sập nguồn bất ngờ"
+  ],
+  "usps": [
+    "Chống ồn chủ động Hybrid ANC triệt tiêu tới 45dB tạp âm xung quanh",
+    "Thời lượng pin khủng 40 giờ chơi nhạc liên tục, sạc nhanh 10 phút dùng 4 giờ",
+    "Đệm tai Memory Foam bọc da Protein mềm mại êm ái suốt cả ngày dài"
+  ],
+  "visual_tone": "Đậm chất công nghệ tương lai, ánh sáng neon tương phản mạnh, cận cảnh kim loại cắt CNC sắc nét",
+  "target_duration": 30.0,
+  "aspect_ratio": "9:16",
+  "has_kol": true,
+  "kol_persona": "Minh Anh",
+  "character_role": "presenter",
+  "audio_strategy": "on_camera_speech",
+  "creative_directives": [
+    "Nhịp 1 (Hook): Khung cảnh đường phố xe cộ ồn ào hỗn loạn, KOL Minh Anh đeo tai nghe lên và bấm nút ANC",
+    "Nhịp 2 (Pain): Toàn bộ tạp âm tức thì tắt lịm, thế giới tĩnh lặng chuyển sang tông màu xanh neon êm dịu",
+    "Nhịp 3 (USP): Macro chi tiết màng loa bọc kim loại dao động theo từng nhịp bass sống động",
+    "Nhịp 4 (CTA): Minh Anh gật đầu theo điệu nhạc đầy cảm hứng, giơ tai nghe và chỉ tay vào nút đặt hàng độc quyền"
+  ]
+}

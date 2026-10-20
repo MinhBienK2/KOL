@@ -1,0 +1,28 @@
+{
+  "campaign_id": "lumina_pro",
+  "product_name": "Ly Giữ Nhiệt Thông Minh Lumina Pro",
+  "target_persona": "Dân văn phòng, freelancer, người trẻ hiện đại 22–35 tuổi yêu thích công nghệ và phong cách sống tinh tế",
+  "pain_points": [
+    "Cà phê nguội ngắt chỉ sau 1 tiếng ngồi phòng máy lạnh làm mất hết vị ngon",
+    "Uống nước nóng không biết nhiệt độ chính xác dễ bị bỏng rát lưỡi",
+    "Bình giữ nhiệt cồng kềnh, kiểu dáng công nghiệp thô kệch không hợp bàn làm việc hiện đại"
+  ],
+  "usps": [
+    "Công nghệ giữ nhiệt chân không 3 lớp TempShield khóa nhiệt 24 giờ liên tục",
+    "Nắp cảm ứng OLED thông minh chạm nhẹ hiển thị nhiệt độ nước thời gian thực",
+    "Ruột inox 316 kháng khuẩn y tế cao cấp, không bám mùi, an toàn tuyệt đối"
+  ],
+  "visual_tone": "Sang trọng, hiện đại, tối giản công sở, chuẩn ánh sáng studio cao cấp",
+  "target_duration": 30.0,
+  "aspect_ratio": "9:16",
+  "has_kol": true,
+  "kol_persona": "Minh Anh",
+  "character_role": "presenter",
+  "audio_strategy": "on_camera_speech",
+  "creative_directives": [
+    "Nhịp 1 (Hook): Bắt đầu bằng cận cảnh hơi nước nghi ngút và ngón tay chạm nắp LED sáng đèn",
+    "Nhịp 2 (Pain): Phản chiếu không gian văn phòng làm việc bận rộn, cốc nước cũ nguội lạnh",
+    "Nhịp 3 (USP): Trình diễn rót nước nóng khói bốc nhẹ, nắp hiển thị 65°C chính xác",
+    "Nhịp 4 (CTA): KOL Minh Anh nâng ly mỉm cười sảng khoái, kêu gọi nhấp link ưu đãi độc quyền"
+  ]
+}

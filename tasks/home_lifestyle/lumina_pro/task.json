@@ -1,0 +1,32 @@
+{
+  "task_id": "home_lifestyle/lumina_pro",
+  "domain": "home_lifestyle",
+  "product_name": "Ly Giữ Nhiệt Thông Minh Lumina Pro",
+  "product_url_or_query": "Ly giữ nhiệt thông minh inox 316 hiển thị nhiệt độ LED 500ml",
+  "archetype": "home_lifestyle",
+  "title": "Commercial Campaign: Ly Giữ Nhiệt Thông Minh Lumina Pro",
+  "instructions": "Orchestrate an autonomous commercial video production run for Ly Giữ Nhiệt Thông Minh Lumina Pro using tools/director.py. Ensure all 8 stages execute properly, canonical artifacts are generated, and all quality verification gates pass.",
+  "acceptance_criteria": {
+    "exit_code": 0,
+    "required_artifacts": [
+      "brief.json",
+      "script.json",
+      "scene_plan.json",
+      "asset_manifest.json",
+      "edit_decisions.json",
+      "render_report.json"
+    ],
+    "verification_gates": [
+      "technical_integrity_gate",
+      "media_quality_gate",
+      "character_sheet_integrity_gate",
+      "character_consistency_gate",
+      "continuity_gate",
+      "slideshow_risk_gate",
+      "identity_preflight_gate",
+      "prompt_ledger_audit_gate"
+    ],
+    "master_aspect_ratio": "9:16",
+    "master_resolution": [1080, 1920]
+  }
+}
