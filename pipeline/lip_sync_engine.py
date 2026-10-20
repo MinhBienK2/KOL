@@ -13,6 +13,7 @@ Solves the character speaking & mouth-sync disconnect:
 from __future__ import annotations
 
 import json
+import math
 import wave
 import struct
 import subprocess
@@ -21,6 +22,12 @@ from typing import Any, Dict, List, Optional, Tuple
 from pydantic import BaseModel, Field
 
 from pipeline.archetypes import AudioStrategy, CharacterRole
+
+
+#: Absolute silence floor. A 50 ms window whose RMS is below this (relative to full scale) is
+#: silence no matter how loud the rest of the clip is, and a clip whose loudest window is below
+#: it is silent outright. Without it a relative threshold normalises digital silence to "speech".
+SILENCE_FLOOR_DBFS = -50.0
 
 
 class SpeechEnergyProfile(BaseModel):
@@ -32,6 +39,8 @@ class SpeechEnergyProfile(BaseModel):
     speaking_duration_ratio: float  # Percentage of clip where character actively speaks
     silence_pauses_count: int
     speech_bursts: List[Tuple[float, float]] = Field(default_factory=list)  # (start_s, end_s)
+    rms_peak_dbfs: Optional[float] = None  # None for an empty clip
+    is_silent: bool = False  # loudest window is below SILENCE_FLOOR_DBFS (no audible speech at all)
 
 
 class LipSyncDecision(BaseModel):
@@ -69,32 +78,44 @@ def analyze_speech_energy(wav_path: str | Path, threshold_ratio: float = 0.15) -
             speech_bursts=[],
         )
 
-    # Unpack 16-bit PCM samples
-    if sampwidth == 2:
-        total_samples = len(raw_bytes) // 2
-        fmt = f"<{total_samples}h"
-        samples = struct.unpack(fmt, raw_bytes)
-        # If stereo, average left and right
-        if n_channels == 2:
-            mono = [(abs(samples[i]) + abs(samples[i+1])) / 2.0 for i in range(0, total_samples, 2)]
-        else:
-            mono = [abs(s) for s in samples]
+    # Decode PCM to |sample| magnitudes; ``full_scale`` maps them onto dBFS.
+    if sampwidth == 1:  # unsigned 8-bit
+        mags = [abs(b - 128) for b in raw_bytes]
+        full_scale = 128.0
+    elif sampwidth == 2:
+        mags = [abs(v) for v in struct.unpack(f"<{len(raw_bytes) // 2}h", raw_bytes)]
+        full_scale = 32768.0
+    elif sampwidth == 3:
+        mags = [
+            abs(int.from_bytes(raw_bytes[i : i + 3], "little", signed=True))
+            for i in range(0, len(raw_bytes) - 2, 3)
+        ]
+        full_scale = 8388608.0
+    elif sampwidth == 4:
+        mags = [abs(v) for v in struct.unpack(f"<{len(raw_bytes) // 4}i", raw_bytes)]
+        full_scale = 2147483648.0
     else:
-        # Fallback approximation for other sample widths
-        mono = [abs(b - 128) for b in raw_bytes]
+        raise ValueError(f"Unsupported WAV sample width: {sampwidth} bytes")
+    if n_channels >= 2:
+        mono = [sum(mags[i : i + n_channels]) / n_channels for i in range(0, len(mags) - n_channels + 1, n_channels)]
+    else:
+        mono = mags
 
-    # Calculate frame chunks (~50ms windows)
-    window_size = int(framerate * 0.05)
+    # Calculate frame chunks (~50ms windows), RMS in full-scale-normalised units.
+    window_size = max(1, int(framerate * 0.05))
     windows = []
     for i in range(0, len(mono), window_size):
         chunk = mono[i : i + window_size]
         if chunk:
-            rms = (sum(s * s for s in chunk) / len(chunk)) ** 0.5
-            windows.append(rms)
+            windows.append(((sum(s * s for s in chunk) / len(chunk)) ** 0.5) / full_scale)
 
-    max_rms = max(windows) if windows else 1.0
+    max_rms = max(windows) if windows else 0.0
     avg_rms = sum(windows) / len(windows) if windows else 0.0
-    thresh = max_rms * threshold_ratio
+    floor = 10 ** (SILENCE_FLOOR_DBFS / 20.0)
+    is_silent = max_rms < floor
+    peak_dbfs = round(20 * math.log10(max_rms), 1) if max_rms > 0 else -120.0
+    # Relative threshold tracks the clip's own dynamics; the absolute floor always applies.
+    thresh = max(max_rms * threshold_ratio, floor)
 
     # Detect speech bursts and pauses
     speech_windows = 0
@@ -118,15 +139,19 @@ def analyze_speech_energy(wav_path: str | Path, threshold_ratio: float = 0.15) -
         bursts.append((round(burst_start, 2), round(duration, 2)))
 
     speaking_ratio = speech_windows / max(1, len(windows))
+    # rms_* stay in int16 units for backward compatibility.
+    int16_scale = 32768.0
 
     return SpeechEnergyProfile(
         duration_seconds=round(duration, 2),
         sample_rate=framerate,
-        rms_peak=round(max_rms, 2),
-        rms_average=round(avg_rms, 2),
+        rms_peak=round(max_rms * int16_scale, 2),
+        rms_average=round(avg_rms * int16_scale, 2),
         speaking_duration_ratio=round(speaking_ratio, 2),
         silence_pauses_count=max(0, len(bursts) - 1),
         speech_bursts=bursts,
+        rms_peak_dbfs=peak_dbfs,
+        is_silent=is_silent,
     )
 
 
