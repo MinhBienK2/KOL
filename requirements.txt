@@ -1,0 +1,8 @@
+pydantic>=2
+fastapi
+uvicorn
+httpx
+pillow
+numpy
+opencv-python-headless
+pytest
