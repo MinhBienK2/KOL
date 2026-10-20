@@ -33,6 +33,7 @@ from pipeline.archetypes import (
 )
 from pipeline.workspace import ProjectWorkspace
 from pipeline.config import ARTIFACTS_DIR
+from pipeline.offline import guard_network, guarded_urlopen, is_offline
 
 STAGE_RESEARCH = telemetry.stage_number("research_briefing")
 RESEARCH_PHASES = ("ingest_product_input", "product_intelligence", "competitor_hooks", "creative_concepts")
@@ -160,6 +161,8 @@ def resolve_affiliate_url(url: str, timeout: int = 10) -> str:
     """Follows HTTP redirects to resolve shortened affiliate links (e.g. vt.tiktok.com, amzn.to)."""
     if not url.startswith("http://") and not url.startswith("https://"):
         return url
+    if is_offline():
+        return url
     try:
         req = urllib.request.Request(
             url,
@@ -170,7 +173,7 @@ def resolve_affiliate_url(url: str, timeout: int = 10) -> str:
                 )
             },
         )
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with guarded_urlopen(req, operation="research.resolve_affiliate_url", timeout=timeout) as resp:
             return resp.geturl()
     except Exception:
         return url
@@ -305,7 +308,11 @@ DEFAULT_RESEARCH_MODEL = os.environ.get("RESEARCH_MODEL", "gemini/gemini-3.6-fla
 
 
 def call_llm(system_prompt: str, user_prompt: str, model: str = DEFAULT_RESEARCH_MODEL, timeout: int = 40) -> Optional[str]:
-    """Invokes the LLM via 9router OpenAI-compatible API with fallback handling."""
+    """Invokes the LLM via 9router OpenAI-compatible API with fallback handling.
+
+    Raises ``OfflineNetworkError`` when offline; callers use the deterministic fallbacks instead.
+    """
+    guard_network("router.chat_completion", ROUTER_URL)
     req_data = {
         "model": model,
         "messages": [
@@ -330,7 +337,7 @@ def call_llm(system_prompt: str, user_prompt: str, model: str = DEFAULT_RESEARCH
     }
     started = time.monotonic()
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with guarded_urlopen(req, operation="router.chat_completion", timeout=timeout) as resp:
             status_code = getattr(resp, "status", None)
             res = json.loads(resp.read().decode("utf-8"))
             content = res["choices"][0]["message"]["content"].strip()
@@ -397,6 +404,7 @@ def extract_product_intel(
     use_llm: bool = True,
 ) -> ProductIntel:
     """Extracts deep product intelligence and objection handling matrix."""
+    use_llm = use_llm and not is_offline()  # offline: deterministic fallbacks only
     if use_llm:
         user_prompt = f"""Target Product Archetype: {product_archetype.value}
 Product URL: {product_url or 'N/A'}
@@ -568,6 +576,7 @@ def _short_name(title: str, max_words: int = 5) -> str:
 
 def synthesize_competitor_and_hooks(product: ProductIntel, use_llm: bool = True) -> tuple[CompetitorLandscape, List[ViralHookCandidate]]:
     """Synthesizes competitor landscape and generates categorized viral hooks."""
+    use_llm = use_llm and not is_offline()  # offline: deterministic fallbacks only
     if use_llm:
         user_prompt = f"""Product: {product.title}
 Category: {product.category} ({product.product_archetype.value})
@@ -693,6 +702,7 @@ def generate_creative_concepts(
 ) -> CreativeConceptArtifact:
     """Generates 3 distinct creative concepts and objectively selects the winning angle."""
     product = research.product_intel
+    use_llm = use_llm and not is_offline()  # offline: deterministic fallbacks only
     if use_llm:
         user_prompt = f"""Campaign ID: {research.campaign_id}
 Product: {product.title} ({product.category})
@@ -1174,9 +1184,12 @@ def run_research_pipeline(
         },
     )
 
+    use_llm = use_llm and not is_offline()  # offline: deterministic fallbacks only
     if first_token.startswith("http://") or first_token.startswith("https://"):
         product_url = first_token
         try:
+            if is_offline():
+                raise ConnectionError("offline mode: product page not fetched")
             product_url = resolve_affiliate_url(first_token, timeout=4)
             req = urllib.request.Request(
                 product_url,
@@ -1187,7 +1200,7 @@ def run_research_pipeline(
                     )
                 },
             )
-            with urllib.request.urlopen(req, timeout=4) as resp:
+            with guarded_urlopen(req, operation="research.fetch_product_page", timeout=4) as resp:
                 html_body = resp.read().decode("utf-8", errors="replace")
                 meta = extract_metadata_from_html(html_body)
                 page_content = build_page_content(meta)

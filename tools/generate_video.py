@@ -24,6 +24,12 @@ if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
 from pipeline import telemetry  # noqa: E402  (import after the sys.path bootstrap)
+from pipeline.offline import (  # noqa: E402
+    OfflineNetworkError,
+    guard_network,
+    guarded_urlopen,
+    guarded_urlretrieve,
+)
 
 API_BASE_URL = os.environ.get("MINIMAX_BASE_URL", "https://aiapi.2tocom.space")
 API_KEY = os.environ.get("MINIMAX_API_KEY", "sk-cu-hr7Y6QZPkzksXlfn74J4yeF_xmL9Rlubf_tAhD4Sgfw")
@@ -61,6 +67,8 @@ class VideoAPIError(RuntimeError):
 
 def is_retryable_error(exc: BaseException) -> bool:
     """True when ``exc`` is worth another (paid) attempt: transient network/server/rate-limit faults."""
+    if isinstance(exc, OfflineNetworkError):
+        return False
     if isinstance(exc, VideoAPIError):
         return exc.retryable
     if isinstance(exc, urllib.error.HTTPError):
@@ -93,7 +101,7 @@ def _download_atomic(video_url: str, output_path: Path) -> None:
     """Download to ``<name>.part`` then rename, so a partial file never masquerades as a clip."""
     part = output_path.with_name(output_path.name + ".part")
     try:
-        urllib.request.urlretrieve(video_url, part)
+        guarded_urlretrieve(video_url, part, operation="minimax.download_video")
         os.replace(part, output_path)
     finally:
         if part.exists():
@@ -101,6 +109,7 @@ def _download_atomic(video_url: str, output_path: Path) -> None:
 
 
 def upload_first_frame(image_path: str | Path) -> str:
+    guard_network("minimax.upload_first_frame")
     path = Path(image_path)
     if not path.is_absolute():
         path = BASE_DIR / path
@@ -135,7 +144,7 @@ def upload_first_frame(image_path: str | Path) -> str:
     status_code: Optional[int] = None
     error: Optional[str] = None
     try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with guarded_urlopen(req, operation="minimax.upload_first_frame", timeout=60) as resp:
             status_code = getattr(resp, "status", None)
             res = json.loads(resp.read().decode("utf-8"))
             file_url = res["data"]["file_url"]
@@ -165,6 +174,7 @@ def submit_video_job(
     resolution: str | None = None,
 ) -> str:
     """Submit one video job (I2V via ``image_url``, R2V via ``subject_reference`` face images)."""
+    guard_network("minimax.submit_video")
     valid_duration = normalize_duration(duration, resolution)
     url = f"{API_BASE_URL.rstrip('/')}/v1/media/video"
     payload: dict = {
@@ -194,7 +204,7 @@ def submit_video_job(
     error: Optional[str] = None
     task_id: Optional[str] = None
     try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with guarded_urlopen(req, operation="minimax.submit_video", timeout=60) as resp:
             status_code = getattr(resp, "status", None)
             res = json.loads(resp.read().decode("utf-8"))
             _raise_for_base_resp(res)
@@ -237,6 +247,7 @@ def poll_and_download_video(
     consecutive failures so one dropped request does not orphan a paid, still-rendering task.
     A remote ``Fail`` raises :class:`VideoAPIError` (``task_failed=True``).
     """
+    guard_network("minimax.poll_video")
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     poll_url = f"{API_BASE_URL.rstrip('/')}/v1/media/video/{task_id}"
@@ -255,7 +266,7 @@ def poll_and_download_video(
         status_code: Optional[int] = None
         try:
             req = urllib.request.Request(poll_url, headers=headers)
-            with urllib.request.urlopen(req, timeout=30) as resp:
+            with guarded_urlopen(req, operation="minimax.poll_video", timeout=30) as resp:
                 status_code = getattr(resp, "status", None)
                 res = json.loads(resp.read().decode("utf-8"))
             transient_errors = 0

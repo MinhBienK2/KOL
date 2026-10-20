@@ -1,13 +1,21 @@
-"""Step 5: 100% Genuine Video Diffusion Engine (MiniMax Hailuo-2.3 I2V & T2V).
+"""Step 5: Video Generation Engine (MiniMax Hailuo-2.3 I2V & T2V, plus local placeholders).
 
-ZERO TOLERANCE for static images or ffmpeg zoompan fallbacks.
-Every single shot is rendered through high-fidelity genuine video diffusion models
-with exponential backoff retries and rigorous validation.
+``mode="api"`` (alias ``"diffusion"``): ZERO TOLERANCE for static images or ffmpeg zoompan
+fallbacks. Every shot is rendered through genuine video diffusion with exponential backoff
+retries and rigorous validation. It never degrades to a placeholder on failure.
+
+``mode="ffmpeg"``: an explicit, network-free LOCAL_FFMPEG run. Each shot becomes a short
+ffmpeg motion clip (zoompan on its keyframe, or a testsrc2 pattern) at 9:16 for the beat's
+duration, burned-in "LOCAL PLACEHOLDER" banner, tagged in the Prompt Ledger and in a
+``.placeholder.json`` sidecar. These are test fixtures, never diffusion output.
+
+``mode="auto"``: ``api`` unless offline (``KOL_OFFLINE=1``), then ``ffmpeg``.
 """
 
 from __future__ import annotations
 
 import concurrent.futures
+import contextlib
 import hashlib
 import json
 import logging
@@ -21,6 +29,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from pipeline import telemetry
+from pipeline.offline import OfflineNetworkError, guard_network, is_offline, offline_mode
 from pipeline.config import (
     ARTIFACTS_DIR,
     BASE_DIR,
@@ -103,6 +112,152 @@ def _stage5_progress(item: Dict[str, Any], label: str, *, advance: bool = False)
 class VideoGenerationError(RuntimeError):
     """Raised when genuine video diffusion generation fails after all retry attempts."""
     pass
+
+
+# --------------------------------------------------------------------------- local placeholders
+
+LOCAL_FFMPEG_MODE = "LOCAL_FFMPEG"
+LOCAL_FFMPEG_MODEL = "local-ffmpeg-placeholder"
+PLACEHOLDER_SIDECAR_SUFFIX = ".placeholder.json"
+LOCAL_WIDTH, LOCAL_HEIGHT, LOCAL_FPS = 1080, 1920, 30
+_VALID_VIDEO_MODES = ("api", "diffusion", "ffmpeg", "auto")
+
+
+def resolve_video_mode(mode: str) -> str:
+    """Normalize a requested video mode to ``"api"`` or ``"ffmpeg"``.
+
+    ``auto`` is ``api`` unless offline. ``diffusion`` is the legacy alias of ``api``.
+    """
+    normalized = (mode or "api").strip().lower()
+    if normalized not in _VALID_VIDEO_MODES:
+        raise ValueError(f"Unknown video mode {mode!r}; expected one of {', '.join(_VALID_VIDEO_MODES)}")
+    if normalized == "auto":
+        return "ffmpeg" if is_offline() else "api"
+    return "api" if normalized == "diffusion" else normalized
+
+
+def _sidecar_path(clip_path: Path) -> Path:
+    return clip_path.with_name(clip_path.name + PLACEHOLDER_SIDECAR_SUFFIX)
+
+
+def is_placeholder_clip(clip_path: str | Path) -> bool:
+    """True when ``clip_path`` is a LOCAL_FFMPEG placeholder (has the marker sidecar)."""
+    return _sidecar_path(Path(clip_path)).exists()
+
+
+def render_local_placeholder_clip(
+    shot_id: str,
+    output_path: str | Path,
+    image_path: Optional[str | Path] = None,
+    duration: float = 5.0,
+    prompt: str = "",
+    width: int = LOCAL_WIDTH,
+    height: int = LOCAL_HEIGHT,
+    fps: int = LOCAL_FPS,
+) -> str:
+    """Render a network-free motion placeholder for one shot with ffmpeg.
+
+    Uses a slow push-in (zoompan) on the shot's keyframe when it exists, otherwise a
+    ``testsrc2`` pattern. The clip is exactly ``duration`` seconds at ``width``x``height``
+    (9:16 by default), carries a burned-in banner and container metadata, and gets a
+    ``.placeholder.json`` sidecar. It is NEVER diffusion output.
+    """
+    out_p = Path(output_path).resolve()
+    out_p.parent.mkdir(parents=True, exist_ok=True)
+    duration = max(0.5, float(duration))
+    frames = max(1, round(duration * fps))
+
+    resolved_img: Optional[Path] = None
+    if image_path:
+        cand = Path(image_path)
+        if not cand.is_absolute():
+            cand = BASE_DIR / cand
+        if cand.exists() and cand.is_file():
+            resolved_img = cand
+
+    box = "drawbox=x=0:y=0:w=iw:h=ih*0.045:color=red@0.85:t=fill"
+    text = (
+        "drawtext=text='LOCAL PLACEHOLDER - NOT DIFFUSION':fontcolor=white:fontsize=h*0.022:"
+        "x=(w-text_w)/2:y=h*0.011"
+    )
+    banners = [f"{box},{text}", box]  # second form: ffmpeg builds without libfreetype
+    if resolved_img is not None:
+        zoom_expr = f"min(1+0.0008*on,1.25)"
+        motion = (
+            f"scale={width}:{height}:force_original_aspect_ratio=increase,crop={width}:{height},"
+            f"zoompan=z='{zoom_expr}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={frames}:s={width}x{height}:fps={fps}"
+        )
+        inputs = ["-i", str(resolved_img)]
+        source = "zoompan_keyframe"
+    else:
+        motion = ""
+        inputs = ["-f", "lavfi", "-i", f"testsrc2=size={width}x{height}:rate={fps}"]
+        source = "testsrc2"
+
+    # Render beside the target then atomically replace it. Never write through the existing
+    # inode: versioned workspaces hardlink clips from parent versions (ADR 0007).
+    tmp_p = out_p.with_name(f".{out_p.stem}.placeholder.tmp.mp4")
+    res = None
+    for banner in banners:
+        vf = ",".join(part for part in (motion, banner, "format=yuv420p") if part)
+        cmd = [
+            "ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+            *inputs,
+            "-vf", vf,
+            "-frames:v", str(frames),
+            "-r", str(fps),
+            "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p", "-an",
+            "-metadata", f"comment=KOL_PLACEHOLDER mode={LOCAL_FFMPEG_MODE} shot={shot_id}",
+            str(tmp_p),
+        ]
+        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if res.returncode == 0:
+            break
+    if res is None or res.returncode != 0:
+        tmp_p.unlink(missing_ok=True)
+        raise VideoGenerationError(
+            f"Local ffmpeg placeholder for '{shot_id}' failed: "
+            f"{(res.stderr if res else b'').decode('utf-8', 'replace')[-400:]}"
+        )
+    os.replace(tmp_p, out_p)
+
+    sidecar = _sidecar_path(out_p)
+    sidecar.unlink(missing_ok=True)
+    sidecar.write_text(
+        json.dumps(
+            {
+                "placeholder": True,
+                "mode": LOCAL_FFMPEG_MODE,
+                "model": LOCAL_FFMPEG_MODEL,
+                "shot_id": shot_id,
+                "source": source,
+                "first_frame": _rel_path(resolved_img),
+                "duration_seconds": round(frames / fps, 3),
+                "width": width,
+                "height": height,
+                "diffusion": False,
+                "note": "Local ffmpeg motion placeholder. NOT genuine video diffusion output.",
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    telemetry.record_prompt(
+        shot_id,
+        prompt,
+        stage=5,
+        mode=LOCAL_FFMPEG_MODE,
+        model=LOCAL_FFMPEG_MODEL,
+        placeholder=True,
+        aspect_ratio=f"{width}:{height}" if (width, height) != (LOCAL_WIDTH, LOCAL_HEIGHT) else "9:16",
+        duration_requested=round(frames / fps, 3),
+        first_frame=_rel_path(resolved_img),
+        first_frame_rel=_rel_path(resolved_img),
+        output_rel_path=_rel_path(out_p),
+        attempt=1,
+        attempt_increment=1,
+    )
+    return str(out_p)
 
 
 class _BatchAborted(Exception):
@@ -324,6 +479,7 @@ def render_single_video_clip(
 
     NEVER falls back to static image slideshows or ffmpeg pan-zoom.
     """
+    guard_network("minimax.video_generation", f"shot {shot_id}")
     out_p = Path(output_path).resolve()
     out_p.parent.mkdir(parents=True, exist_ok=True)
 
@@ -435,6 +591,8 @@ def render_single_video_clip(
             print(f"[VideoEngine] [{shot_id}] SUCCESS! Genuine video generated: {out_p.name} ({file_size_kb} KB)")
             return str(out_p)
 
+        except OfflineNetworkError:
+            raise  # never retried, never converted into a generic generation failure
         except Exception as exc:
             last_error = exc
             print(f"[VideoEngine] [{shot_id}] Attempt {attempt} failed: {exc}")
@@ -550,19 +708,26 @@ def render_all_video_clips(
     manifest: AssetManifestArtifact | None = None,
     artifacts_dir: Path | None = None,
     raw_clips_dir: Path | None = None,
-    mode: str = "diffusion",
+    mode: str = "api",
     max_retries: int = 3,
     initial_retry_delay: float = 5.0,
     poll_timeout_seconds: int = 300,
     max_concurrency: int = 3,
     workspace: Optional[ProjectWorkspace] = None,
 ) -> List[str]:
-    """Renders 100% genuine video diffusion clips for all storyboard shots concurrently.
+    """Renders clips for all storyboard shots concurrently.
 
-    Each shot is rendered through MiniMax Hailuo-2.3 with zero tolerance for static images.
+    ``mode="api"`` (or legacy ``"diffusion"``): genuine MiniMax Hailuo-2.3 diffusion with zero
+    tolerance for static images; raises ``OfflineNetworkError`` up front if offline.
     Clips whose request fingerprint is unchanged are reused (no new paid jobs); the first
     failing shot cancels all not-yet-started shots so no further credits are spent.
+    ``mode="ffmpeg"``: local, network-free LOCAL_FFMPEG placeholder clips (see module doc).
+    ``mode="auto"``: ``api`` unless ``KOL_OFFLINE=1``, then ``ffmpeg``.
     """
+    resolved_mode = resolve_video_mode(mode)
+    if resolved_mode == "api":
+        guard_network("minimax.video_generation", "render_all_video_clips(mode='api')")
+    local = resolved_mode == "ffmpeg"
     target_artifacts_dir = workspace.artifacts_dir if workspace is not None else (artifacts_dir or ARTIFACTS_DIR)
     target_clips_dir = workspace.raw_clips_dir if workspace is not None else (raw_clips_dir or RAW_CLIPS_DIR)
     target_clips_dir.mkdir(parents=True, exist_ok=True)
@@ -596,8 +761,11 @@ def render_all_video_clips(
     _ensure_stage5_started(n_shots)
 
     print("=" * 80)
-    print(f"[VideoEngine] Starting Genuine Video Diffusion Batch ({n_shots} shots, concurrency={max_concurrency})")
-    print(f"[VideoEngine] Target Model: {DEFAULT_VIDEO_MODEL} | Aspect: {DEFAULT_ASPECT_RATIO}")
+    if local:
+        print(f"[VideoEngine] LOCAL_FFMPEG PLACEHOLDER batch ({n_shots} shots): no network, NOT diffusion output")
+    else:
+        print(f"[VideoEngine] Starting Genuine Video Diffusion Batch ({n_shots} shots, concurrency={max_concurrency})")
+        print(f"[VideoEngine] Target Model: {DEFAULT_VIDEO_MODEL} | Aspect: {DEFAULT_ASPECT_RATIO}")
     print("=" * 80)
 
     rendered_map: Dict[str, str] = {}
@@ -614,10 +782,53 @@ def render_all_video_clips(
 
     def _render_shot_inner(shot: StoryboardShot) -> tuple[str, str]:
         out_clip_path = target_clips_dir / f"{shot.shot_id}.mp4"
+        if is_placeholder_clip(out_clip_path):
+            # Placeholders are cheap and deterministic: always regenerate, and never let a stale
+            # one be passed off as a (cached) diffusion clip.
+            out_clip_path.unlink(missing_ok=True)
+            _sidecar_path(out_clip_path).unlink(missing_ok=True)
+            _meta_path(out_clip_path).unlink(missing_ok=True)
         kf = keyframes_by_shot.get(shot.shot_id)
         kf_image_path = kf.cleaned_image_path if kf else None
         kf_mode = getattr(kf, "generation_mode", None)
         kf_refs = getattr(kf, "reference_assets", None)
+        if local:
+            if out_clip_path.exists() and verify_generated_clip(out_clip_path):
+                # A real (non-placeholder) clip is free to reuse; never overwrite paid output.
+                print(f"[VideoEngine] [{shot.shot_id}] Existing real clip kept (offline run): {out_clip_path.name}")
+                _stage5_progress(
+                    {
+                        "id": shot.shot_id,
+                        "status": "cached",
+                        "mode": "CACHED",
+                        "placeholder": False,
+                        "output_rel_path": _rel_path(out_clip_path),
+                        "size_bytes": _file_size(out_clip_path),
+                    },
+                    f"{shot.shot_id} cached",
+                    advance=True,
+                )
+                return shot.shot_id, str(out_clip_path)
+            clip_path = render_local_placeholder_clip(
+                shot_id=shot.shot_id,
+                output_path=out_clip_path,
+                image_path=kf_image_path,
+                duration=shot.estimated_duration,
+                prompt=shot.prompt_6part,
+            )
+            _stage5_progress(
+                {
+                    "id": shot.shot_id,
+                    "status": "completed",
+                    "mode": LOCAL_FFMPEG_MODE,
+                    "placeholder": True,
+                    "output_rel_path": _rel_path(clip_path),
+                    "size_bytes": _file_size(clip_path),
+                },
+                f"{shot.shot_id} placeholder completed",
+                advance=True,
+            )
+            return shot.shot_id, clip_path
         request_kwargs = dict(
             image_path=kf_image_path,
             duration=shot.estimated_duration,
@@ -673,7 +884,9 @@ def render_all_video_clips(
         )
         return shot.shot_id, clip_path
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_concurrency) as executor:
+    # Local mode also scopes the global offline guard: any accidental network call raises.
+    scope = offline_mode(True) if local else contextlib.nullcontext()
+    with scope, concurrent.futures.ThreadPoolExecutor(max_workers=max_concurrency) as executor:
         futures = {executor.submit(_render_shot, shot): shot for shot in scene_plan.shots}
         for fut in concurrent.futures.as_completed(futures):
             shot_ref = futures[fut]
@@ -690,7 +903,9 @@ def render_all_video_clips(
                     {"id": shot_ref.shot_id, "status": "failed", "error": str(e)},
                     f"{shot_ref.shot_id} failed",
                 )
-                telemetry.fail_stage(5, f"Shot '{shot_ref.shot_id}' failed diffusion generation: {e}")
+                telemetry.fail_stage(5, f"Shot '{shot_ref.shot_id}' failed {'local placeholder' if local else 'diffusion'} generation: {e}")
+                if isinstance(e, OfflineNetworkError):
+                    raise
                 raise VideoGenerationError(f"Shot '{shot_ref.shot_id}' failed diffusion generation: {e}")
 
     rendered_clips = [rendered_map[shot.shot_id] for shot in scene_plan.shots]
@@ -701,11 +916,22 @@ def render_all_video_clips(
         json.dump(manifest.model_dump(), f, ensure_ascii=False, indent=2)
 
     print("\n" + "=" * 80)
-    print(f"[VideoEngine] ALL {len(rendered_clips)} VIDEO CLIPS RENDERED THROUGH GENUINE DIFFUSION ENGINE.")
+    if local:
+        print(f"[VideoEngine] {len(rendered_clips)} LOCAL_FFMPEG PLACEHOLDER CLIPS READY (not diffusion output).")
+    else:
+        print(f"[VideoEngine] ALL {len(rendered_clips)} VIDEO CLIPS RENDERED THROUGH GENUINE DIFFUSION ENGINE.")
     print("=" * 80)
+    placeholders = [clip for clip in rendered_clips if is_placeholder_clip(clip)]
     telemetry.complete_stage(
         5,
-        message=f"Rendered {len(rendered_clips)} clips via {DEFAULT_VIDEO_MODEL}",
+        message=(
+            f"Rendered {len(rendered_clips)} LOCAL_FFMPEG placeholder clips (no network, not diffusion)"
+            if local
+            else f"Rendered {len(rendered_clips)} clips via {DEFAULT_VIDEO_MODEL}"
+        ),
         clips=[_rel_path(clip) for clip in rendered_clips],
+        video_mode=LOCAL_FFMPEG_MODE if local else "api",
+        placeholder=bool(placeholders),
+        placeholder_clips=len(placeholders),
     )
     return rendered_clips
