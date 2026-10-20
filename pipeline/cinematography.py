@@ -212,8 +212,15 @@ def camera_phrase(choreography: Any, *, short: bool = True) -> str:
 
 
 _TOKEN_PHRASES: Dict[str, str] = {**LIGHTING_PHRASES, **CAMERA_MOTION_PHRASES}
+# Already-humanised phrases are part of the alternation so they match first (leftmost, longest)
+# and are left untouched: the replacement is idempotent, and "orbit" inside
+# "smooth slow orbit around the subject" is not expanded a second time. Hyphen/underscore
+# lookarounds keep words like "tilt-up" or "pedestal-up" out of reach.
+_PHRASE_SET = set(_TOKEN_PHRASES.values())
 _TOKEN_RE = re.compile(
-    r"\b(" + "|".join(sorted((re.escape(k) for k in _TOKEN_PHRASES), key=len, reverse=True)) + r")\b"
+    r"(?<![\w-])("
+    + "|".join(sorted((re.escape(k) for k in [*_TOKEN_PHRASES, *_PHRASE_SET]), key=len, reverse=True))
+    + r")(?![\w-])"
 )
 
 # Filler that burns prompt budget without steering a video model.
@@ -235,7 +242,7 @@ _BUDGET_DROP_PREFIXES = ("Poise:", "Model does visual acting", "Styled with")
 
 def humanize_directive_tokens(text: str) -> str:
     """Replace snake_case camera/lighting enum values with plain cinematographic phrasing."""
-    return _TOKEN_RE.sub(lambda m: _TOKEN_PHRASES[m.group(1)], text)
+    return _TOKEN_RE.sub(lambda m: _TOKEN_PHRASES.get(m.group(1), m.group(1)), text)
 
 
 def compact_video_prompt(text: str, max_words: int = 180) -> str:
