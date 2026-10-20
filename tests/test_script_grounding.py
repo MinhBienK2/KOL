@@ -11,20 +11,22 @@ from pipeline.briefing import create_product_brief
 from pipeline.cinematography import CameraAngle, CameraLens, ShotScale
 from pipeline.composer import SUPPORTED_TRANSITIONS
 from pipeline.schemas import ScriptArtifact, ScriptBeat
-from pipeline.scriptwriter import MAX_BEAT_SECONDS, generate_commercial_script, validate_script
+from pipeline.scriptwriter import (
+    BANNED_CLAIM_PHRASES,
+    MAX_BEAT_SECONDS,
+    NUMERIC_CLAIM_RE,
+    find_unsupported_claims,
+    generate_commercial_script,
+    validate_script,
+)
 from pipeline.storyboard import generate_scene_plan
 
 NO_OFFER_USPS = ["Thiết kế gọn nhẹ dễ mang theo", "Chất liệu mềm mại thoáng khí", "Dễ phối với nhiều phong cách"]
 NO_OFFER_PAINS = ["Sản phẩm cũ khó dùng", "Mất nhiều thời gian chuẩn bị"]
 
-# Anything that reads as an invented offer, price, statistic or social-proof number.
-BANNED_WORDS = (
-    "ưu đãi", "giảm giá", "khuyến mãi", "voucher", "mua 1 tặng 1", "quà tặng", "miễn phí",
-    "freeship", "flash sale", "hàng ngàn", "hàng nghìn", "100%", "đánh giá 5 sao", "5 sao",
-)
-NUMERIC_CLAIM = re.compile(
-    r"\d+\s*%|\d[\d.,]*\s*(?:đ|vnd|k\b|nghìn|ngàn|triệu)|\bx\s*\d|\d+\s*lần|\d+[.,]\d{3}", re.IGNORECASE
-)
+# The claim lint lives in pipeline.scriptwriter so LLM drafts are held to the same standard.
+BANNED_WORDS = BANNED_CLAIM_PHRASES
+NUMERIC_CLAIM = NUMERIC_CLAIM_RE
 
 
 def _brief(tmp_path: Path, arch: ProductArchetype, name: str = "Sản Phẩm Thử Nghiệm Aurora"):
@@ -54,6 +56,7 @@ def test_scripts_never_invent_offers_or_numbers(tmp_path: Path, arch):
             assert not NUMERIC_CLAIM.search(low), (arch.value, beat.scene_id, text)
             # No digit at all: the brief supplied none, so none may appear.
             assert not re.search(r"\d", text), (arch.value, beat.scene_id, text)
+    assert find_unsupported_claims(script, brief) == []
 
 
 def test_legacy_mug_script_has_no_invented_offer(tmp_path: Path):

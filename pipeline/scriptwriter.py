@@ -11,6 +11,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from pipeline import telemetry
 from pipeline.config import ARTIFACTS_DIR
+from pipeline.offline import is_offline
 from pipeline.schemas import BriefArtifact, ScriptArtifact, ScriptBeat
 from pipeline.workspace import ProjectWorkspace
 from pipeline.cinematography import camera_phrase
@@ -161,37 +162,171 @@ def validate_script(beats: List[ScriptBeat]) -> List[str]:
     return issues
 
 
-def _clean_spoken_product_name(product: str) -> str:
-    """Simplifies long catalog titles into natural conversational Vietnamese for voiceover."""
-    low = product.lower()
-    if "cherry" in low:
-        return "đầm xòe cherry kiểu Pháp"
-    if "blazer" in low:
-        return "áo khoác blazer Hàn Quốc"
-    if "satin silk" in low or "evening gown" in low or "couture" in low:
-        return "đầm dạ hội lụa Pháp"
-    if "cyberkey" in low or "keyboard" in low or "bàn phím" in low:
-        return "bàn phím cơ CyberKey Pro"
-    if "serum" in low or "glowrevive" in low or "peptide" in low:
-        return "serum phục hồi GlowRevive"
-    name = product.strip()
-    for sep in ("-", "|", ",", "với", "phức hợp", "dành cho"):
-        if sep in name:
-            name = name.split(sep)[0].strip()
-    words = name.split()
-    if len(words) > 5:
-        # Keep the trailing Latin brand run (e.g. "Lumina Pro") and as much of the leading
-        # category as fits in 5 words, instead of chopping the brand off mid-name.
-        brand: List[str] = []
-        for w in reversed(words):
-            if w.isascii() and w[:1].isalpha():
-                brand.insert(0, w)
+# ==============================================================================
+# No-fabrication lint (shared by LLM-drafted and agent-authored scripts)
+# ==============================================================================
+
+# Offer / statistic / social-proof / guarantee wording. Each phrase is a claim the advertiser must
+# have supplied (brief) or research must contain; otherwise it is fabricated.
+BANNED_CLAIM_PHRASES = (
+    "ưu đãi", "giảm giá", "khuyến mãi", "voucher", "mua 1 tặng 1", "quà tặng", "miễn phí", "freeship",
+    "flash sale", "hàng ngàn", "hàng nghìn", "100%", "đánh giá 5 sao", "5 sao", "bán chạy", "số 1",
+    "số một", "top 1", "best seller", "bestseller", "lâm sàng", "chuyên gia", "bác sĩ", "da liễu",
+    "kiểm chứng", "chứng nhận", "bảo hành", "hoàn tiền", "đổi trả", "chính hãng", "cam kết",
+)
+# Percent, price, multiplier, "N lần", thousands-separated numbers.
+NUMERIC_CLAIM_RE = re.compile(
+    r"\d+\s*%|\d[\d.,]*\s*(?:đ|vnd|k\b|nghìn|ngàn|triệu)|\bx\s*\d|\d+\s*lần|\d+[.,]\d{3}", re.IGNORECASE
+)
+_NUMBER_RE = re.compile(r"\d+(?:[.,]\d+)*")
+
+
+def _flatten_strings(value: Any) -> Iterable[str]:
+    if value is None:
+        return
+    if isinstance(value, str):
+        yield value
+    elif isinstance(value, dict):
+        for v in value.values():
+            yield from _flatten_strings(v)
+    elif isinstance(value, (list, tuple, set)):
+        for v in value:
+            yield from _flatten_strings(v)
+    elif isinstance(value, (int, float)) and not isinstance(value, bool):
+        yield f"{value:g}"
+    elif hasattr(value, "model_dump"):
+        yield from _flatten_strings(value.model_dump())
+
+
+def _numbers_in(text: str) -> set:
+    """Digit runs normalised without thousands separators ("199.000" -> "199000", "4,5" -> "45")."""
+    return {re.sub(r"[.,]", "", m) for m in _NUMBER_RE.findall(text)}
+
+
+def load_research_context(artifacts_dir: Optional[Path]) -> Dict[str, Any]:
+    """Research artifacts a script may legitimately draw facts from (untrusted pricing removed)."""
+    context: Dict[str, Any] = {}
+    if artifacts_dir is None:
+        return context
+    research = _load_json(artifacts_dir / "competitor_research.json")
+    if research:
+        research = dict(research)
+        intel = dict(research.get("product_intel") or {})
+        source = str(intel.get("source") or "").strip().lower()
+        if source and any(tag in source for tag in _UNTRUSTED_SOURCES):
+            intel.pop("pricing", None)
+        research["product_intel"] = intel
+        context["research"] = research
+    concept = _load_json(artifacts_dir / "creative_concept.json")
+    if concept:
+        context["concept"] = concept
+    return context
+
+
+def find_unsupported_claims(
+    script: Union[ScriptArtifact, Iterable[ScriptBeat]],
+    brief: BriefArtifact,
+    research: Any = None,
+) -> List[str]:
+    """Flag numbers, prices, discounts and proof/offer wording that neither brief nor research supply.
+
+    ``script`` is a ScriptArtifact or an iterable of beats; ``research`` is anything containing the
+    allowed source text (dict from :func:`load_research_context`, a list of strings, ...). Spoken and
+    on-screen text may use no number that the sources do not contain; visual cues are checked for
+    price/percent-style numbers. Returns human-readable issues (empty list = grounded).
+    """
+    beats = script.beats if isinstance(script, ScriptArtifact) else list(script)
+    corpus = " \n ".join(
+        _flatten_strings(
+            [
+                brief.product_name, brief.usps, brief.pain_points, brief.offers, brief.target_persona,
+                brief.visual_tone, brief.category, research,
+            ]
+        )
+    ).lower()
+    allowed_numbers = _numbers_in(corpus)
+
+    issues: List[str] = []
+    for beat in beats:
+        voiced = {"spoken_text": beat.spoken_text or "", "on_screen_text": beat.on_screen_text or ""}
+        visual = {"visual_cue": beat.visual_cue or "", "visual_cue_en": beat.visual_cue_en or ""}
+        for field_name, text in {**voiced, **visual}.items():
+            low = text.lower()
+            for phrase in BANNED_CLAIM_PHRASES:
+                if phrase in low and phrase not in corpus:
+                    issues.append(f"{beat.scene_id}.{field_name}: unsupported claim '{phrase}' (not in brief/research)")
+            if field_name in voiced:
+                unknown = sorted(n for n in _numbers_in(text) if n not in allowed_numbers)
             else:
-                break
-        brand = brand[-3:]
-        head = words[: max(2, 5 - len(brand))]
-        return " ".join(head + brand) if brand and len(brand) < len(words) else " ".join(words[:5])
-    return name
+                unknown = sorted(
+                    n for m in NUMERIC_CLAIM_RE.findall(text) for n in _numbers_in(m) if n not in allowed_numbers
+                )
+            if unknown:
+                issues.append(
+                    f"{beat.scene_id}.{field_name}: number(s) {', '.join(unknown)} not found in brief/research"
+                )
+    return list(dict.fromkeys(issues))
+
+
+# Diacritic-free Vietnamese product words that look like Latin brand tokens ("Tai nghe", "Ly", "Minh").
+_VI_PLAIN_WORDS = frozenset({
+    "tai", "ly", "minh", "nam", "nu", "kem", "sua", "tui", "ao", "do", "be", "bo", "cap", "sac", "den",
+    "dan", "hoa", "mat", "gel", "set", "bot", "bluetooth", "wireless", "smart", "gaming", "mini",
+})
+_NAME_CUT = re.compile(r"\s[-–—|:]\s|\s*[|,;(]\s*|\s(?:với|dành cho|phức hợp|cho|có|kèm|và)\s")
+_MAX_DISPLAY_WORDS = 5
+
+
+def _is_latin_name_token(word: str) -> bool:
+    core = word.strip("()[]{}.,;:!?\"'")
+    if not core or not core.isascii() or core.lower() in _VI_PLAIN_WORDS:
+        return False
+    return core[0].isupper() or any(c.isdigit() for c in core)
+
+
+def _is_acronym(word: str) -> bool:
+    core = word.strip("()[]{}.,;:!?\"'")
+    return core.isalpha() and core.isupper() and len(core) <= 4
+
+
+def derive_display_name(product_name: str, max_words: int = _MAX_DISPLAY_WORDS) -> str:
+    """Short spoken/display name for a catalog title: category + brand/model, never a description.
+
+    "Tai nghe chống ồn Sonic Air Pro" -> "Tai nghe Sonic Air Pro";
+    "Tai nghe bluetooth chống ồn chủ động ANC, pin 30 giờ" -> "Tai nghe bluetooth chống ồn".
+    """
+    name = " ".join((product_name or "").split())
+    if not name:
+        return name
+    parts = _NAME_CUT.split(name, maxsplit=1)
+    head = parts[0].strip()
+    if len(head.split()) >= 2:
+        name = head
+    words = name.split()
+    if len(words) <= max_words:
+        return name
+
+    # Last run of Latin brand/model tokens (acronyms such as ANC/RGB may sit inside but not at the edges).
+    run_end = None
+    for i in range(len(words) - 1, -1, -1):
+        if _is_latin_name_token(words[i]) and not _is_acronym(words[i]):
+            run_end = i
+            break
+    if run_end is None:
+        return " ".join(words[:max_words])
+    run_start = run_end
+    while run_start > 0 and _is_latin_name_token(words[run_start - 1]) and run_end - run_start < 2:
+        run_start -= 1
+    while run_start < run_end and _is_acronym(words[run_start]):
+        run_start += 1
+    brand = words[run_start : run_end + 1]
+    head_words = words[:run_start][: min(3, max_words - len(brand))]
+    return " ".join(head_words + brand)
+
+
+def _clean_spoken_product_name(product: str) -> str:
+    """Natural conversational name for voiceover (kept for backwards compatibility)."""
+    return derive_display_name(product)
 
 
 def _clean_caption(text: str, max_len: int = 38) -> str:
@@ -614,9 +749,10 @@ def _build_archetype_beats(
     beats: List[ScriptBeat] = []
     for idx, tpl in enumerate(config.beat_templates, start=1):
         scene_id = f"shot_{idx:02d}_{tpl.beat_type}"
+        display_name = derive_display_name(product)
         ctx = _Ctx(
-            product=product,
-            spoken_prod=_clean_spoken_product_name(product),
+            product=display_name,
+            spoken_prod=display_name,
             tag=character_tag,
             cam_vi=camera_phrase(tpl.camera_choreography),
             cam_en=_CAMERA_LABEL_EN.get(tpl.camera_choreography.value, "smooth"),
@@ -725,6 +861,7 @@ def generate_commercial_script(
     workspace: Optional[ProjectWorkspace] = None,
     beats: Optional[List[Union[ScriptBeat, dict]]] = None,
     strict: bool = True,
+    use_llm: bool = True,
 ) -> ScriptArtifact:
     """Generates high-conversion TVC script based on brief.json and directorial archetype.
 
@@ -733,6 +870,10 @@ def generate_commercial_script(
     fitted to the spoken line, and are checked with :func:`validate_script`; with
     ``strict=True`` (default) any issue raises ``ValueError``, with ``strict=False`` the
     issues are only recorded in the run telemetry.
+
+    Without ``beats``, and unless offline or ``use_llm=False``, the LLM drafts the script
+    (:mod:`pipeline.script_llm`: validated, grounded, one repair retry); any failure falls back to the
+    deterministic archetype templates.
     """
     target_artifacts_dir = workspace.artifacts_dir if workspace is not None else (output_dir or ARTIFACTS_DIR)
     target_artifacts_dir.mkdir(parents=True, exist_ok=True)
@@ -767,8 +908,10 @@ def generate_commercial_script(
             if cb.archetype is None:
                 cb.archetype = selected_archetype
 
+    generator = "deterministic_beat_templates"
     # If legacy mug campaign is tested without custom archetype override, maintain 4-beat legacy compatibility
     if custom_beats is not None:
+        generator = "agent_authored_beats"
         beats = custom_beats  # type: ignore[assignment]
         script_warnings = fit_beat_durations_to_speech(custom_beats)
         script_warnings += validate_script(custom_beats)
@@ -781,8 +924,17 @@ def generate_commercial_script(
         beats = _build_legacy_mug_beats(brief)
         fit_beat_durations_to_speech(beats)
     else:
-        beats = _build_archetype_beats(brief, selected_archetype, target_artifacts_dir)
-        template_warnings = fit_beat_durations_to_speech(beats)
+        llm_beats: Optional[List[ScriptBeat]] = None
+        if use_llm and not is_offline():
+            from pipeline.script_llm import draft_script_with_llm  # lazy: script_llm imports this module
+
+            llm_beats = draft_script_with_llm(brief, selected_archetype, target_artifacts_dir)
+        if llm_beats:
+            beats = llm_beats
+            generator = "llm_script"
+        else:
+            beats = _build_archetype_beats(brief, selected_archetype, target_artifacts_dir)
+        template_warnings = [] if generator == "llm_script" else fit_beat_durations_to_speech(beats)
         template_warnings += [i for i in validate_script(beats) if "spoken line needs" not in i]
         if template_warnings:
             telemetry.note(
@@ -807,13 +959,21 @@ def generate_commercial_script(
                 "has_speech": bool(beat.spoken_text and beat.spoken_text.strip()),
             },
         )
+    if generator == "llm_script":
+        summary = f"Script drafted by the LLM and validated: {len(beats)} {selected_archetype.value} beats"
+    elif generator == "agent_authored_beats":
+        summary = f"Script taken from {len(beats)} agent-authored {selected_archetype.value} beats"
+    else:
+        summary = (
+            f"Script rendered deterministically from {len(beats)} {selected_archetype.value} beat templates "
+            "(no LLM draft used)"
+        )
     telemetry.note(
-        f"Script rendered deterministically from {len(beats)} {selected_archetype.value} beat templates "
-        f"(no LLM call), total {total_duration:.1f}s",
+        f"{summary}, total {total_duration:.1f}s",
         archetype=selected_archetype.value,
         beats=len(beats),
         total_duration_seconds=round(total_duration, 2),
-        generator="deterministic_beat_templates",
+        generator=generator,
     )
 
     script = ScriptArtifact(
