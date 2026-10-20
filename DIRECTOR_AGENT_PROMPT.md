@@ -104,7 +104,7 @@ python3 tools/director.py \
 Khi truyền `--json`, stdout chỉ in ra duy nhất MỘT JSON object.
 - **Exit Code 0 (`EXIT_OK`):** Thành công trọn vẹn, tất cả 8 gate PASSED. Video sẵn sàng xuất bản.
 - **Exit Code 1 (`EXIT_PIPELINE_FAILED`):** Một stage bị lỗi kỹ thuật (xem `failed_stage` và `error`).
-- **Exit Code 2 (`EXIT_INVALID_INPUT`):** Thiếu artifact tiền đề hoặc tham số sai (xem `problems`).
+- **Exit Code 2 (`EXIT_INVALID_INPUT`):** Thiếu artifact tiền đề hoặc tham số sai (xem `problems`); cũng dùng cho `status: budget_exceeded` (vượt `--max-video-jobs`, chưa gửi job trả phí nào; nâng trần rồi `--from-stage 5`) và `error_code: missing_api_key` (thiếu `MINIMAX_API_KEY`; export hoặc đặt trong `.env`, hoặc chạy `--offline`).
 - **Exit Code 3 (`EXIT_VERIFICATION_FAILED`):** Master video đã dựng xong nhưng Stage 8 Verification Gates từ chối nghiệm thu (xem `failed_gates`).
 - **Exit Code 4 (`EXIT_PAUSED`):** Pipeline tạm dừng sạch sẽ sau `--pause-after-stage N` để con người kiểm duyệt.
 
@@ -119,7 +119,8 @@ Khi truyền `--json`, stdout chỉ in ra duy nhất MỘT JSON object.
 - `--from-stage N`: Khởi động lại pipeline trực tiếp từ stage N (1-8).
 - `--inject NAME=PATH`: Cài đặt artifact tự viết và tự động resume ở stage tiếp theo.
 - `--new-version`: Phân nhánh một run version mới (v2, v3) kế thừa media cũ qua hardlinks.
-- `--check`: Chế độ chỉ đọc kiểm tra kế hoạch và tiền đề, không ghi đè dữ liệu.
+- `--check`: Chế độ chỉ đọc kiểm tra kế hoạch và tiền đề, không ghi đè dữ liệu. JSON gồm `estimate` (số video job mới chưa cache, giây sinh, số lần TTS, `estimated_cost` hoặc `null` nếu chưa khai `KOL_UNIT_COSTS`); `estimate.available=false` nếu `scene_plan.json`/`asset_manifest.json`/`script.json` chưa tồn tại.
+- `--max-video-jobs N`: (Stage 5) Trần ngân sách. Kế hoạch vượt N video job mới thì dừng trước mọi lệnh submit, exit 2, `status: budget_exceeded`. Không đặt thì không giới hạn nhưng vẫn in và ghi `estimate` (telemetry + `run_result.json`). Để biết con số trước khi chi tiền: chạy `--pause-after-stage 4`, rồi `--check --from-stage 5 --json` để đọc `estimate` và đặt trần phù hợp.
 - `--offline`: Chế độ chạy offline, đặt `KOL_OFFLINE=1` và ép `--video-mode ffmpeg`.
 
 ---

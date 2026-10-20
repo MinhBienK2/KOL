@@ -8,6 +8,11 @@ used because this conftest is not the top-level one).
 
 from __future__ import annotations
 
+import os
+
+# Hermetic: never load a developer's real .env (and its API keys) into the test process.
+os.environ["KOL_ENV_FILE"] = os.devnull
+
 from tests.dashboard_fixtures import run_tree  # noqa: F401  (re-exported fixture)
 
 
@@ -41,3 +46,9 @@ def _no_real_asr_network(monkeypatch):
         raise RuntimeError(f"tests may not call the real ASR endpoint ({operation})")
 
     monkeypatch.setattr(asr, "guarded_urlopen", _blocked)
+
+
+@pytest.fixture(autouse=True)
+def _dummy_minimax_key(monkeypatch):
+    """A fake key so mocked-API tests pass the configuration check; tests of the missing-key path delenv it."""
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-minimax-key")

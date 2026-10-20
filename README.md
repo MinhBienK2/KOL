@@ -65,10 +65,15 @@ Mọi cờ dưới đây đều tuỳ chọn; không truyền thì pipeline ch�
 | `--transitions PATH.json` | 7 | Mỗi mối nối một `{"type", "duration"}` (hoặc tên transition); mặc định đọc trường `transition` của từng beat trong `script.json` (transition của beat là mối nối SAU beat đó) |
 | `--pause-after-stage N` | 1-7 | Dừng sạch sau stage N, trạng thái `paused`, exit code **4** |
 | `--offline` | tất cả | `KOL_OFFLINE=1` + `--video-mode ffmpeg` |
+| `--max-video-jobs N` | 5 | Trần ngân sách: nếu Stage 5 cần hơn N video job MỚI (shot đã có clip cache thì miễn phí), dừng TRƯỚC khi gửi bất kỳ job trả phí nào: exit **2**, `status: budget_exceeded`, `error_code: max_video_jobs_exceeded`. Mặc định không giới hạn |
 
 Stage 1 có `--url` sẽ dùng `create_product_brief_from_concept`, nên Character Role, audio strategy của angle thắng đi thẳng vào `brief.json`.
 
-**Kết quả máy đọc được:** object `--json` của CLI cũng được lưu thành `projects/<topic>/<project>/runs/<vN>/run_result.json` (cùng một định dạng). `status`: `completed` / `failed` / `verification_failed` / `paused` / `invalid` / `checked`; khi tạm dừng có thêm `paused_after_stage`, `next_stage`, `resume_hint`. Exit code: `0` hoàn tất, `1` lỗi stage, `2` input sai, `3` Verification Gate từ chối, `4` tạm dừng. `--inject NAME=PATH`, `--check`, `--json` xem `DIRECTOR_AGENT_PROMPT.md`.
+**Kết quả máy đọc được:** object `--json` của CLI cũng được lưu thành `projects/<topic>/<project>/runs/<vN>/run_result.json` (cùng một định dạng). `status`: `completed` / `failed` / `verification_failed` / `paused` / `invalid` / `budget_exceeded` / `checked`; khi tạm dừng có thêm `paused_after_stage`, `next_stage`, `resume_hint`. Exit code: `0` hoàn tất, `1` lỗi stage, `2` input sai, `3` Verification Gate từ chối, `4` tạm dừng. `--inject NAME=PATH`, `--check`, `--json` xem `DIRECTOR_AGENT_PROMPT.md`.
+
+**Ước tính chi phí trước khi sinh trả phí:** trước Stage 5/6, Director in và ghi (telemetry `run_meta.paid_estimate`, `run_result.json`, và `estimate` trong `--check --json`) kế hoạch gọi API trả phí: số video job mới, thời lượng giây sẽ sinh, số lần gọi TTS, số ảnh (luôn 0), tổng giây sinh. Giá chưa biết nên `estimated_cost` là `null`; khai báo bảng giá theo model qua `KOL_UNIT_COSTS` (JSON hoặc đường dẫn file), ví dụ `{"currency":"USD","MiniMax-Hailuo-2.3":{"per_job":0.3},"tts-1":{"per_call":0.01}}`. Hàm: `pipeline.cost.estimate_paid_generation`. `--check` ở giai đoạn đầu (chưa có `scene_plan.json`) trả `estimate.available: false`.
+
+**API key:** lấy từ biến môi trường; file `.env` ở thư mục gốc repo (đã gitignore, mẫu: `.env.example`) được `pipeline/config.py` nạp tự động, biến môi trường thật luôn ưu tiên. Thiếu `MINIMAX_API_KEY` khi cần gọi API: exit 2, `error_code: missing_api_key` (hoặc `ConfigurationError` khi gọi trực tiếp); chế độ `--offline` không cần key.
 
 ```bash
 python3 tools/director.py --campaign demo --pause-after-stage 3   # dừng sau storyboard, exit 4
