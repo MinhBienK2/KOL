@@ -1,0 +1,52 @@
+{
+  "outfit_id": "minimalist_spa_silk",
+  "wardrobe_id": "costume_minimalist_spa_silk",
+  "identity_id": "kol_main_spa",
+  "sheet": "assets/characters/kol_main/outfits/minimalist_spa_silk/character_sheet.png",
+  "sheet_size": [
+    2516,
+    2033
+  ],
+  "generation": {
+    "provider": "flow2api",
+    "body": {
+      "provider": "flow2api",
+      "model": "gemini-3.1-flash-image-landscape-2k",
+      "prompt": "Photorealistic professional character turnaround reference sheet on one seamless flat light grey studio background (#E8E8E8), soft even diffused lighting, no vignette, no background shadow. The exact same young Vietnamese woman as the reference image: refined oval face, soft double eyelids, dark brown almond eyes, straight nose bridge, natural lips, warm fair skin, chin-length black bob haircut. Preserve her face, skin tone, body proportions and hairstyle EXACTLY. The reference clothing is irrelevant: replace it completely with the outfit below. OUTFIT: Relaxed luxury pearl white silk spa wrap robe, wide kimono sleeves, delicate tied waist sash, revealing graceful collarbones and glowing bare shoulders for skincare demonstration. Color palette: Pearl White, Soft Warm Ivory. Fabric: Pure 100% natural Mulberry silk, soft waffle-weave trim. Accessories: Bare skin aesthetic, zero chunky jewelry, natural healthy lip gloss. Four separate full-body figures in one horizontal row, equal scale, standing upright with arms relaxed at the sides, empty hands, neutral closed-mouth expression, head-to-toe fully in frame with feet visible. Left to right: front view 0 degrees, three-quarter view 45 degrees, side profile 90 degrees, rear view 180 degrees. No text, no labels, no watermark, no props, no overlapping figures, no cropped limbs. Editorial costume-sheet quality, 8k detail.",
+      "aspect_ratio": "16:9",
+      "references": [
+        "/home/minhbien/Documents/KOL/assets/characters/kol_main/face_anchor.png"
+      ],
+      "image_url": "http://100.111.37.118:8000/tmp/6f5f8f776d513740f2d7f537c749b3ab_2K.jpg",
+      "size": [
+        2752,
+        1536
+      ],
+      "watermark_pixels": 0
+    },
+    "faces": {
+      "provider": "flow2api",
+      "model": "gemini-3.1-flash-image-square-2k",
+      "prompt": "Photorealistic 2x2 grid of close-up head-and-shoulders portraits of the exact same young Vietnamese woman as the reference image: refined oval face, soft double eyelids, dark brown almond eyes, straight nose bridge, natural lips, warm fair skin, chin-length black bob haircut. Preserve her face and hairstyle EXACTLY; do not copy the reference clothing. OUTFIT: Relaxed luxury pearl white silk spa wrap robe, wide kimono sleeves, delicate tied waist sash, revealing graceful collarbones and glowing bare shoulders for skincare demonstration. Color palette: Pearl White, Soft Warm Ivory. Fabric: Pure 100% natural Mulberry silk, soft waffle-weave trim. Accessories: Bare skin aesthetic, zero chunky jewelry, natural healthy lip gloss. Four distinct head angles, equal scale and framing: top-left front view 0 degrees, top-right three-quarter view 30 degrees, bottom-left three-quarter view 45 degrees, bottom-right side profile 90 degrees. Neutral expression, eyes open, mouth closed. Seamless flat light grey background (#E8E8E8), even beauty lighting, no text, no labels, no watermark, no props. Sharp facial detail, 8k.",
+      "aspect_ratio": "1:1",
+      "references": [
+        "/home/minhbien/Documents/KOL/assets/characters/kol_main/face_anchor.png"
+      ],
+      "image_url": "http://100.111.37.118:8000/tmp/2c16725aa39514a515deff5e6e93f3b7_2K.jpg",
+      "size": [
+        2048,
+        2048
+      ],
+      "watermark_pixels": 0
+    },
+    "composition": {
+      "sheet_width": 2516,
+      "background": [
+        219,
+        219,
+        219
+      ],
+      "body_background_normalised": true
+    }
+  }
+}

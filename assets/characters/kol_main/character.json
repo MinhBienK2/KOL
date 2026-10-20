@@ -20,6 +20,20 @@
       "character_tag": "[KOL_MAIN_OFFICE]",
       "appearance_details": "Chic off-shoulder matte black long-sleeve top, tailored charcoal grey slim trousers, minimalist black flats",
       "character_sheet": "assets/characters/kol_main/outfits/studio_chic_black/character_sheet.png"
+    },
+    {
+      "identity_id": "kol_main_spa",
+      "identity_name": "Minimalist Spa Silk",
+      "character_tag": "[KOL_MAIN_SPA]",
+      "appearance_details": "Relaxed luxury pearl white silk spa wrap robe, wide kimono sleeves, delicate tied waist sash, revealing graceful collarbones and glowing bare shoulders for skincare demonstration.",
+      "character_sheet": "assets/characters/kol_main/outfits/minimalist_spa_silk/character_sheet.png"
+    },
+    {
+      "identity_id": "kol_main_cozy",
+      "identity_name": "Cozy Kitchen Knit",
+      "character_tag": "[KOL_MAIN_COZY]",
+      "appearance_details": "Oversized chunky knit oatmeal cashmere sweater with rolled cuffs and slouchy crewneck, paired with relaxed cream linen lounge pants, warm domestic comfort.",
+      "character_sheet": "assets/characters/kol_main/outfits/cozy_kitchen_knit/character_sheet.png"
     }
   ]
 }

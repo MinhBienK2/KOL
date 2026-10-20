@@ -1,0 +1,37 @@
+{
+  "outfit_id": "cozy_kitchen_knit",
+  "wardrobe_id": "costume_cozy_nordic_knit",
+  "identity_id": "kol_main_cozy",
+  "sheet": "assets/characters/kol_main/outfits/cozy_kitchen_knit/character_sheet.png",
+  "sheet_size": [
+    2752,
+    1536
+  ],
+  "generation": {
+    "provider": "flow2api",
+    "mode": "single_pass",
+    "aspect_ratio": "16:9",
+    "references": [
+      "/home/minhbien/Documents/KOL/assets/characters/kol_main/outfits/studio_chic_black/character_sheet.png",
+      "/home/minhbien/Documents/KOL/assets/characters/kol_main/face_anchor.png"
+    ],
+    "generation": {
+      "provider": "flow2api",
+      "model": "gemini-3.1-flash-image-landscape-2k",
+      "prompt": "You are given TWO reference images of the SAME young Vietnamese woman.\nREFERENCE 1 = her existing character sheet: four full-body views on the top row and four close-up face views on the bottom row, wearing a black outfit. Use REFERENCE 1 for LAYOUT, panel order, panel proportions and body proportions ONLY. Do NOT copy its black clothing.\nREFERENCE 2 = a clear close-up face anchor. Use REFERENCE 2 for FACIAL IDENTITY.\n\nTASK: create ONE new photorealistic character reference sheet for this exact same woman, with a new outfit, in a single image. Do not add a second person.\n\nIDENTITY LOCK (highest priority): exact same refined oval face, soft double eyelids, dark brown almond eyes, straight nose bridge, natural lips, warm fair skin, same skin tone, same chin-length black bob haircut and hairline. Neutral expression, eyes open, mouth closed, no smile. Do not beautify, change age, or change ethnicity.\n\nNEW OUTFIT (replace the black outfit completely): Oversized chunky knit oatmeal cashmere sweater with rolled cuffs and slouchy crewneck, paired with relaxed cream linen lounge pants, warm domestic comfort. Color palette: Oatmeal Cream, Warm Biscuit, Heather Grey. Fabric: Chunky ribbed 100% pure cashmere yarn, soft brushed wool. Accessories: Ceramic handcrafted ring, warm woolen indoor socks. Cozy kitchen/home loungewear styling, soft natural fabric folds, no logos, no visible brand.\n\nLAYOUT — match REFERENCE 1 exactly: one LANDSCAPE sheet, width greater than height (the requested aspect ratio), do NOT create or rotate into a tall/portrait image; exactly EIGHT panels in exactly TWO rows and FOUR columns, thin light-grey gutters, no outer frame, no third row, no second face row. TOP ROW (taller, about 60% of the sheet height): exactly FOUR separate FULL-BODY panels, head-to-toe with feet visible, standing upright, arms relaxed at the sides, empty hands, equal scale: left to right front 0 degrees, three-quarter 45 degrees, side profile 90 degrees, back 180 degrees (the fourth panel shows her back, no face). Do not omit the back view. BOTTOM ROW: exactly FOUR separate head-and-shoulders CLOSE-UP panels, one row only, equal scale: left to right front 0 degrees, three-quarter 30 degrees, three-quarter 45 degrees, side profile 90 degrees. Do not duplicate the face row. Every panel shows the same woman, same outfit, same lighting.\n\nBACKGROUND: one flat seamless light neutral grey (#E8E8E8) across all eight panels, soft even studio lighting, no vignette, no background shadows, no kitchen props, no furniture.\n\nFORBIDDEN: different face, different hairstyle, black top, black trousers, dress, duplicate person, overlapping figures, mismatched outfit between panels, cropped head or feet, extra limbs, text, numbers, labels, watermark, logo, frame, collage seams, portrait/tall canvas, third row, duplicated face row, missing back view.\n\nSTYLE: photorealistic editorial costume sheet, sharp facial detail, natural skin texture, 8k.",
+      "aspect_ratio": "16:9",
+      "references": [
+        "/home/minhbien/Documents/KOL/assets/characters/kol_main/outfits/studio_chic_black/character_sheet.png",
+        "/home/minhbien/Documents/KOL/assets/characters/kol_main/face_anchor.png"
+      ],
+      "image_url": "http://100.111.37.118:8000/tmp/e0919712a71b8c2243f3c7ff887baef6_2K.jpg",
+      "size": [
+        2752,
+        1536
+      ],
+      "watermark_pixels": 0
+    },
+    "source_image": "assets/characters/kol_main/outfits/cozy_kitchen_knit/_source/single_pass_sheet.jpg",
+    "source_note": "Raw Flow2API JPEG (2752x1536); character_sheet.png is the Telea-cleaned final artifact."
+  }
+}
