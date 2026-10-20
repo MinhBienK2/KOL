@@ -7,7 +7,7 @@ import json
 import re
 import subprocess
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, Dict, Iterable, List, Mapping, Optional
 
 from PIL import Image
 from pipeline import telemetry
@@ -41,8 +41,23 @@ TRUE_PEAK_CEILING_DBTP = 0.0  # above this the master is clipping
 SILENT_LUFS = -50.0
 THUMBNAIL_MAX_TIMESTAMP = 18.0
 
-# technical, media quality, character sheet integrity, character consistency, continuity, slideshow risk
-VERIFICATION_GATE_COUNT = 6
+#: Max disagreement between stage 7's audio_mix_report.json and the loudness re-measured on the master.
+MIX_REPORT_LUFS_AGREEMENT = 1.0
+#: A voice stem whose peak is at or below this is digital silence (a placeholder for failed TTS).
+SILENT_STEM_MAX_DB = -60.0
+
+#: Generation modes that mean "no real diffusion output" (matched case-insensitively).
+PLACEHOLDER_MODES = frozenset({"LOCAL_FFMPEG", "FFMPEG", "PLACEHOLDER"})
+
+#: ``overall_status`` values. DRAFT: a complete master that contains placeholders; watchable, never released.
+STATUS_PASSED = "PASSED"
+STATUS_FAILED = "FAILED"
+STATUS_DRAFT = "DRAFT"
+PLACEHOLDER_GATE_NAME = "prompt_ledger_audit_gate"
+
+# technical, media quality, character sheet integrity, character consistency, continuity, slideshow risk,
+# identity pre-flight audit, prompt ledger audit
+VERIFICATION_GATE_COUNT = 8
 
 
 def _ensure_stage_started(total: int) -> None:
@@ -181,8 +196,30 @@ def _parse_media_quality_log(stderr: str) -> dict[str, Any]:
     }
 
 
-def verify_media_quality_gate(video_path: str | Path) -> GateVerificationResult:
+def _load_fresh_mix_report(mix_report_path: str | Path | None, video_path: Path) -> Optional[Dict[str, Any]]:
+    """Stage 7's ``audio_mix_report.json`` if it exists, parses and was written after the master."""
+    if mix_report_path is None:
+        return None
+    path = Path(mix_report_path)
+    try:
+        if not path.is_file() or path.stat().st_mtime + 1.0 < video_path.stat().st_mtime:
+            return None  # absent, or older than the master: it describes a previous render
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if not isinstance(data, dict) or "compliant" not in data or not isinstance(data.get("output_lufs"), (int, float)):
+        return None
+    return data
+
+
+def verify_media_quality_gate(
+    video_path: str | Path, mix_report_path: str | Path | None = None
+) -> GateVerificationResult:
     """Perceptual defect scan of the master: black frames, frozen frames and loudness.
+
+    When stage 7's ``audio_mix_report.json`` is present (and not older than the master) its ``compliant``
+    verdict is the loudness authority; the master is still measured so a report that does not describe
+    this file (> 1 LU apart) is rejected. Without a report the +/- 3 LUFS delivery window applies.
 
     One ffmpeg pass runs ``blackdetect`` and ``freezedetect`` on the picture and ``ebur128``
     (ITU-R BS.1770 integrated loudness and true peak) on the audio. The Technical Integrity Gate only
@@ -251,6 +288,7 @@ def verify_media_quality_gate(video_path: str | Path) -> GateVerificationResult:
 
     lufs = parsed["integrated_lufs"]
     peak = parsed["true_peak_dbtp"]
+    mix_report = _load_fresh_mix_report(mix_report_path, v_path)
     details: dict[str, Any] = {
         "black_seconds": black_seconds,
         "frozen_seconds": frozen_seconds,
@@ -260,7 +298,11 @@ def verify_media_quality_gate(video_path: str | Path) -> GateVerificationResult:
         "integrated_lufs": lufs,
         "true_peak_dbtp": peak,
         "target_lufs": TARGET_LUFS,
+        "loudness_source": "audio_mix_report" if mix_report is not None else "measured",
     }
+    if mix_report is not None:
+        details["mix_report_output_lufs"] = mix_report["output_lufs"]
+        details["mix_report_compliant"] = bool(mix_report["compliant"])
 
     errors: List[str] = []
     if black_seconds > MAX_BLACK_SECONDS:
@@ -279,6 +321,17 @@ def verify_media_quality_gate(video_path: str | Path) -> GateVerificationResult:
         errors.append("Loudness measurement unavailable (no audio stream analysed)")
     elif lufs <= SILENT_LUFS:
         errors.append(f"Loudness {lufs:.1f} LUFS: master is silent")
+    elif mix_report is not None:
+        if abs(lufs - mix_report["output_lufs"]) > MIX_REPORT_LUFS_AGREEMENT:
+            errors.append(
+                f"audio_mix_report.json ({mix_report['output_lufs']:.1f} LUFS) does not describe this master "
+                f"(measured {lufs:.1f} LUFS)"
+            )
+        elif not mix_report["compliant"]:
+            errors.append(
+                f"audio_mix_report.json: mix not compliant ({mix_report['output_lufs']:.1f} LUFS "
+                f"vs {TARGET_LUFS:.0f} LUFS target)"
+            )
     elif abs(lufs - TARGET_LUFS) > LUFS_TOLERANCE:
         errors.append(
             f"Loudness {lufs:.1f} LUFS outside {TARGET_LUFS:.0f} +/- {LUFS_TOLERANCE:.0f} LUFS delivery target"
@@ -487,6 +540,166 @@ def verify_slideshow_risk_gate(scene_plan_path: str | Path) -> GateVerificationR
     )
 
 
+def verify_identity_preflight_gate(preflight_path: str | Path) -> GateVerificationResult:
+    """Audit stage 4's ``identity_preflight.json``: fail on unusable identity assets, warn on weak ones.
+
+    A missing report passes with a warning (runs recorded before the pre-flight existed); an unreadable
+    one fails. ``warnings`` (low-resolution references) are surfaced in ``details`` but do not fail.
+    """
+    gate_name = "identity_preflight_gate"
+    path = Path(preflight_path)
+    if not path.is_file():
+        return GateVerificationResult(
+            gate_name=gate_name,
+            passed=True,
+            details={"found": False, "warnings": [f"identity_preflight.json not found at {path}"]},
+        )
+    try:
+        report = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(report, dict):
+            raise ValueError("not a JSON object")
+    except (OSError, ValueError) as exc:
+        return GateVerificationResult(
+            gate_name=gate_name,
+            passed=False,
+            details={"found": True},
+            error_message=f"identity_preflight.json unreadable: {exc}",
+        )
+
+    def _label(entry: Any) -> str:
+        if isinstance(entry, dict):
+            return f"{entry.get('asset', '?')}: {entry.get('issue', 'issue')}"
+        return str(entry)
+
+    errors = [_label(e) for e in report.get("errors") or []]
+    warnings = [_label(w) for w in report.get("warnings") or []]
+    ok = bool(report.get("ok", not errors)) and not errors
+    details = {
+        "found": True,
+        "ok": ok,
+        "assets": sorted((report.get("assets") or {}).keys()),
+        "warnings": warnings,
+        "errors": errors,
+    }
+    return GateVerificationResult(
+        gate_name=gate_name,
+        passed=ok,
+        details=details,
+        error_message=None if ok else ("Identity pre-flight failed: " + "; ".join(errors or ["ok=false"])),
+    )
+
+
+def _load_json_file(path: Path) -> Any:
+    try:
+        return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else None
+    except (OSError, ValueError):
+        return None
+
+
+def load_run_ledger(artifacts_dir: Path, workspace: Optional[ProjectWorkspace] = None) -> Dict[str, Any]:
+    """Prompt Ledger entries by shot id: ``prompt_ledger.json`` overlaid with the live telemetry snapshot.
+
+    The director only persists ``prompt_ledger.json`` after stage 8 succeeds, so at verification time the
+    live recorder is the authority and the file covers standalone re-verification of a finished run.
+    """
+    candidates = [Path(artifacts_dir).parent / "prompt_ledger.json", Path(artifacts_dir) / "prompt_ledger.json"]
+    if workspace is not None:
+        candidates.insert(0, workspace.prompt_ledger_path)
+    ledger: Dict[str, Any] = {}
+    for candidate in candidates:
+        data = _load_json_file(candidate)
+        if isinstance(data, dict):
+            ledger.update({k: v for k, v in data.items() if isinstance(v, dict)})
+            break
+        if isinstance(data, list):
+            ledger.update({str(e.get("shot_id")): e for e in data if isinstance(e, dict) and e.get("shot_id")})
+            break
+    recorder = telemetry.current()
+    if recorder is not None:
+        try:
+            ledger.update(recorder.snapshot().get("prompts") or {})
+        except Exception:
+            pass
+    return ledger
+
+
+def _audio_stage_tts_fallback_shots() -> List[str]:
+    """Shots stage 6 flagged ``tts_fallback`` in the live telemetry (best effort)."""
+    recorder = telemetry.current()
+    if recorder is None:
+        return []
+    try:
+        stages = recorder.snapshot().get("stages") or []
+        stage = next(st for st in stages if st.get("stage") == telemetry.stage_number("audio_lip_sync"))
+        return [str(i.get("id")) for i in stage.get("items") or [] if i.get("tts_fallback")]
+    except Exception:
+        return []
+
+
+def silent_voice_stems(script_path: Path, manifest_path: Path) -> List[str]:
+    """Shots with spoken text whose voice stem is digital silence (failed TTS written as a placeholder)."""
+    script = _load_json_file(script_path) or {}
+    manifest = _load_json_file(manifest_path) or {}
+    stems = manifest.get("audio_stems") or []
+    silent: List[str] = []
+    for idx, beat in enumerate(script.get("beats") or []):
+        if not (beat.get("spoken_text") or "").strip() or idx >= len(stems):
+            continue
+        stem = Path(stems[idx])
+        if not stem.is_file():
+            continue
+        res = subprocess.run(
+            ["ffmpeg", "-hide_banner", "-nostats", "-i", str(stem), "-af", "volumedetect", "-f", "null", "-"],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        )
+        peak = re.search(r"max_volume:\s*(-?[\d.]+|-inf) dB", res.stderr.decode("utf-8", "replace"))
+        if peak is None or peak.group(1) == "-inf" or float(peak.group(1)) <= SILENT_STEM_MAX_DB:
+            silent.append(f"shot_{idx + 1:02d}")
+    return silent
+
+
+def verify_prompt_ledger_gate(
+    ledger: Mapping[str, Any], tts_fallback_shots: Iterable[str] = ()
+) -> GateVerificationResult:
+    """Prompt Ledger audit: a master containing placeholders must not be released as PASSED.
+
+    Flags every shot whose ledger entry carries ``degraded_from`` (e.g. R2V degraded to a first frame),
+    a placeholder ``mode`` (LOCAL_FFMPEG / PLACEHOLDER), or ``tts_fallback``; plus any shot in
+    ``tts_fallback_shots`` (stage 6 telemetry / silent stems). ``run_all_verification_gates`` turns a
+    failure of this gate alone into ``overall_status == "DRAFT"``.
+    """
+    flagged: Dict[str, List[str]] = {}
+
+    def _flag(shot: str, reason: str) -> None:
+        flagged.setdefault(shot, [])
+        if reason not in flagged[shot]:
+            flagged[shot].append(reason)
+
+    for shot_id, entry in sorted(ledger.items()):
+        entry = entry if isinstance(entry, Mapping) else {}
+        if entry.get("degraded_from"):
+            _flag(shot_id, f"degraded_from={entry['degraded_from']}")
+        mode = str(entry.get("mode") or "")
+        if mode.upper() in PLACEHOLDER_MODES:
+            _flag(shot_id, f"mode={mode}")
+        if entry.get("tts_fallback"):
+            _flag(shot_id, "tts_fallback")
+    for shot_id in tts_fallback_shots:
+        _flag(str(shot_id), "tts_fallback")
+
+    details = {"shots_audited": len(ledger), "flagged_shots": flagged, "placeholder_count": len(flagged)}
+    passed = not flagged
+    return GateVerificationResult(
+        gate_name=PLACEHOLDER_GATE_NAME,
+        passed=passed,
+        details=details,
+        error_message=None
+        if passed
+        else "Master contains placeholder/degraded content: "
+        + "; ".join(f"{shot} ({', '.join(reasons)})" for shot, reasons in flagged.items()),
+    )
+
+
 def publish_thumbnail_timestamp(duration: float) -> float:
     """Poster-frame time: one second before the end, capped at 18s, never negative."""
     return max(0.0, min(duration - 1.0, THUMBNAIL_MAX_TIMESTAMP))
@@ -541,11 +754,16 @@ def run_all_verification_gates(
     # Run the independent verification gates (including Two-Tier Character Sheet Integrity)
     gate_runners = (
         lambda: verify_technical_gate(video_path),
-        lambda: verify_media_quality_gate(video_path),
+        lambda: verify_media_quality_gate(video_path, target_artifacts_dir / "audio_mix_report.json"),
         lambda: verify_character_sheet_integrity_gate(),
         lambda: verify_character_consistency_gate(manifest_path),
         lambda: verify_continuity_gate(script_path, manifest_path),
         lambda: verify_slideshow_risk_gate(scene_plan_path),
+        lambda: verify_identity_preflight_gate(target_artifacts_dir / "identity_preflight.json"),
+        lambda: verify_prompt_ledger_gate(
+            load_run_ledger(target_artifacts_dir, workspace),
+            sorted(set(_audio_stage_tts_fallback_shots()) | set(silent_voice_stems(script_path, manifest_path))),
+        ),
     )
 
     all_gates: List[GateVerificationResult] = []
@@ -565,7 +783,14 @@ def run_all_verification_gates(
                 "details": gate.details,
             },
         )
-    overall_status = "PASSED" if all(g.passed for g in all_gates) else "FAILED"
+    # DRAFT = every real quality gate passed but the master contains placeholders (ADR 0004).
+    hard_failures = [g for g in all_gates if not g.passed and g.gate_name != PLACEHOLDER_GATE_NAME]
+    if hard_failures:
+        overall_status = STATUS_FAILED
+    elif any(not g.passed for g in all_gates):
+        overall_status = STATUS_DRAFT
+    else:
+        overall_status = STATUS_PASSED
     tech_gate = all_gates[0]
 
     file_size = video_path.stat().st_size if video_path.exists() else 0
@@ -604,7 +829,7 @@ def run_all_verification_gates(
     telemetry.register_artifact(report_file, stage=STAGE_VERIFICATION, label="Render report")
 
     publish_file = target_artifacts_dir / "publish_log.json"
-    if overall_status != "PASSED":
+    if overall_status != STATUS_PASSED:
         # ADR 0004: a master that failed a gate must never reach the publication catalog, and a
         # publish_log.json left by an earlier PASSED run no longer describes this master.
         publish_file.unlink(missing_ok=True)

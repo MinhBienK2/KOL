@@ -271,3 +271,115 @@ def test_master_hits_streaming_loudness_and_true_peak(tmp_path: Path):
     assert report["target_lufs"] == TARGET_LUFS
     assert report["two_pass"] is True
     assert abs(report["output_lufs"] - m["integrated_lufs"]) < 0.5
+
+
+# --------------------------------------------------------------------------------------
+# Per-shot timing: clips are cut to the beat; frozen frames are never used to pad voice
+# --------------------------------------------------------------------------------------
+import re
+
+
+def _moving_clip(path: Path, seconds: float) -> str:
+    _ffmpeg("-f", "lavfi", "-i", f"testsrc2=size=540x960:rate=24:duration={seconds}",
+            "-c:v", "libx264", "-pix_fmt", "yuv420p", str(path))
+    return str(path)
+
+
+def _voice_stem(path: Path, seconds: float) -> str:
+    _ffmpeg("-f", "lavfi", "-i", f"anoisesrc=d={seconds}:c=brown:a=0.4:r=48000",
+            "-af", "aformat=channel_layouts=stereo", str(path))
+    return str(path)
+
+
+def _frozen_seconds(path: Path) -> float:
+    res = subprocess.run(
+        ["ffmpeg", "-hide_banner", "-i", str(path), "-vf", "freezedetect=n=-60dB:d=0.25", "-an", "-f", "null", "-"],
+        capture_output=True, text=True,
+    )
+    return sum(float(x) for x in re.findall(r"freeze_duration: ([\d.]+)", res.stderr))
+
+
+def _timed_script(estimates, caption: str = "") -> ScriptArtifact:
+    return ScriptArtifact(
+        campaign_id="timing",
+        product_name="P",
+        target_duration=sum(estimates),
+        beats=[
+            ScriptBeat(
+                scene_id=f"shot_{i + 1:02d}", beat_type="hook", spoken_text="x", on_screen_text=caption,
+                visual_cue="c", estimated_duration=e,
+            )
+            for i, e in enumerate(estimates)
+        ],
+    )
+
+
+def _compose_timed(tmp_path: Path, estimates, clip_secs, voice_secs, caption: str = ""):
+    raw, stems = [], []
+    for i, (c, v) in enumerate(zip(clip_secs, voice_secs), start=1):
+        raw.append(_moving_clip(tmp_path / f"shot_{i:02d}.mp4", c))
+        stems.append(_voice_stem(tmp_path / f"voice_shot_{i:02d}.wav", v))
+    manifest = AssetManifestArtifact(
+        campaign_id="timing", keyframes=[], raw_video_clips=raw, audio_stems=stems, synced_video_clips=[],
+    )
+    master = tmp_path / "master.mp4"
+    edl = compose_master_commercial(
+        script=_timed_script(estimates, caption), manifest=manifest, output_master_path=master,
+        artifacts_dir=tmp_path, include_captions=bool(caption),
+    )
+    return master, edl, json.loads((tmp_path / "edit_decisions.json").read_text())
+
+
+def test_six_second_clips_are_trimmed_to_beat_runtime_without_freezing(tmp_path: Path):
+    master, _edl, doc = _compose_timed(tmp_path, [2.0, 3.0], clip_secs=[6.0, 6.0], voice_secs=[1.5, 2.5])
+    assert _duration(master) == pytest.approx(5.0, abs=0.25)
+    assert _frozen_seconds(master) == 0.0
+    shots = doc["shots"]
+    assert [s["shot_id"] for s in shots] == ["shot_01", "shot_02"]
+    assert shots[0]["action"] == "trim"
+    assert shots[0]["target_seconds"] == pytest.approx(2.0)
+    assert shots[0]["in_point"] == 0.0 and shots[0]["out_point"] == pytest.approx(2.0)
+    assert shots[1]["timeline_start"] == pytest.approx(2.0)
+    assert shots[1]["timeline_end"] == pytest.approx(5.0)
+    assert doc["total_duration_seconds"] == pytest.approx(5.0)
+
+
+def test_voice_longer_than_beat_extends_shot_with_real_motion_not_frozen_frames(tmp_path: Path):
+    master, _edl, doc = _compose_timed(tmp_path, [1.5], clip_secs=[6.0], voice_secs=[4.0])
+    assert _duration(master) == pytest.approx(4.0, abs=0.25)
+    assert _frozen_seconds(master) == 0.0
+    shot = doc["shots"][0]
+    assert shot["action"] == "trim" and shot["target_seconds"] == pytest.approx(4.0)
+    assert shot["held_tail_seconds"] == 0.0
+
+
+def test_genuinely_short_clip_is_slowed_down_and_recorded_in_edl(tmp_path: Path):
+    master, _edl, doc = _compose_timed(tmp_path, [3.0], clip_secs=[3.0], voice_secs=[3.6])
+    assert _duration(master) == pytest.approx(3.6, abs=0.25)
+    assert _frozen_seconds(master) == 0.0
+    shot = doc["shots"][0]
+    assert shot["action"] == "slowdown"
+    assert shot["slowdown_factor"] == pytest.approx(1.2, abs=0.01)
+
+
+def test_unreachable_voice_length_records_held_tail_as_last_resort(tmp_path: Path):
+    master, _edl, doc = _compose_timed(tmp_path, [2.0], clip_secs=[2.0], voice_secs=[4.0])
+    assert _duration(master) == pytest.approx(4.0, abs=0.25)
+    shot = doc["shots"][0]
+    assert shot["action"] == "slowdown_and_hold"
+    assert shot["held_tail_seconds"] == pytest.approx(4.0 - 2.0 * 1.25, abs=0.01)
+
+
+def test_captions_follow_planned_shot_timecodes(tmp_path: Path):
+    _master, edl, _doc = _compose_timed(tmp_path, [2.0, 3.0], clip_secs=[6.0, 6.0], voice_secs=[1.0, 1.0], caption="HELLO")
+    assert [(c["start"], c["end"]) for c in edl.captions] == [(0.0, 2.0), (2.0, 5.0)]
+
+
+def test_legacy_synced_clips_without_raw_sources_still_compose_and_record_passthrough(tmp_path: Path):
+    clips = [_voiced_clip(tmp_path / f"synced_{i}.mp4", 2.0) for i in (1, 2)]
+    manifest = AssetManifestArtifact(campaign_id="t", keyframes=[], synced_video_clips=clips)
+    master = tmp_path / "legacy.mp4"
+    compose_master_commercial(script=_script(2), manifest=manifest, output_master_path=master, artifacts_dir=tmp_path)
+    doc = json.loads((tmp_path / "edit_decisions.json").read_text())
+    assert [s["action"] for s in doc["shots"]] == ["passthrough", "passthrough"]
+    assert not (tmp_path / "_segments").exists()
