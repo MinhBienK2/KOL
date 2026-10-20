@@ -15,6 +15,7 @@ from pipeline.archetypes import (
     ARCHETYPE_REGISTRY,
     DirectorialArchetypeConfig,
     ProductArchetype,
+    classify_product_archetype,
     get_archetype_config,
 )
 from pipeline.wardrobe import (
@@ -89,6 +90,11 @@ class TopicCatalog:
             default_costume_id=costume_id,
             default_env_id=env_id,
         )
+
+    @classmethod
+    def classify(cls, product_text: str) -> TopicDefinition:
+        """Detect the best matching topic for free product text (title, copy, URL slug)."""
+        return cls.get_topic(classify_product_archetype(product_text))
 
     @classmethod
     def get_default_wardrobe(cls, topic: Union[str, ProductArchetype]) -> Optional[WardrobeItem]:

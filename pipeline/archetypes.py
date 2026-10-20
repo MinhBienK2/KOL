@@ -13,6 +13,8 @@ This module defines:
 
 from __future__ import annotations
 
+import re
+import unicodedata
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -606,7 +608,7 @@ GENERAL_COMMERCIAL_CONFIG = DirectorialArchetypeConfig(
             name="Visceral Pain Agitation",
             target_duration=4.5,
             recommended_role=CharacterRole.MODEL,
-            audio_strategy=AudioStrategy.ON_CAMERA_SPEECH,
+            audio_strategy=AudioStrategy.OFF_CAMERA_VO,
             camera_choreography=CameraChoreography.ZOOM_IN,
             lighting_contract=LightingContract.STUDIO_3POINT,
             narrative_purpose="Show tangible negative consequences (wasted money, lost time, mess).",
@@ -1022,3 +1024,65 @@ def route_character_for_beat(
     if "solution" in beat_type.lower() or "demo" in beat_type.lower() or "macro" in beat_type.lower():
         return CharacterRole.PRODUCT_ONLY, AudioStrategy.OFF_CAMERA_VO
     return CharacterRole.MODEL, AudioStrategy.OFF_CAMERA_VO
+
+
+# ==============================================================================
+# Deterministic Product-to-Archetype Classification
+# ==============================================================================
+
+# Keywords are stored accent-stripped / lower-case (see ``_normalize_text``) and matched on word
+# boundaries so a short token such as "ao" never fires inside "dao".
+_ARCHETYPE_KEYWORDS: Dict[ProductArchetype, Tuple[str, ...]] = {
+    ProductArchetype.FASHION_APPAREL: (
+        "dam", "vay", "ao", "quan", "ao khoac", "blazer", "jacket", "dress", "skirt", "shirt",
+        "jeans", "hoodie", "sweater", "cardigan", "corset", "phom", "form dang", "thoi trang",
+        "giay", "sneaker", "tui xach", "handbag", "fashion", "outfit", "lookbook", "do bo", "set do",
+    ),
+    ProductArchetype.TECH_GADGETS: (
+        "ban phim", "keyboard", "chuot", "mouse", "tai nghe", "earbuds", "headphone", "bluetooth",
+        "wireless", "khong day", "sac du phong", "power bank", "usb", "cap sac", "sac nhanh", "pin",
+        "loa", "speaker", "camera", "man hinh", "laptop", "dien thoai", "smartwatch", "dong ho thong minh",
+        "gadget", "rgb", "led", "cong nghe", "robot", "may chieu",
+    ),
+    ProductArchetype.BEAUTY_SKINCARE: (
+        "serum", "kem duong", "kem chong nang", "sunscreen", "spf", "duong da", "duong am", "skincare",
+        "makeup", "trang diem", "son moi", "lipstick", "mat na", "toner", "cleanser", "sua rua mat",
+        "tay trang", "collagen", "retinol", "vitamin c", "da dau", "da kho", "da mun", "lan da",
+        "nuoc hoa", "perfume", "dau goi", "dau xa", "cham soc da", "lam dep",
+    ),
+    ProductArchetype.HOME_LIFESTYLE: (
+        "nen thom", "tinh dau", "decor", "trang tri", "phong khach", "phong ngu", "nha bep", "nha cua",
+        "ly giu nhiet", "binh giu nhiet", "coc", "binh nuoc", "noi chien", "noi com", "may xay",
+        "den ngu", "den ban", "chan ga", "goi om", "tham", "ke sach", "hop dung", "do gia dung",
+        "kitchen", "candle", "home", "furniture", "noi that", "ap cuc", "cozy", "am cung",
+    ),
+}
+
+
+def _normalize_text(text: str) -> str:
+    """Lower-case, strip Vietnamese diacritics and collapse punctuation to single spaces."""
+    lowered = text.replace("đ", "d").replace("Đ", "D").lower()
+    stripped = "".join(
+        ch for ch in unicodedata.normalize("NFD", lowered) if unicodedata.category(ch) != "Mn"
+    )
+    return re.sub(r"[^a-z0-9]+", " ", stripped).strip()
+
+
+def classify_product_archetype(text: str) -> ProductArchetype:
+    """Deterministically map free product text (title, copy, URL slug) to a ProductArchetype.
+
+    Counts distinct keyword hits per archetype (accent/case-insensitive, whole-word). The archetype
+    with the most hits wins; ties resolve in declaration order; no hits yields GENERAL_COMMERCIAL.
+    """
+    haystack = f" {_normalize_text(text or '')} "
+    if haystack.strip() == "":
+        return ProductArchetype.GENERAL_COMMERCIAL
+    best = ProductArchetype.GENERAL_COMMERCIAL
+    best_score = 0
+    for archetype, keywords in _ARCHETYPE_KEYWORDS.items():
+        score = sum(
+            1 for kw in keywords if re.search(rf"(?<![a-z0-9]){re.escape(kw)}(?![a-z0-9])", haystack)
+        )
+        if score > best_score:
+            best, best_score = archetype, score
+    return best
