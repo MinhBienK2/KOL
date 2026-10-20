@@ -492,7 +492,7 @@ def compose_master_commercial(
             caption_filters.append(
                 f"drawtext=fontfile='{_filter_quote(font_path)}':textfile='{_filter_quote(str(text_file))}':"
                 f"expansion=none:fontcolor=white:fontsize={font_size}:line_spacing={layout.line_spacing}:"
-                f"box=1:boxcolor=black@0.65:boxborderw={layout.box_border}:text_align=center:"
+                f"box=1:boxcolor=black@0.65:boxborderw={layout.box_border}:"
                 f"x=(w-text_w)/2:y=h-{layout.bottom_margin}-text_h-{layout.box_border}:"
                 f"enable='between(t,{start_t:.3f},{visible_end:.3f})'"
             )

@@ -485,6 +485,8 @@ def _split_body_panels(img: Image.Image, count: int = 4) -> list[Image.Image]:
 
     Column/row standard deviation is used instead of background-colour thresholding so
     that a white robe on a light backdrop still separates cleanly from the background.
+    Each figure is tight-cropped to its active silhouette so horizontal centering in its
+    column aligns with the facial portrait below.
     """
     gray = np.asarray(img.convert("L"), dtype=np.float32)
     height, width = gray.shape
@@ -502,48 +504,90 @@ def _split_body_panels(img: Image.Image, count: int = 4) -> list[Image.Image]:
 
     panels: list[Image.Image] = []
     for x0, x1 in spans:
-        row_std = gray[:, x0 : x1 + 1].std(axis=1)
-        rows = np.where(row_std > 4.0)[0]
-        if len(rows) == 0:
+        span_gray = gray[:, x0 : x1 + 1]
+        col_s = span_gray.std(axis=0)
+        row_s = span_gray.std(axis=1)
+        active_cols = np.where(col_s > 4.0)[0]
+        active_rows = np.where(row_s > 4.0)[0]
+        if len(active_cols) == 0 or len(active_rows) == 0:
             return []
-        panels.append(img.crop((x0, int(rows.min()), x1 + 1, int(rows.max()) + 1)))
+        cx0 = x0 + int(active_cols.min())
+        cx1 = x0 + int(active_cols.max())
+        cy0 = int(active_rows.min())
+        cy1 = int(active_rows.max())
+        panels.append(img.crop((cx0, cy0, cx1 + 1, cy1 + 1)))
     return panels
 
 
 def _split_face_grid(grid: Image.Image) -> list[Image.Image]:
-    """Split the 2x2 grid at its quiet gutters, then return four equal panels.
-
-    Finds the widest near-uniform column/row band in the middle 30-70% of each axis.
-    Falls back to the exact midpoint when the model rendered no gutter.
-    """
+    """Split the 2x2 grid by trimming outer white frames and stripping middle gutters."""
     rgb = grid.convert("RGB")
-    arr = np.asarray(rgb).astype(np.int16)
+    arr = np.asarray(rgb)
+    gray = np.asarray(grid.convert("L"), dtype=np.float32)
     w, h = rgb.size
 
-    def _quiet_split(spreads: "np.ndarray", length: int) -> int:
-        lo, hi = int(length * 0.30), int(length * 0.70)
-        best, best_width, run_start = (lo + hi) // 2, 0, None
-        for pos in range(lo, hi):
-            if spreads[pos] <= 6:
-                if run_start is None:
-                    run_start = pos
-            else:
-                if run_start is not None and pos - run_start > best_width:
-                    best, best_width = (run_start + pos) // 2, pos - run_start
-                run_start = None
-        if run_start is not None and hi - run_start > best_width:
-            best = (run_start + hi) // 2
-        return best
+    col_std = gray.std(axis=0)
+    row_std = gray.std(axis=1)
 
-    col_spread = (arr.max(axis=0) - arr.min(axis=0)).max(axis=1)
-    row_spread = (arr.max(axis=1) - arr.min(axis=1)).max(axis=1)
-    split_x = _quiet_split(col_spread, w)
-    split_y = _quiet_split(row_spread, h)
+    # 1. Middle vertical gutter (look in middle 35% to 65%)
+    mid_x = w // 2
+    lo_x, hi_x = int(0.35 * w), int(0.65 * w)
+    quiet_cols = col_std < 3.5
+    runs_x = _quiet_runs(quiet_cols[lo_x:hi_x], min_width=1)
+    runs_x = [(s + lo_x, e + lo_x) for s, e in runs_x]
+    if runs_x:
+        runs_x.sort(key=lambda r: abs((r[0] + r[1]) / 2 - mid_x))
+        x_g_start, x_g_end = runs_x[0]
+    else:
+        x_g_start = x_g_end = mid_x
+
+    # 2. Middle horizontal gutter (look in middle 35% to 65%)
+    mid_y = h // 2
+    lo_y, hi_y = int(0.35 * h), int(0.65 * h)
+    quiet_rows = row_std < 3.5
+    runs_y = _quiet_runs(quiet_rows[lo_y:hi_y], min_width=1)
+    runs_y = [(s + lo_y, e + lo_y) for s, e in runs_y]
+    if runs_y:
+        runs_y.sort(key=lambda r: abs((r[0] + r[1]) / 2 - mid_y))
+        y_g_start, y_g_end = runs_y[0]
+    else:
+        y_g_start = y_g_end = mid_y
+
+    # 3. Outer border frame: trim quiet outer edges that are near white (>235)
+    max_border = int(0.04 * min(w, h))
+    left = 0
+    for x in range(max_border):
+        if arr[:, x, :3].mean() > 235:
+            left = x + 1
+        else:
+            break
+
+    right = w
+    for x in range(w - 1, w - 1 - max_border, -1):
+        if arr[:, x, :3].mean() > 235:
+            right = x
+        else:
+            break
+
+    top = 0
+    for y in range(max_border):
+        if arr[y, :, :3].mean() > 235:
+            top = y + 1
+        else:
+            break
+
+    bottom = h
+    for y in range(h - 1, h - 1 - max_border, -1):
+        if arr[y, :, :3].mean() > 235:
+            bottom = y
+        else:
+            break
+
     boxes = [
-        (0, 0, split_x, split_y),
-        (split_x, 0, w, split_y),
-        (0, split_y, split_x, h),
-        (split_x, split_y, w, h),
+        (left, top, x_g_start, y_g_start),
+        (x_g_end + 1, top, right, y_g_start),
+        (left, y_g_end + 1, x_g_start, bottom),
+        (x_g_end + 1, y_g_end + 1, right, bottom),
     ]
     return [rgb.crop(box) for box in boxes]
 
@@ -552,33 +596,43 @@ def compose_character_sheet(
     body_path: Path,
     faces_path: Path,
     output_path: Path,
-    background: tuple[int, int, int] = SHEET_BG,
+    background: tuple[int, int, int] | None = None,
 ) -> tuple[int, int]:
     """Compose the canonical 4-body-over-4-face layout at ``SHEET_WIDTH`` px."""
     with Image.open(body_path) as body_img, Image.open(faces_path) as faces_img:
+        faces = _split_face_grid(faces_img)
+        if background is None:
+            p0_arr = np.asarray(faces[0])
+            pw, ph = faces[0].size
+            corner = p0_arr[: max(1, int(0.08 * ph)), : max(1, int(0.08 * pw)), :3]
+            background = tuple(int(round(x)) for x in corner.mean(axis=(0, 1)))
+
         body_source = body_img.convert("RGB")
         body_bg = _border_background_mask(body_source)
         body = _replace_background(body_source, body_bg, background)
         body = _trim_to_subject(body, bg_mask=body_bg)
-        faces = _split_face_grid(faces_img)
 
-    body_width, body_height = body.size
-    scaled_height = max(1, round(body_height * SHEET_WIDTH / body_width))
     panels = _split_body_panels(body)
+    cell_w = SHEET_WIDTH // 4  # 629 px
+    TARGET_SCALED_HEIGHT = 1260
+    TARGET_COMMON_HEIGHT = round(TARGET_SCALED_HEIGHT * 0.92)  # 1159 px
+
     if len(panels) == 4:
-        cell_w = SHEET_WIDTH // 4
-        common_height = min((cell_w * 0.96) * panel.height / panel.width for panel in panels)
-        scaled_height = max(1, round(common_height / 0.92))
+        common_height = min(TARGET_COMMON_HEIGHT, min((cell_w * 0.90) * p.height / p.width for p in panels))
+        scaled_height = TARGET_SCALED_HEIGHT
         body_row = Image.new("RGB", (SHEET_WIDTH, scaled_height), background)
         for index, panel in enumerate(panels):
             scale = common_height / panel.height
-            resized = panel.resize((max(1, round(panel.width * scale)), max(1, round(panel.height * scale))), Image.LANCZOS)
-            body_row.paste(
-                resized,
-                (index * cell_w + (cell_w - resized.width) // 2, (scaled_height - resized.height) // 2),
-            )
+            new_w = max(1, round(panel.width * scale))
+            new_h = max(1, round(panel.height * scale))
+            resized = panel.resize((new_w, new_h), Image.LANCZOS)
+            pos_x = index * cell_w + (cell_w - new_w) // 2
+            pos_y = (scaled_height - new_h) // 2
+            body_row.paste(resized, (pos_x, pos_y))
         body = body_row
     else:
+        body_w, body_h = body.size
+        scaled_height = max(1, round(body_h * SHEET_WIDTH / body_w))
         body = body.resize((SHEET_WIDTH, scaled_height), Image.LANCZOS)
 
     face_w, face_h = FACE_PANEL

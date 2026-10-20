@@ -5,7 +5,7 @@
   "sheet": "assets/characters/kol_main/outfits/minimalist_spa_silk/character_sheet.png",
   "sheet_size": [
     2516,
-    2033
+    2056
   ],
   "generation": {
     "provider": "flow2api",
