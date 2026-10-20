@@ -23,12 +23,14 @@ if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
 from pipeline import telemetry  # noqa: E402  (import after the sys.path bootstrap)
+from pipeline.offline import guard_network, guarded_urlopen, guarded_urlretrieve  # noqa: E402
 
 API_BASE_URL = os.environ.get("MINIMAX_BASE_URL", "https://aiapi.2tocom.space")
 API_KEY = os.environ.get("MINIMAX_API_KEY", "sk-cu-hr7Y6QZPkzksXlfn74J4yeF_xmL9Rlubf_tAhD4Sgfw")
 
 
 def upload_first_frame(image_path: str | Path) -> str:
+    guard_network("minimax.upload_first_frame")
     path = Path(image_path)
     if not path.is_absolute():
         path = BASE_DIR / path
@@ -63,7 +65,7 @@ def upload_first_frame(image_path: str | Path) -> str:
     status_code: Optional[int] = None
     error: Optional[str] = None
     try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with guarded_urlopen(req, operation="minimax.upload_first_frame", timeout=60) as resp:
             status_code = getattr(resp, "status", None)
             res = json.loads(resp.read().decode("utf-8"))
             file_url = res["data"]["file_url"]
@@ -90,6 +92,7 @@ def submit_video_job(
     duration: int = 6,
     model: str = "MiniMax-Hailuo-2.3",
 ) -> str:
+    guard_network("minimax.submit_video")
     valid_duration = 10 if duration >= 8.5 else 6
     url = f"{API_BASE_URL.rstrip('/')}/v1/media/video"
     payload: dict = {
@@ -115,7 +118,7 @@ def submit_video_job(
     error: Optional[str] = None
     task_id: Optional[str] = None
     try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with guarded_urlopen(req, operation="minimax.submit_video", timeout=60) as resp:
             status_code = getattr(resp, "status", None)
             res = json.loads(resp.read().decode("utf-8"))
             task_id = res["task_id"]
@@ -143,6 +146,7 @@ def submit_video_job(
 
 
 def poll_and_download_video(task_id: str, output_path: str | Path, timeout_seconds: int = 300) -> str:
+    guard_network("minimax.poll_video")
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     poll_url = f"{API_BASE_URL.rstrip('/')}/v1/media/video/{task_id}"
@@ -160,7 +164,7 @@ def poll_and_download_video(task_id: str, output_path: str | Path, timeout_secon
         status_code: Optional[int] = None
         try:
             req = urllib.request.Request(poll_url, headers=headers)
-            with urllib.request.urlopen(req, timeout=30) as resp:
+            with guarded_urlopen(req, operation="minimax.poll_video", timeout=30) as resp:
                 status_code = getattr(resp, "status", None)
                 res = json.loads(resp.read().decode("utf-8"))
         except Exception as exc:
@@ -191,7 +195,7 @@ def poll_and_download_video(task_id: str, output_path: str | Path, timeout_secon
             download_started = time.monotonic()
             download_error: Optional[str] = None
             try:
-                urllib.request.urlretrieve(video_url, output_path)
+                guarded_urlretrieve(video_url, output_path, operation="minimax.download_video")
             except Exception as exc:
                 download_error = str(exc)
                 raise

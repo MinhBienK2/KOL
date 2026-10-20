@@ -29,6 +29,13 @@ import cv2
 import numpy as np
 from PIL import Image
 
+from pipeline.offline import (
+    OfflineNetworkError,
+    guard_network,
+    guarded_urlopen,
+    guarded_urlretrieve,
+    is_offline,
+)
 from pipeline.config import (
     DEFAULT_IMAGE_MODEL,
     FLOW2API_API_KEY,
@@ -56,6 +63,7 @@ def load_character() -> dict:
 
 def upload_reference_image(image_path: str | Path) -> str:
     """Uploads a local image to MiniMax temporary OSS storage to obtain file_url."""
+    guard_network("minimax.upload_reference_image")
     path = Path(image_path)
     if not path.is_absolute():
         path = BASE_DIR / path
@@ -73,18 +81,18 @@ def upload_reference_image(image_path: str | Path) -> str:
     body.extend(file_bytes)
     body.extend(f"\r\n--{boundary}--\r\n".encode("utf-8"))
 
-    url = f"{API_BASE_URL.rstrip('/')}/v1/media/storage/upload"
+    url = f"{MINIMAX_BASE_URL.rstrip('/')}/v1/media/storage/upload"
     req = urllib.request.Request(
         url,
         data=bytes(body),
         headers={
             "User-Agent": "Mozilla/5.0",
-            "Authorization": f"Bearer {API_KEY}",
+            "Authorization": f"Bearer {MINIMAX_API_KEY}",
             "Content-Type": f"multipart/form-data; boundary={boundary}",
         },
     )
 
-    with urllib.request.urlopen(req, timeout=60) as resp:
+    with guarded_urlopen(req, operation="minimax.upload_reference_image", timeout=60) as resp:
         res = json.loads(resp.read().decode("utf-8"))
         file_url = res["data"]["file_url"]
         return file_url
@@ -118,6 +126,32 @@ def clean_watermark_inpaint(img_path: str | Path, out_path: str | Path) -> None:
     cv2.imwrite(str(out_path), clean_img)
 
 
+_ASPECT_SIZES = {
+    "9:16": (1080, 1920),
+    "16:9": (1920, 1080),
+    "1:1": (1080, 1080),
+    "4:3": (1440, 1080),
+    "3:4": (1080, 1440),
+}
+
+
+def _write_local_reference_frame(reference: Path, output_path: Path, aspect_ratio: str) -> bool:
+    """Deterministic offline fallback: letterbox the reference into the target aspect ratio."""
+    img = cv2.imread(str(reference))
+    if img is None:
+        print(f"[ShotBuilder] Error: cannot decode reference image: {reference}")
+        return False
+    tw, th = _ASPECT_SIZES.get(aspect_ratio, _ASPECT_SIZES["9:16"])
+    h, w = img.shape[:2]
+    scale = min(tw / w, th / h)
+    resized = cv2.resize(img, (max(1, round(w * scale)), max(1, round(h * scale))), interpolation=cv2.INTER_AREA)
+    canvas = np.zeros((th, tw, 3), dtype=np.uint8)
+    y0 = (th - resized.shape[0]) // 2
+    x0 = (tw - resized.shape[1]) // 2
+    canvas[y0 : y0 + resized.shape[0], x0 : x0 + resized.shape[1]] = resized
+    return bool(cv2.imwrite(str(output_path), canvas))
+
+
 def generate_first_frame(
     scene_desc: str,
     output_path: str | Path,
@@ -149,6 +183,15 @@ def generate_first_frame(
         f"Professional studio lighting, 35mm lens, high detail, photorealistic 8k quality, masterclass cinematography."
     )
 
+    if is_offline():
+        # Offline: no paid image generation. Reuse the reference image, fitted to the
+        # requested aspect ratio, as a clearly-reference (not generated) placeholder frame.
+        print(
+            "[ShotBuilder] OFFLINE: skipping Flow2API/MiniMax image generation; "
+            f"using reference image '{reference_image_path.name}' as local placeholder first frame."
+        )
+        return _write_local_reference_frame(reference_image_path, output_path, aspect_ratio)
+
     if provider == "flow2api":
         selected_model = model or ASPECT_RATIO_MODEL_MAP.get(aspect_ratio, DEFAULT_IMAGE_MODEL)
         print(f"[ShotBuilder] 1/2 Invoking Flow2API with model '{selected_model}' and reference '{reference_image_path.name}'...")
@@ -175,7 +218,7 @@ def generate_first_frame(
                     "Content-Type": "application/json",
                 },
             )
-            with urllib.request.urlopen(req, timeout=240) as resp:
+            with guarded_urlopen(req, operation="flow2api.image_generation", timeout=240) as resp:
                 res = json.loads(resp.read().decode("utf-8"))
                 content = res["choices"][0]["message"]["content"]
                 m = re.search(r'\((https?://[^\)]+)\)', content)
@@ -183,11 +226,13 @@ def generate_first_frame(
                     raise ValueError(f"No image URL found in Flow2API response: {content[:200]}")
                 img_url = m.group(1)
                 print(f"[ShotBuilder] Image rendered successfully! Downloading to {output_path}...")
-                urllib.request.urlretrieve(img_url, output_path)
+                guarded_urlretrieve(img_url, output_path, operation="flow2api.download_image")
 
             clean_watermark_inpaint(output_path, output_path)
             print(f"[ShotBuilder] DONE! Clean identity-locked Keyframe saved to: {output_path}")
             return True
+        except OfflineNetworkError:
+            raise
         except Exception as e:
             print(f"[ShotBuilder] Flow2API generation failed: {e}. Falling back to MiniMax...")
 
@@ -218,7 +263,7 @@ def generate_first_frame(
             data=json.dumps(payload).encode("utf-8"),
             headers=headers,
         )
-        with urllib.request.urlopen(req, timeout=180) as resp:
+        with guarded_urlopen(req, operation="minimax.image_generation", timeout=180) as resp:
             res = json.loads(resp.read().decode("utf-8"))
             task_id = res.get("task_id")
             img_url = None
@@ -227,7 +272,7 @@ def generate_first_frame(
                 for _ in range(60):
                     time.sleep(2)
                     q_req = urllib.request.Request(f"{MINIMAX_BASE_URL}/v1/media/image/jobs/{task_id}", headers=headers)
-                    with urllib.request.urlopen(q_req, timeout=30) as q_resp:
+                    with guarded_urlopen(q_req, operation="minimax.image_poll", timeout=30) as q_resp:
                         q_res = json.loads(q_resp.read().decode("utf-8"))
                         if q_res.get("status") == "Success":
                             img_url = q_res["images"][0]["url"]
@@ -239,7 +284,7 @@ def generate_first_frame(
                 raise RuntimeError(f"MiniMax image URL acquisition failed: {res}")
 
             req_dl = urllib.request.Request(img_url, headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(req_dl) as dl_resp, open(temp_raw_path, "wb") as f:
+            with guarded_urlopen(req_dl, operation="minimax.image_download") as dl_resp, open(temp_raw_path, "wb") as f:
                 f.write(dl_resp.read())
 
         clean_watermark_inpaint(temp_raw_path, output_path)
