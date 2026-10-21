@@ -11,6 +11,13 @@ python3 tools/director.py \
   --json
 ```
 
+### Tiền Đề Đầu Vào (Input Prerequisites):
+Trước khi khởi chạy pipeline, hãy luôn đảm bảo:
+- Thư mục đầu vào của dự án `projects/<topic>/<campaign>/input/` đã có ảnh sản phẩm rõ nét (ví dụ: `product_hero.jpg` hoặc `.png`).
+- Nếu chưa có ảnh trong thư mục `input/`, bắt buộc phải truyền cờ:
+  `--references '{"product_hero": "duong/dan/anh_san_pham.jpg"}'`
+- Nếu thiếu ảnh sản phẩm, Stage 4 sẽ dừng lại với lỗi `IdentityReferenceError` theo đúng chuẩn Product Isolation (ADR 0006).
+
 ## 2. HỢP ĐỒNG `--json` & MÃ THOÁT (EXIT CODES)
 Khi truyền cờ `--json`, stdout chỉ in ra duy nhất MỘT object JSON duy nhất chứa toàn bộ thông tin run (log chi tiết chuyển sang stderr):
 ```json

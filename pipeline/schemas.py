@@ -34,8 +34,8 @@ def validate_transition(value: Optional[Dict[str, Any]]) -> Optional[Dict[str, A
 
 
 class PresenterInfo(BaseModel):
-    name: str = "Minh Anh"
-    character_tag: str = "[KOL_MA]"
+    name: str = "Mai Ly"
+    character_tag: str = "[KOL_MAIN]"
     role: str = "Lead Presenter / Protagonist"
     character_file: str = "assets/characters/kol_main/character.json"
 

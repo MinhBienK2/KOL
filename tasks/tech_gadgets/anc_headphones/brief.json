@@ -16,13 +16,13 @@
   "target_duration": 30.0,
   "aspect_ratio": "9:16",
   "has_kol": true,
-  "kol_persona": "Minh Anh",
+  "kol_persona": "Mai Ly",
   "character_role": "presenter",
   "audio_strategy": "on_camera_speech",
   "creative_directives": [
-    "Nhịp 1 (Hook): Khung cảnh đường phố xe cộ ồn ào hỗn loạn, KOL Minh Anh đeo tai nghe lên và bấm nút ANC",
+    "Nhịp 1 (Hook): Khung cảnh đường phố xe cộ ồn ào hỗn loạn, KOL Mai Ly đeo tai nghe lên và bấm nút ANC",
     "Nhịp 2 (Pain): Toàn bộ tạp âm tức thì tắt lịm, thế giới tĩnh lặng chuyển sang tông màu xanh neon êm dịu",
     "Nhịp 3 (USP): Macro chi tiết màng loa bọc kim loại dao động theo từng nhịp bass sống động",
-    "Nhịp 4 (CTA): Minh Anh gật đầu theo điệu nhạc đầy cảm hứng, giơ tai nghe và chỉ tay vào nút đặt hàng độc quyền"
+    "Nhịp 4 (CTA): Mai Ly gật đầu theo điệu nhạc đầy cảm hứng, giơ tai nghe và chỉ tay vào nút đặt hàng độc quyền"
   ]
 }

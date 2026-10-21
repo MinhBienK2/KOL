@@ -11,7 +11,11 @@ Một AI Director Agent xuất sắc không bao giờ dừng lại đầu hàng 
   1. *Nếu Stage 1 lỗi:* Kiểm tra lại URL sản phẩm hoặc tên sản phẩm. Rerun với `--from-stage 1`.
   2. *Nếu Stage 2 lỗi:* Kiểm tra lại brief hoặc file `--beats` xem có bị vượt quá 6s/beat hoặc sai cấu trúc schema không.
   3. *Nếu Stage 3 lỗi:* Điểm Slideshow Risk vượt ngưỡng cho phép. Bổ sung động từ hành động và chuyển động camera vào `--shot-overrides`, chạy lại với `--from-stage 3`.
-  4. *Nếu Stage 4 lỗi:* Thiếu reference ảnh nhân vật hoặc ảnh mờ. Bổ sung ảnh rõ nét vào `--references`, chạy lại với `--from-stage 4`.
+  4. *Nếu Stage 4 lỗi (IdentityReferenceError / Thiếu ảnh sản phẩm hoặc nhân vật):*
+     - Nếu lỗi báo `No product reference available for product_only shots`: Bổ sung ngay ảnh sản phẩm vào `projects/<topic>/<campaign>/input/product_hero.jpg` hoặc truyền cờ `--references '{"product_hero": <path>}'`.
+     - Nếu thiếu ảnh nhân vật hoặc ảnh mờ: Bổ sung ảnh chất lượng cao vào `--references`.
+     - Sau khi bổ sung, tiếp tục pipeline bằng lệnh:
+       `python3 tools/director.py --campaign <id> --from-stage 4`
   5. *Nếu Stage 5 lỗi (Diffusion API 422 / Network Timeout):* Lỗi API dịch vụ sinh video bên ngoài. Chạy lại với `--from-stage 5 --video-mode ffmpeg` để tiếp tục luồng sản xuất hoàn chỉnh.
   6. *Nếu Stage 6 lỗi:* Audio TTS lỗi kết nối hoặc stem bị rỗng. Chạy lại với `--from-stage 6`.
   7. *Nếu Stage 7 lỗi:* Lỗi ghép FFmpeg hoặc sidechain ducking. Chạy lại với `--from-stage 7`.

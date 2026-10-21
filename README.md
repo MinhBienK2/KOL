@@ -50,6 +50,25 @@ python3 tools/director.py --from-stage 6
 python3 tools/director.py --offline
 ```
 
+### Tạo character sheet cho trang phục mới (ADR 0008)
+
+```bash
+# Sinh 4 body panels + 2x2 face grid, ghép sheet 2516 px, rồi đăng ký identity:
+python3 tools/generate_character_sheet.py \
+  --outfit-id minimalist_spa_silk \
+  --wardrobe-id costume_minimalist_spa_silk \
+  --identity-id kol_main_spa \
+  --identity-name "Minimalist Spa Silk" \
+  --character-tag "[KOL_MAIN_SPA]" \
+  --register
+```
+
+- Mặc định dùng `--provider flow2api` (Gemini image / Nano Banana): giữ đúng Face Anchor.
+- `--provider minimax` dùng MiniMax `image-01`; proxy hiện bỏ qua nội dung `file_list`, nên mặt sinh ra lệch identity (SFace cosine ~0.16). Chỉ dùng để thử layout, không đăng ký bản MiniMax cho production.
+- `--single-pass --aspect-ratio 16:9`: 1 call duy nhất, gửi 2 reference (character sheet gốc + face anchor), model trả thẳng 4 body + 4 face trong 2 hàng. Phải dùng 16:9; model 4:3 đang trả portrait 3:4 và sinh thêm hàng mặt.
+- `--from-images BODY FACES` ghép sheet từ ảnh có sẵn, không gọi mạng.
+- Mỗi outfit là một identity trong `character.json`; `ARCHETYPE_IDENTITY_MAP` tự chọn sheet theo archetype.
+
 ### Chỉ đạo của Agent (tuỳ chọn) và Checkpoint con người
 
 Mọi cờ dưới đây đều tuỳ chọn; không truyền thì pipeline chạy hành vi mặc định. Cũng dùng được qua `python -m pipeline.director`.
@@ -59,7 +78,7 @@ Mọi cờ dưới đây đều tuỳ chọn; không truyền thì pipeline ch�
 | `--beats PATH.json` | 2 | Danh sách beat do agent viết, truyền `generate_commercial_script(beats=..., strict=True)` |
 | `--shot-overrides PATH.json` | 3 | Ghi đè từng shot cho `generate_scene_plan(shot_overrides=...)` |
 | `--references PATH.json` | 4 | `reference_overrides` cho `generate_clean_keyframes` |
-| `--character PATH_OR_ID` | 3, 4 | File/thư mục `character.json` hoặc persona id trong `assets/characters/` (vd `kol_minhanh`) |
+| `--character PATH_OR_ID` | 3, 4 | File/thư mục `character.json` hoặc persona id trong `assets/characters/` (vd `kol_main`) |
 | `--strict-resolution` | 4 | Lỗi thay vì chấp nhận reference độ phân giải thấp |
 | `--strict-tts` | 6 | Lỗi thay vì rơi về giọng TTS suy giảm |
 | `--transitions PATH.json` | 7 | Mỗi mối nối một `{"type", "duration"}` (hoặc tên transition); mặc định đọc trường `transition` của từng beat trong `script.json` (transition của beat là mối nối SAU beat đó) |
@@ -185,10 +204,12 @@ KOL/
 │                   ├── keyframes/             # Ảnh First Frame 9:16 sạch đã khử watermark
 │                   ├── media/                 # raw_clips/, synced_clips/, audio/
 │                   └── telemetry/             # state.json & events.jsonl
-├── assets/characters/{persona_id}/  # kol_main (Mai Ly), kol_minhanh (Minh Anh)
+├── assets/characters/{persona_id}/  # kol_main (Mai Ly)
 │   ├── character.json               # Hồ sơ nhân vật; mỗi identity = 1 trang phục
 │   ├── portrait.png                 # Face Anchor
-│   └── outfits/{outfit_id}.png      # 1 character sheet cho mỗi trang phục (ADR 0008)
+│   └── outfits/{outfit_id}/         # 1 character sheet cho mỗi trang phục (ADR 0008)
+│       ├── character_sheet.png      # 4 body panels + 4 face panels, 2516 px wide
+│       └── _source/                 # Ảnh gốc MiniMax/Flow2API + generation.json
 ├── assets/audio/                    # Nhạc nền BGM & hiệu ứng âm thanh SFX
 │   ├── music/commercial_bgm.mp3
 │   └── sfx/pop.mp3, chime.mp3
@@ -213,6 +234,7 @@ KOL/
 │   ├── director.py                  # CLI điều hành Tổng Đạo Diễn
 │   ├── dashboard.py                 # CLI giám sát: serve / --list / --run-id --json
 │   ├── dramaclaw_shot_builder.py
+│   ├── generate_character_sheet.py  # Sinh character sheet theo trang phục + đăng ký identity
 │   └── generate_video.py
 ├── output/
 │   ├── final_commercial_master.mp4  # Video thành phẩm xuất xưởng (1080x1920, H.264, AAC)

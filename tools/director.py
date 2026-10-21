@@ -128,7 +128,7 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Stage 4: reference_overrides for keyframe generation (JSON object)")
     direct.add_argument("--character", metavar="PATH_OR_ID", default=None,
                         help="Stage 3/4: character.json path, character directory, or persona id under "
-                             "assets/characters/ (e.g. kol_minhanh)")
+                             "assets/characters/ (e.g. kol_main)")
     direct.add_argument("--strict-resolution", action="store_true",
                         help="Stage 4: fail instead of accepting low-resolution character references")
     direct.add_argument("--strict-tts", action="store_true",

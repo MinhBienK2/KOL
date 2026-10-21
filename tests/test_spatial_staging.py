@@ -93,7 +93,7 @@ def test_dramaclaw_spatial_grammar_synthesizer():
     )
 
     prompt = DramaClawSpatialGrammar.synthesize_shot_prompt(
-        character_tag="[KOL_MA]",
+        character_tag="[KOL_MAIN]",
         identity_lock="Vietnamese young woman, early 20s, refined oval face",
         scene_action="gently taps the LED touch lid of the Lumina Smart Mug revealing 65C display",
         choreography=CameraChoreographyType.ORBIT,
@@ -103,7 +103,7 @@ def test_dramaclaw_spatial_grammar_synthesizer():
         style_negative="watermark, deformed hands, blurry, static slideshow",
     )
 
-    assert "[KOL_MA]" in prompt
+    assert "[KOL_MAIN]" in prompt
     assert "Vietnamese young woman" in prompt
     assert "Scene Action: gently taps the LED touch lid" in prompt
     assert "Spatial staging anchor [center_desk]" in prompt

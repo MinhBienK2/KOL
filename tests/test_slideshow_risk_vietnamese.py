@@ -8,7 +8,7 @@ from pipeline.slideshow_risk import (
 
 
 def test_vietnamese_kinetic_verbs_are_detected():
-    assert _has_kinetic_subject_action("Minh Anh chạm nhẹ nút cảm ứng trên nắp")
+    assert _has_kinetic_subject_action("Mai Ly chạm nhẹ nút cảm ứng trên nắp")
     assert _has_kinetic_subject_action("KOL bước sải chân tự tin trên phố")
     assert not _has_kinetic_subject_action("Một chiếc ly đặt trên bàn")
 

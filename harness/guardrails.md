@@ -15,8 +15,13 @@
 ## 3. RÀNG BUỘC CHẤT LƯỢNG THỊ GIÁC & TÍNH LIỀN MẠCH (VISUAL CONTINUITY)
 - **Zero Black Frames:** Cấm xuất hiện đoạn khung hình đen kéo dài quá 1.0 giây.
 - **No Frozen Holds:** Không được có phân cảnh đứng yên liên tục >= 2.0s hoặc tổng thời lượng đứng hình vượt quá 20% video.
-- **Character Identity Consistency:** Cấu trúc khuôn mặt, kiểu tóc, màu da của KOL `Minh Anh` phải đồng nhất xuyên suốt giữa shot đầu và shot cuối.
+- **Character Identity Consistency (ADR 0008):** Nhân vật đại diện chuẩn tắc là `Mai Ly` (`kol_main`). Tự động ánh xạ trang phục chuyên nghiệp theo archetype ngành hàng:
+  - Mỹ phẩm / Spa (`beauty_skincare`): dùng `minimalist_spa_silk` (`kol_main_spa`).
+  - Đời sống / Gia dụng (`home_lifestyle`): dùng `cozy_kitchen_knit` (`kol_main_cozy`).
+  - Thời trang / Thương mại chung (`fashion_apparel`, `general_commercial`): dùng `studio_chic_black`.
+- **Product Isolation (ADR 0006):** Đối với các phân cảnh quay riêng sản phẩm (`product_only`), bắt buộc phải có ảnh sản phẩm mẫu độc lập đặt tại `projects/<topic>/<campaign>/input/product_hero.jpg` hoặc truyền qua `--references '{"product_hero": "..."}'`. Tuyệt đối không bao giờ lấy chân dung nhân vật thay thế cho sản phẩm.
 - **Slideshow Risk Gate:** Bắt buộc sử dụng động từ hành động thị giác mạnh mẽ trong prompt; loại bỏ triệt để cảm giác ảnh tĩnh zoom lướt kiểu slideshow.
+- **FFmpeg Drawtext Compatibility:** Mọi hiệu ứng chữ/phụ đề gắn qua FFmpeg tuân thủ cú pháp tương thích FFmpeg 4.4+ (căn giữa ngang bằng `x=(w-text_w)/2`).
 
 ## 4. BỘ 8 CỔNG KIỂM ĐỊNH NGHIỆM THU ĐỘC LẬP (VERIFICATION GATES - ADR 0004)
 1. `technical_integrity_gate`: Chạy `ffprobe` kiểm tra container MP4, codec h264/aac, độ phân giải 1080x1920, sample rate 48kHz.

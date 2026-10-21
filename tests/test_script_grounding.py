@@ -273,9 +273,9 @@ def test_character_path_drives_persona_in_dynamic_path(tmp_path: Path):
 def test_persona_drives_legacy_mug_storyboard(tmp_path: Path):
     brief = create_product_brief(output_dir=tmp_path)
     script = generate_commercial_script(brief=brief, output_dir=tmp_path)
-    plan = generate_scene_plan(script=script, output_dir=tmp_path, persona="kol_minhanh")
-    assert all(s.character_tag == "[KOL_MINHANH]" for s in plan.shots)
-    assert all("[KOL_MINHANH]" in s.prompt_6part for s in plan.shots)
+    plan = generate_scene_plan(script=script, output_dir=tmp_path, persona="kol_main")
+    assert all(s.character_tag == "[KOL_MAIN]" for s in plan.shots)
+    assert all("[KOL_MAIN]" in s.prompt_6part for s in plan.shots)
     assert max(s.estimated_duration for s in plan.shots) <= MAX_BEAT_SECONDS
 
 
