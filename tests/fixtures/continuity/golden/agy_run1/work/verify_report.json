@@ -1,0 +1,83 @@
+{
+  "passed": false,
+  "gates": {
+    "duration": {
+      "value": 22.75,
+      "target": 23.5,
+      "passed": true
+    },
+    "seams": {
+      "cuts": [
+        {
+          "cut": "shot_01->shot_02",
+          "correlation": 0.8488,
+          "color_delta": 4.11,
+          "passed": false
+        },
+        {
+          "cut": "shot_02->shot_03",
+          "correlation": 0.7185,
+          "color_delta": 1.17,
+          "passed": false
+        },
+        {
+          "cut": "shot_03->shot_04",
+          "correlation": 0.7576,
+          "color_delta": 4.46,
+          "passed": false
+        }
+      ],
+      "passed": false
+    },
+    "identity": {
+      "similarity": 0.2518,
+      "min_similarity": 0.171,
+      "passing_ratio": 0.0,
+      "face_found": true,
+      "passed": false,
+      "frames_checked": 10,
+      "frames_with_face": 10,
+      "threshold": 0.45
+    },
+    "voice": {
+      "transcript": "Tan làm, điều mình thích nhất là được lượn một vòng Hồ Tây. Xe một tốc độ, có sẵn baga chắn bùn, lên xe là đi. Phuộc trước giảm xóc, lốp Kenda gai và phanh đĩa chắc chắn. Thống Nhất MTB 26 21 tốc độ, cùng bạn dạo phố.",
+      "wer": 0.04,
+      "cer": 0.0245,
+      "cer_unaccented": 0.0245,
+      "ok": true,
+      "passed": true
+    },
+    "loudness": {
+      "integrated_lufs": -14.79,
+      "true_peak_db": -1.46,
+      "lra": 4.1,
+      "passed": true
+    },
+    "clips": {
+      "per_shot": {
+        "shot_01": {
+          "score": 5.0,
+          "approved": true,
+          "seam_similarity": null
+        },
+        "shot_02": {
+          "score": 4.0,
+          "approved": true,
+          "seam_similarity": 0.8442
+        },
+        "shot_03": {
+          "score": 9.0,
+          "approved": true,
+          "seam_similarity": 0.7341
+        },
+        "shot_04": {
+          "score": 6.0,
+          "approved": true,
+          "seam_similarity": 0.7289
+        }
+      },
+      "passed": true
+    }
+  },
+  "contact_sheet": "projects/continuity/agy_run1/work/contact_sheet.jpg"
+}

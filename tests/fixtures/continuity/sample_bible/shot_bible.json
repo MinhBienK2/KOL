@@ -1,0 +1,111 @@
+{
+  "campaign_id": "thongnhat_morning",
+  "title": "Một tốc, một buổi sáng",
+  "controlling_idea": "Chiếc Thống Nhất MTB 26-02 một tốc biến quãng đường buổi sáng thành phần dễ chịu nhất trong ngày: lên xe là đi, không rườm rà.",
+  "visual_motif": "Chiếc khung đỏ tươi nổi bật trên con phố Hà Nội vàng nhạt, lá xanh và sương sớm; máy quay đi song song với cô ấy như một người bạn đạp cùng, rồi đứng lại khi cô dừng.",
+  "audience_arc": [
+    "Dừng lướt: một hình ảnh buổi sáng đẹp, sạch, có chiếc xe đỏ ở trung tâm",
+    "Thấy sự nhẹ nhàng: lên xe là đi, không cần chỉnh líp",
+    "Tin vào độ chắc chắn: phuộc, lốp, phanh nhìn rõ khi xe lăn ngang khung hình",
+    "Muốn có nó: cô ấy dừng lại, mỉm cười, gọi tên sản phẩm"
+  ],
+  "target_duration": 23.5,
+  "aspect_ratio": "9:16",
+  "product": {
+    "name": "Xe đạp Thống Nhất MTB 26-02 (1 tốc)",
+    "hero_image": "tests/fixtures/continuity/sample_bible/product_hero.png",
+    "canon_text": "a glossy bright-red steel 26-inch mountain bicycle with a classic diamond frame: a straight top tube sloping down from the head tube to the seat tube (NOT step-through, NOT a ladies frame); large white angular 'THONGNHAT' lettering along the down tube; black front suspension fork with an orange reflector; short black mudguards over the front and the rear wheel; black rear cargo rack; black saddle; straight black handlebar; front and rear disc brakes; black knobby KENDA tyres; single speed: one chainring with a round black chain-guard disc, the chain runs straight to one small rear cog on a plain hub, no derailleur, no gear cassette, no gear shifters",
+    "must_show": [
+      "bright red diamond frame with a straight sloping top tube (not step-through)",
+      "white THONGNHAT lettering on the down tube",
+      "black front suspension fork",
+      "black front and rear mudguards",
+      "black rear cargo rack",
+      "single speed: one chainring with round chain-guard disc, no rear derailleur"
+    ],
+    "must_not_show": [
+      "rear derailleur or multi-gear cassette",
+      "step-through / ladies frame",
+      "front basket",
+      "a frame that is not red"
+    ],
+    "allowed_claims": [
+      "một tốc độ (single speed)",
+      "phuộc trước giảm xóc",
+      "lốp Kenda gai",
+      "phanh đĩa",
+      "baga sau và chắn bùn"
+    ],
+    "printed_text": [
+      "THONGNHAT",
+      "KENDA"
+    ]
+  },
+  "talent": {
+    "character_id": "kol_main",
+    "reference_images": [
+      "assets/characters/kol_main/face_anchor.png"
+    ],
+    "canon_text": "a Vietnamese woman in her early twenties, straight chin-length black bob with a side part and no bangs, refined oval face, warm fair skin, natural light makeup, slim build",
+    "wardrobe": "a loose cream linen button-up shirt with rolled sleeves, light-blue straight jeans and clean white canvas sneakers"
+  },
+  "location": {
+    "canon_text": "a quiet tree-lined street in Hanoi's French Quarter: pale-yellow colonial walls with green wooden shutters, tall old trees with thick trunks, a wide clean sidewalk of grey tiles, the asphalt street empty and receding into soft haze",
+    "time_of_day": "early morning, about 6:30",
+    "lighting": "low warm sunlight raking from camera-left through the leaves, soft dappled shadows on the street, gentle haze"
+  },
+  "look": "premium lifestyle commercial, true-to-life colours, soft contrast, warm highlights, subtle film grain, 35mm lens look",
+  "voice": {
+    "voice": "Vietnamese_kindhearted_girl",
+    "speed": 1.0,
+    "music_prompt": "Light acoustic guitar with soft hand claps and a warm hopeful morning mood, 95 bpm, gentle and uplifting, instrumental only"
+  },
+  "shots": [
+    {
+      "shot_id": "shot_01",
+      "purpose": "Hook: a clean, beautiful morning frame with the red bicycle as hero; she is about to ride.",
+      "handoff": "anchor",
+      "keyframe_prompt": "Medium-wide shot from the street edge at chest height. She stands on the sidewalk beside the bicycle, her right hand on the handlebar grip, left hand resting on the saddle, body three-quarters toward the camera, looking down the empty street to her left with a calm half-smile. The entire bicycle is side-on to the camera from front tyre to rear rack, its lettering readable. Behind her a pale-yellow wall with green shutters and a thick tree trunk; the street recedes into morning haze on the left.",
+      "motion_prompt": "She lifts her eyes from the street to the camera with a small smile, then swings her right leg high over the rear of the bicycle and sits on the saddle, both hands on the grips, right foot settling on the raised pedal, ready to ride. The bicycle stays upright and still. Leaves sway gently. [Static shot]",
+      "start_state": "Standing beside the bicycle, hands on the grips, looking down the street.",
+      "end_state": "Seated on the saddle, hands on the grips, right foot on the raised pedal, face visible and smiling toward the camera, bicycle side-on facing left, still.",
+      "vo_text": "Sáng nào mình cũng bắt đầu ở con phố này.",
+      "on_screen_text": "Buổi sáng nhẹ tênh",
+      "duration": 6
+    },
+    {
+      "shot_id": "shot_02",
+      "purpose": "Ease: one push and she glides off; single speed means nothing to fiddle with. The camera rides along like a friend.",
+      "handoff": "chain",
+      "motion_prompt": "She pushes off and pedals slowly to the left along the edge of the empty street, riding smooth and relaxed, the camera moving alongside her at the same distance so she stays medium-wide in frame, the whole red bicycle side-on, dappled light sliding over her. [Tracking shot]",
+      "start_state": "Seated on the bicycle at the sidewalk edge, side-on, ready.",
+      "end_state": "Riding at an easy pace, side-on to the camera in medium-wide framing, face in profile clearly visible, the whole bicycle in frame.",
+      "vo_text": "Xe một tốc, không phải chỉnh líp, đạp là đi.",
+      "on_screen_text": "",
+      "duration": 6
+    },
+    {
+      "shot_id": "shot_03",
+      "purpose": "Proof: riding past at an easy pace so the fork, Kenda tyres and disc brakes read clearly; she looks at us.",
+      "handoff": "chain",
+      "motion_prompt": "She keeps riding at the same easy pace with the camera moving alongside her, turns her head toward the lens and smiles, the front suspension fork, the knobby tyres and the disc brake rolling in clear view. [Tracking shot]",
+      "start_state": "Riding side-on in medium-wide framing, face in profile.",
+      "end_state": "Riding side-on in medium-wide framing, smiling toward the camera, face clearly visible, whole bicycle in frame.",
+      "vo_text": "Phuộc trước êm, lốp Kenda bám đường, phanh đĩa chắc tay.",
+      "on_screen_text": "Phuộc trước · Lốp Kenda · Phanh đĩa",
+      "duration": 6
+    },
+    {
+      "shot_id": "shot_04",
+      "purpose": "Desire and name: back where she started, clean product and face again (re-anchor after two hops); she smiles at us and the product is named.",
+      "handoff": "anchor",
+      "motion_prompt": "She turns from the street to the camera with a warm, confident smile and rests her hand on the saddle, standing relaxed beside the still bicycle. Leaves sway gently. [Push in]",
+      "start_state": "Standing beside the bicycle, hands on the grips, looking down the street.",
+      "end_state": "Smiling at the camera beside the still bicycle, lettering clear.",
+      "vo_text": "Thống Nhất MTB 26-02. Xem giá ở giỏ hàng nhé.",
+      "on_screen_text": "Thống Nhất MTB 26-02",
+      "duration": 6,
+      "keyframe_from": "shot_01"
+    }
+  ]
+}

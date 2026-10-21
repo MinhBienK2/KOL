@@ -913,7 +913,7 @@ class DynamicPromptBuilder:
             f"Subject: {p.base_face_prompt}",
             f"Wardrobe: {rule.wardrobe_directive}",
             f"Delivery action: Direct eye contact to camera, {scene_action}, speaking with clear engaged expression",
-            f"Camera framing: Medium close-up with a {camera_phrase(active_camera, short=False)}",
+            f"Camera move: {camera_phrase(active_camera, short=False)}",
             f"Environment: {rule.environment_directive}",
             f"Lighting: {LIGHTING_PHRASES.get(active_lighting.value, active_lighting.value)}, studio portrait quality, crystal clear 8k resolution",
         ]

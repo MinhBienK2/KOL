@@ -27,7 +27,7 @@ from pipeline.offline import OfflineNetworkError, guard_network, guarded_urlopen
 
 DEFAULT_PROVIDER = "nine-router"
 DEFAULT_MODEL = "2tocom/MiniMax-M3"
-FALLBACK_MODELS = ("2tocom/MiniMax-M3.1-Flash",)
+FALLBACK_MODELS = ("2tocom/MiniMax-M3.1-Flash", "MiniMax-M3.1-Flash")
 DEFAULT_OMP_MODELS_PATH = Path.home() / ".omp" / "agent" / "models.yml"
 
 _THINK_BLOCK = re.compile(r"<think>.*?</think>", re.DOTALL | re.IGNORECASE)
@@ -125,7 +125,8 @@ def _post_chat(provider: LLMProvider, model: str, messages: list, timeout: int,
         payload["temperature"] = temperature
     if max_tokens is not None:
         payload["max_tokens"] = max_tokens
-    headers = {"Content-Type": "application/json"}
+    # Cloudflare-fronted gateways reject urllib's default User-Agent with 403 / error 1010.
+    headers = {"Content-Type": "application/json", "User-Agent": "Mozilla/5.0"}
     if provider.api_key:
         headers["Authorization"] = f"Bearer {provider.api_key}"
     req = urllib.request.Request(provider.chat_url, data=json.dumps(payload).encode("utf-8"), headers=headers)

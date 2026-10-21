@@ -258,12 +258,12 @@ ENVIRONMENT_CATALOG: Dict[str, EnvironmentSetting] = {
         location_type="studio_cyclorama",
         nominal_color_temp_kelvin=5500,
         lighting_contract=LightingContract.STUDIO_3POINT,
-        foreground_elements=["Clean reflective glossy presentation pedestal"],
+        foreground_elements=["Clean reflective glossy presentation stand"],
         midground_elements=["Presenter standing confidently beside hero product"],
         background_elements=["Seamless neutral gradient cyclorama wall, calibrated studio light grids overhead"],
         prompt_set_directive=(
             "SET: Premium commercial broadcast studio, seamless neutral grey cyclorama backdrop, calibrated 3-point 5500K "
-            "softbox lighting, glossy reflection stage pedestal, tack-sharp commercial commercial advertising finish."
+            "softbox lighting, glossy reflective display stage, tack-sharp commercial advertising finish."
         ),
     ),
 }

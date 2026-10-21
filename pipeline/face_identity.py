@@ -45,7 +45,10 @@ DEFAULT_FACE_SIMILARITY_THRESHOLD = 0.363
 #: Minimum YuNet confidence for a detection to count as a face.
 DETECTION_SCORE_THRESHOLD = 0.6
 #: Frames sampled from a clip by default.
-DEFAULT_SAMPLE_FRAMES = 3
+DEFAULT_SAMPLE_FRAMES = 10
+#: Share of face-bearing frames that must clear the threshold. A clip whose identity drifts after
+#: the I2V first frame must fail, so neither the best frame nor a single good frame is enough.
+MIN_PASSING_FRAME_RATIO = 0.8
 
 _ZOO = "https://media.githubusercontent.com/media/opencv/opencv_zoo/main/models"
 
@@ -169,6 +172,28 @@ def embed_face(image_bgr: np.ndarray) -> Optional[np.ndarray]:
         return recognizer.feature(recognizer.alignCrop(image_bgr, faces[0]))
 
 
+def face_yaw(face: np.ndarray) -> float:
+    """Head-turn proxy from a YuNet row: nose offset from the eye midpoint over the eye distance.
+
+    About 0 for a frontal face, 0.3+ for a three-quarter turn, near 1 in profile.
+    """
+    right_eye, left_eye, nose = face[4:6], face[6:8], face[8:10]
+    eye_distance = max(1.0, abs(float(left_eye[0] - right_eye[0])))
+    return abs(float(nose[0] - (right_eye[0] + left_eye[0]) / 2)) / eye_distance
+
+
+def embed_face_with_yaw(image_bgr: np.ndarray) -> Optional[tuple[np.ndarray, float]]:
+    """``(embedding, yaw)`` of the largest face, or None when no face is found."""
+    if image_bgr is None or image_bgr.size == 0:
+        return None
+    with _lock:
+        faces = _detect_faces(image_bgr)
+        if len(faces) == 0:
+            return None
+        recognizer = _recognizer(str(model_cache_dir()))
+        return recognizer.feature(recognizer.alignCrop(image_bgr, faces[0])), face_yaw(faces[0])
+
+
 def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
     va, vb = np.asarray(a, dtype=np.float64).ravel(), np.asarray(b, dtype=np.float64).ravel()
     denom = float(np.linalg.norm(va) * np.linalg.norm(vb))
@@ -218,10 +243,11 @@ def verify_shot_identity(
 ) -> dict[str, Any]:
     """Compare the face(s) in an image or video against the Face Anchor.
 
-    ``anchor`` is an image path or a precomputed embedding. For a video the best similarity over
-    ``n_frames`` sampled frames is used. Returns ``{"similarity", "face_found", "passed",
-    "frames_checked", "frames_with_face", "threshold"}``; ``similarity`` is None when no face was
-    found. Raises :class:`FaceModelsUnavailable` if the models cannot be obtained.
+    ``anchor`` is an image path or a precomputed embedding. For a video the *median* similarity over
+    ``n_frames`` sampled frames is reported, and the clip passes only when at least
+    ``MIN_PASSING_FRAME_RATIO`` of the face-bearing frames clear the threshold. Returns
+    ``{"similarity", "min_similarity", "passing_ratio", "face_found", "passed", "frames_checked",
+    "frames_with_face", "threshold"}``; ``similarity`` is None when no face was found. Raises :class:`FaceModelsUnavailable` if the models cannot be obtained.
     """
     limit = face_similarity_threshold() if threshold is None else threshold
     anchor_emb = anchor if isinstance(anchor, np.ndarray) else embed_face(read_image(anchor))
@@ -240,11 +266,14 @@ def verify_shot_identity(
         embedding = embed_face(frame)
         if embedding is not None:
             scores.append(cosine_similarity(anchor_emb, embedding))
-    best = max(scores) if scores else None
+    median = float(np.median(scores)) if scores else None
+    passing_ratio = (sum(score >= limit for score in scores) / len(scores)) if scores else 0.0
     return {
-        "similarity": None if best is None else round(best, 4),
-        "face_found": best is not None,
-        "passed": best is not None and best >= limit,
+        "similarity": None if median is None else round(median, 4),
+        "min_similarity": round(min(scores), 4) if scores else None,
+        "passing_ratio": round(passing_ratio, 3),
+        "face_found": median is not None,
+        "passed": median is not None and passing_ratio >= MIN_PASSING_FRAME_RATIO,
         "frames_checked": len(frames),
         "frames_with_face": len(scores),
         "threshold": limit,

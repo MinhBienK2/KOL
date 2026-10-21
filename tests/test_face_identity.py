@@ -54,20 +54,33 @@ def test_verify_shot_identity_no_face(tmp_path, monkeypatch):
     assert res == {**res, "similarity": None, "face_found": False, "passed": False}
 
 
-def test_verify_shot_identity_video_takes_best_frame(tmp_path, monkeypatch):
-    video = tmp_path / "clip.mp4"
-    writer = cv2.VideoWriter(str(video), cv2.VideoWriter_fourcc(*"mp4v"), 10, (64, 64))
+def _write_clip(path):
+    writer = cv2.VideoWriter(str(path), cv2.VideoWriter_fourcc(*"mp4v"), 10, (64, 64))
     for i in range(20):
         writer.write(np.full((64, 64, 3), i * 10, dtype=np.uint8))
     writer.release()
-    frames = face_identity.sample_video_frames(video, 3)
-    assert len(frames) == 3
+    return path
 
+
+def test_verify_shot_identity_video_fails_when_identity_drifts(tmp_path, monkeypatch):
+    video = _write_clip(tmp_path / "clip.mp4")
+    assert len(face_identity.sample_video_frames(video, 3)) == 3
+
+    # One on-identity frame (the I2V first frame) no longer rescues a clip whose face drifted.
     scores = iter([None, np.array([[0.0, 1.0]]), np.array([[1.0, 0.0]])])  # no face, off-identity, on-identity
     monkeypatch.setattr(face_identity, "embed_face", lambda frame: next(scores))
     res = face_identity.verify_shot_identity(np.array([[1.0, 0.0]]), video, n_frames=3)
     assert res["frames_checked"] == 3 and res["frames_with_face"] == 2
-    assert res["similarity"] == pytest.approx(1.0) and res["passed"]
+    assert res["passing_ratio"] == pytest.approx(0.5) and res["min_similarity"] == pytest.approx(0.0)
+    assert not res["passed"]
+
+
+def test_verify_shot_identity_video_passes_when_identity_holds(tmp_path, monkeypatch):
+    video = _write_clip(tmp_path / "clip.mp4")
+    scores = iter([np.array([[1.0, 0.0]]), np.array([[0.9, 0.1]]), np.array([[1.0, 0.0]])])
+    monkeypatch.setattr(face_identity, "embed_face", lambda frame: next(scores))
+    res = face_identity.verify_shot_identity(np.array([[1.0, 0.0]]), video, n_frames=3)
+    assert res["passing_ratio"] == pytest.approx(1.0) and res["passed"]
 
 
 def test_sample_video_frames_bad_file(tmp_path):
