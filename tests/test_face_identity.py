@@ -20,7 +20,7 @@ from pipeline.verification import FACE_ROLES, verify_face_identity_gate
 needs_models = pytest.mark.skipif(not face_identity.models_available(), reason="YuNet/SFace models not cached")
 
 MAIN = BASE_DIR / "assets/characters/kol_main"
-MINHANH = BASE_DIR / "assets/characters/kol_minhanh"
+OTHER_PERSONA = BASE_DIR / "tests/fixtures/different_face.png"
 
 
 # ---------------------------------------------------------------- mocked-embedding unit tests
@@ -218,8 +218,8 @@ def test_calibration_same_image_is_near_one():
 @needs_models
 def test_calibration_same_persona_above_and_other_persona_below_threshold():
     threshold = face_identity.DEFAULT_FACE_SIMILARITY_THRESHOLD
-    same = face_identity.identity_similarity(MAIN / "portrait.png", MAIN / "outfits/studio_chic_black.png")
-    other = face_identity.identity_similarity(MAIN / "portrait.png", MINHANH / "portrait.png")
+    same = face_identity.identity_similarity(MAIN / "portrait.png", MAIN / "outfits/studio_chic_black/character_sheet.png")
+    other = face_identity.identity_similarity(MAIN / "portrait.png", OTHER_PERSONA)
     assert same is not None and other is not None
     assert same >= threshold, f"same persona scored {same:.3f}"
     assert other < threshold, f"different persona scored {other:.3f}"
@@ -238,8 +238,8 @@ def test_gate_real_models_pass_same_persona_and_fail_other(tmp_path):
         )
         return verify_face_identity_gate(plan, manifest, character_file=MAIN / "character.json")
 
-    assert run(MAIN / "outfits/studio_chic_black.png").passed
-    wrong = run(MINHANH / "portrait.png")
+    assert run(MAIN / "outfits/studio_chic_black/character_sheet.png").passed
+    wrong = run(OTHER_PERSONA)
     assert not wrong.passed and "below threshold" in wrong.error_message
 
 
