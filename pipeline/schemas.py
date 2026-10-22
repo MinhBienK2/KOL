@@ -133,6 +133,12 @@ class KeyframeAsset(BaseModel):
     height: int = 1920
     generation_mode: Optional[str] = None
     reference_assets: Optional[List[str]] = None
+    # "synthesized" (scene frame rendered from references), "reference_pad" (the reference itself
+    # padded to 9:16: not the planned scene) or "override" (agent-supplied first frame).
+    keyframe_source: Optional[str] = None
+    synthesis_references: Optional[List[str]] = None
+    synthesis_error: Optional[str] = None
+    identity_vs_anchor: Optional[float] = None
 class AssetManifestArtifact(BaseModel):
     campaign_id: str
     keyframes: List[KeyframeAsset]

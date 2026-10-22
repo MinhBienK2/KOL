@@ -102,9 +102,10 @@ def generate_scene_plan(
 
     ``shot_overrides`` lets an orchestrating agent direct individual shots. Keys are a
     ``shot_id`` ("shot_02") or a script ``scene_id``; values may contain ``shot_scale``
-    (ShotScale value/name), ``lens`` (CameraLens), ``angle`` (CameraAngle) and
-    ``extra_direction`` (free text appended to the generation prompt). Unknown scale,
-    lens or angle values raise ``ValueError``.
+    (ShotScale value/name), ``lens`` (CameraLens), ``angle`` (CameraAngle),
+    ``extra_direction`` (free text appended to the generation prompt) and ``set_direction``
+    (replaces the archetype's ``SET:`` clause, e.g. a kitchen instead of the default living
+    room). Unknown scale, lens or angle values raise ``ValueError``.
     """
     shot_overrides = shot_overrides or {}
     target_artifacts_dir = workspace.artifacts_dir if workspace is not None else (output_dir or ARTIFACTS_DIR)
@@ -205,10 +206,13 @@ def generate_scene_plan(
                 camera=beat.camera_choreography,
             )
             framing_clause = framing.to_natural_clause()
+            set_directive = str(override.get("set_direction", "")).strip() or environment.prompt_set_directive
+            if not set_directive.upper().startswith("SET:"):
+                set_directive = f"SET: {set_directive}"
             prompt_parts = [
                 framing_clause,
                 base_prompt,
-                environment.prompt_set_directive,
+                set_directive,
             ]
             if not is_prod_only:
                 prompt_parts.append(wardrobe.prompt_wear_directive)
@@ -237,7 +241,7 @@ def generate_scene_plan(
                 segments=[
                     {"label": "Framing & optics", "text": framing_clause},
                     {"label": "Subject & action", "text": base_prompt},
-                    {"label": "Set & environment", "text": environment.prompt_set_directive},
+                    {"label": "Set & environment", "text": set_directive},
                     *([{"label": "Wardrobe", "text": wardrobe.prompt_wear_directive}] if not is_prod_only else []),
                     *(
                         [{"label": "Articulation", "text": lip_decision.prompt_articulation_directive}]

@@ -67,6 +67,7 @@ class CameraChoreography(str, Enum):
     DUTCH_ANGLE = "dutch_angle"                # Stylized canted horizon for high-energy/tension
     STATIC_MACRO = "macro_push_in"              # Cinematic macro push-in with focal depth shift
     TOP_DOWN_FLAT_LAY = "top_down_flat_lay"    # 90-degree overhead precision for unboxing/swatches
+    LOCKED_OFF = "locked_off"                  # Tripod-still frame; the subject carries all motion
 
 
 class LightingContract(str, Enum):

@@ -46,6 +46,7 @@ _CAMERA_LABEL_EN = {
     "dutch_angle": "dutch-angle",
     "macro_push_in": "macro push-in",
     "top_down_flat_lay": "top-down",
+    "locked_off": "locked-off",
 }
 
 # A short fade leads into the CTA; every other beat is a hard cut. Types come from

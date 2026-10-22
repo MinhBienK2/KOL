@@ -175,6 +175,7 @@ CAMERA_MOTION_PHRASES: Dict[str, str] = {
     "dutch_angle": "canted dutch angle with a slight push-in",
     "macro_push_in": "slow macro push-in",
     "top_down_flat_lay": "overhead top-down framing, gentle drift",
+    "locked_off": "locked-off static camera, no camera movement",
 }
 
 # Short noun-ish labels for embedding inside script visual cues ("Camera orbit ...").
@@ -189,6 +190,7 @@ CAMERA_MOTION_LABELS: Dict[str, str] = {
     "dutch_angle": "dutch-angle",
     "macro_push_in": "macro push-in",
     "top_down_flat_lay": "top-down",
+    "locked_off": "locked-off",
 }
 
 # Keyed by the LightingContract enum *values* in pipeline.archetypes.
@@ -216,10 +218,24 @@ _TOKEN_PHRASES: Dict[str, str] = {**LIGHTING_PHRASES, **CAMERA_MOTION_PHRASES}
 # and are left untouched: the replacement is idempotent, and "orbit" inside
 # "smooth slow orbit around the subject" is not expanded a second time. Hyphen/underscore
 # lookarounds keep words like "tilt-up" or "pedestal-up" out of reach.
+# Bare English words ("pan", "truck", "orbit", "tilt", "pedestal") are only expanded right
+# after a camera label: in free text they are nouns ("four-compartment pan"), not directives.
 _PHRASE_SET = set(_TOKEN_PHRASES.values())
+_BARE_TOKENS = {k for k in _TOKEN_PHRASES if "_" not in k}
 _TOKEN_RE = re.compile(
     r"(?<![\w-])("
-    + "|".join(sorted((re.escape(k) for k in [*_TOKEN_PHRASES, *_PHRASE_SET]), key=len, reverse=True))
+    + "|".join(
+        sorted(
+            (re.escape(k) for k in [*(k for k in _TOKEN_PHRASES if k not in _BARE_TOKENS), *_PHRASE_SET]),
+            key=len,
+            reverse=True,
+        )
+    )
+    + r")(?![\w-])"
+)
+_BARE_TOKEN_RE = re.compile(
+    r"(?i)(\bcamera(?:\s+(?:movement|move|motion|choreography))?\s*:?\s*)("
+    + "|".join(sorted(map(re.escape, _BARE_TOKENS), key=len, reverse=True))
     + r")(?![\w-])"
 )
 
@@ -242,7 +258,8 @@ _BUDGET_DROP_PREFIXES = ("Poise:", "Model does visual acting", "Styled with")
 
 def humanize_directive_tokens(text: str) -> str:
     """Replace snake_case camera/lighting enum values with plain cinematographic phrasing."""
-    return _TOKEN_RE.sub(lambda m: _TOKEN_PHRASES.get(m.group(1), m.group(1)), text)
+    out = _TOKEN_RE.sub(lambda m: _TOKEN_PHRASES.get(m.group(1), m.group(1)), text)
+    return _BARE_TOKEN_RE.sub(lambda m: m.group(1) + _TOKEN_PHRASES[m.group(2).lower()], out)
 
 
 def compact_video_prompt(text: str, max_words: int = 180) -> str:
@@ -343,6 +360,22 @@ def plan_shot_scales(beats: List[Any]) -> List[ShotScale]:
 # DramaClaw Storyboard Contact Sheet (Visual Pre-visualization)
 # ==============================================================================
 
+CONTACT_SHEET_FONTS = (
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
+    "/Library/Fonts/Arial Unicode.ttf",
+    "C:/Windows/Fonts/arial.ttf",
+)
+
+
+def _contact_sheet_font(size: int = 13) -> Any:
+    """First installed TrueType font with Vietnamese coverage, else Pillow's default."""
+    for path in CONTACT_SHEET_FONTS:
+        if Path(path).exists():
+            return ImageFont.truetype(path, size)
+    return ImageFont.load_default()
+
+
 def generate_storyboard_contact_sheet(
     shots: List[Dict[str, Any]],
     output_path: str | Path,
@@ -369,10 +402,12 @@ def generate_storyboard_contact_sheet(
     # Dark slate studio canvas (#0e1117)
     canvas = Image.new("RGB", (canvas_w, canvas_h), "#0e1117")
     draw = ImageDraw.Draw(canvas)
+    # Pillow's default bitmap font has no Vietnamese glyphs (every diacritic renders as a box).
+    draw.font = _contact_sheet_font()
 
     # Title header
     draw.rectangle([(0, 0), (canvas_w, header_h)], fill="#161b22")
-    draw.text((gap, 16), f"🎬 DIRECTOR STORYBOARD CONTACT SHEET: {campaign_title.upper()}", fill="#58a6ff")
+    draw.text((gap, 16), f"DIRECTOR STORYBOARD CONTACT SHEET: {campaign_title.upper()}", fill="#58a6ff")
     draw.text((gap, 42), "DramaClaw Multi-Scale Framing & Spatial Continuity System", fill="#8b949e")
 
     for idx, shot in enumerate(shots):
@@ -409,9 +444,9 @@ def generate_storyboard_contact_sheet(
         )
 
         # Technical Details
-        draw.text((x + 18, y + 54), f"🎥 Motion: {camera_m} | Lens: {shot.get('lens', '50mm_prime')}", fill="#e6edf3")
-        draw.text((x + 18, y + 78), f"💡 Lighting: {lighting} ({kelvin}K)", fill="#e6edf3")
-        draw.text((x + 18, y + 102), f"🎯 Intent: {shot.get('shot_intent', 'Commercial Communication')}", fill="#7ee787")
+        draw.text((x + 18, y + 54), f"Motion: {camera_m} | Lens: {shot.get('lens', '50mm_prime')}", fill="#e6edf3")
+        draw.text((x + 18, y + 78), f"Lighting: {lighting} ({kelvin}K)", fill="#e6edf3")
+        draw.text((x + 18, y + 102), f"Intent: {shot.get('shot_intent', 'Commercial Communication')}", fill="#7ee787")
 
         # Action & Dialogue Box
         action = shot.get("scene_description", "Active kinetic product demonstration")
@@ -445,9 +480,9 @@ def generate_storyboard_contact_sheet(
 
         if spoken:
             draw.text((x + 18, y + 265), "Spoken Audio (VO/Speech):", fill="#58a6ff")
-            draw.text((x + 24, y + 285), f"🗣️ \"{spoken[:48]}...\"", fill="#e6edf3")
+            draw.text((x + 24, y + 285), f"\"{spoken[:48]}...\"", fill="#e6edf3")
         else:
-            draw.text((x + 18, y + 270), "Audio: 🎵 Beat-Synced Commercial BGM + SFX", fill="#7ee787")
+            draw.text((x + 18, y + 270), "Audio: Beat-Synced Commercial BGM + SFX", fill="#7ee787")
 
     canvas.save(out_p, "JPEG", quality=90, optimize=True)
     return str(out_p)

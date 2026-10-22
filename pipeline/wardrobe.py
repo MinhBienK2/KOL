@@ -28,6 +28,12 @@ class CostumeStyle(str, Enum):
     COZY_HOMELIVING = "cozy_homeliving"
 
 
+# Hair is identity, not costume: the face anchor and character sheet own it (kol_main is a
+# chin-length bob). A WEAR: directive that restyles hair (bun, updo, blowout) contradicts the
+# identity prompt and makes the face drift between shots.
+CANON_HAIR = "Character's canonical hairstyle from the identity references, unchanged"
+
+
 class WardrobeItem(BaseModel):
     """A distinct costume outfit profile from the Director's Wardrobe Catalog."""
     costume_id: str
@@ -74,11 +80,11 @@ WARDROBE_CATALOG: Dict[str, WardrobeItem] = {
             "Floor-length black silk satin evening gown with an elegant high asymmetrical leg slit, "
             "bias-cut contouring that hugs the waist, cowl neckline, and a subtle sweeping mini-train."
         ),
-        hair_styling="Sleek polished chignon bun with delicate face-framing tendrils",
+        hair_styling=CANON_HAIR,
         accessories=["Minimalist platinum drop earrings", "Thin strappy metallic stiletto heels"],
         prompt_wear_directive=(
             "WEAR: Wearing an exquisite haute-couture midnight noir French satin silk evening gown with "
-            "asymmetrical high leg slit, fluid bias-cut drape, elegant neckline, sleek polished chignon hair, "
+            "asymmetrical high leg slit, fluid bias-cut drape, elegant neckline, "
             "minimalist platinum jewelry, editorial Parisian gala fashion standard."
         ),
         reference_image_path=None,
@@ -97,7 +103,7 @@ WARDROBE_CATALOG: Dict[str, WardrobeItem] = {
             "Sleek architectural techwear zip hoodie in matte obsidian black over a fitted charcoal crewneck, "
             "clean tapered technical trousers with concealed zip pockets, ultra-modern creator aesthetic."
         ),
-        hair_styling="Modern textured crop / neat low ponytail with clean undercut lines",
+        hair_styling=CANON_HAIR,
         accessories=["Titanium cybernetic smartwatch", "Matte black wireless in-ear monitors"],
         prompt_wear_directive=(
             "WEAR: Wearing modern minimalist obsidian black designer techwear hoodie, clean architectural tailoring, "
@@ -119,11 +125,11 @@ WARDROBE_CATALOG: Dict[str, WardrobeItem] = {
             "Relaxed luxury pearl white silk spa wrap robe, wide kimono sleeves, delicate tied waist sash, "
             "revealing graceful collarbones and glowing bare shoulders for skincare demonstration."
         ),
-        hair_styling="Soft effortless claw clip updo with gentle sunlit wisps around face",
+        hair_styling=CANON_HAIR,
         accessories=["Bare skin aesthetic, zero chunky jewelry, natural healthy lip gloss"],
         prompt_wear_directive=(
             "WEAR: Wearing relaxed luxury pearl-white silk wrap robe with loose kimono sleeves, dewy bare shoulders "
-            "and collarbones, effortless hair claw clip updo, glowing healthy glass-skin skincare aesthetic."
+            "and collarbones, glowing healthy glass-skin skincare aesthetic."
         ),
         reference_image_path=None,
         shot_references={},
@@ -141,11 +147,11 @@ WARDROBE_CATALOG: Dict[str, WardrobeItem] = {
             "Oversized chunky knit oatmeal cashmere sweater with rolled cuffs and slouchy crewneck, "
             "paired with relaxed cream linen lounge pants, warm domestic comfort."
         ),
-        hair_styling="Casual half-up messy bun, soft natural texture",
+        hair_styling=CANON_HAIR,
         accessories=["Ceramic handcrafted ring, warm woolen indoor socks"],
         prompt_wear_directive=(
             "WEAR: Wearing cozy oversized oatmeal cashmere knit sweater with chunky ribbed cuffs, relaxed cream "
-            "linen trousers, casual natural messy bun, warm comforting home sanctuary aesthetic."
+            "linen trousers, warm comforting home sanctuary aesthetic."
         ),
         reference_image_path=None,
         shot_references={},
@@ -163,11 +169,11 @@ WARDROBE_CATALOG: Dict[str, WardrobeItem] = {
             "Sharp tailored single-breasted blazer in slate grey over an elegant silk-chiffon camisole, "
             "structured power shoulders with slim notched lapels, confident professional demeanor."
         ),
-        hair_styling="Polished shoulder-length blowout with soft inward curl",
+        hair_styling=CANON_HAIR,
         accessories=["Brushed gold minimal watch, subtle geometric stud earrings"],
         prompt_wear_directive=(
             "WEAR: Wearing tailored slate-grey designer executive blazer, crisp silk inner camisole, structured "
-            "sharp tailoring, polished shoulder-length blowout, minimalist gold watch, high-trust presenter aesthetic."
+            "sharp tailoring, minimalist gold watch, high-trust presenter aesthetic."
         ),
         reference_image_path=None,
         shot_references={},

@@ -62,6 +62,21 @@ def resolve_character_path(value: Any) -> Optional[Path]:
     raise FileNotFoundError(f"Character not found (file, directory or persona id): {value}")
 
 
+def _synthesize_keyframes(keyframe_source: str, video_mode: str) -> bool:
+    """Stage 4 renders scene first frames from references unless told to pad the references.
+
+    ``auto`` synthesizes whenever real video is produced (not ``ffmpeg`` test mode, not offline):
+    an i2v clip that starts from a padded studio portrait cannot show the planned scene.
+    """
+    if keyframe_source not in ("auto", "synth", "reference"):
+        raise ValueError(f"keyframe_source must be auto|synth|reference, got {keyframe_source!r}")
+    if keyframe_source == "auto":
+        from pipeline.offline import is_offline
+
+        return video_mode != "ffmpeg" and not is_offline()
+    return keyframe_source == "synth"
+
+
 def _call_stage(fn: Any, base: dict[str, Any], optional: Optional[dict[str, Any]] = None) -> Any:
     """Call a stage function, adding only the director instructions that were actually given.
 
@@ -139,6 +154,7 @@ def run_pipeline(
     reference_overrides: Any = None,
     character_path: Any = None,
     strict_resolution: bool = False,
+    keyframe_source: str = "auto",
     transitions: Any = None,
     strict_tts: bool = False,
     pause_after_stage: Optional[int] = None,
@@ -151,7 +167,7 @@ def run_pipeline(
 
     Agent direction (all optional; objects or JSON file paths where noted):
       ``beats`` -> stage 2 (strict), ``shot_overrides`` -> stage 3, ``reference_overrides`` /
-      ``character_path`` / ``strict_resolution`` -> stage 4, ``strict_tts`` -> stage 6,
+      ``character_path`` / ``strict_resolution`` / ``keyframe_source`` -> stage 4, ``strict_tts`` -> stage 6,
       ``transitions`` -> stage 7 (default: per-beat ``transition`` in script.json).
     ``pause_after_stage`` stops cleanly after that stage (returns False, ``result["status"] ==
     "paused"``); resume with ``resume_from_stage=N+1``.  ``result`` (if given) is filled with the
@@ -475,6 +491,7 @@ def run_pipeline(
                             "reference_overrides": reference_overrides,
                             "character_path": character_file,
                             "strict_resolution": strict_resolution,
+                            "synthesize_frames": _synthesize_keyframes(keyframe_source, video_mode),
                         },
                     ),
                 )

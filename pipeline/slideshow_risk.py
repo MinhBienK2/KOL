@@ -54,7 +54,7 @@ _WORD_RE = re.compile(r"[^\W\d_]+", re.UNICODE)
 
 # Static camera motion keywords indicating high slideshow risk
 STATIC_CAMERA_KEYWORDS: Set[str] = {
-    "static", "none", "fixed", "locked-off", "stationary", "no movement",
+    "static", "none", "fixed", "locked-off", "locked_off", "stationary", "no movement",
     "still", "unspecified", "tripod locked", "zero motion",
 }
 

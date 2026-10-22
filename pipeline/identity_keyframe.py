@@ -23,6 +23,53 @@ STAGE_IDENTITY_KEYFRAMES = telemetry.stage_number("identity_keyframes")
 MIN_LONG_EDGE = {"character_sheet": 2048, "face_anchor": 1536, "product_hero": 1024}
 
 
+#: Appended to every synthesized first frame: a still moment the video model can start from.
+SYNTH_FRAME_SUFFIX = (
+    "Vertical 9:16 photograph: the very first frame of this commercial shot, a still moment with no "
+    "motion blur. Photoreal, natural skin texture, true-to-life colours. No text, no captions, no "
+    "subtitles, no logos, no watermark."
+)
+
+
+def compose_synthesis_prompt(shot: Any, reference_roles: List[str]) -> str:
+    """Scene prompt for a first-frame image: reference roles first, then the shot's own prompt."""
+    roles = {
+        "face_anchor": "is the woman: keep her exact face, facial proportions and hairstyle",
+        "product_hero": "is the product: reproduce this exact object, its shape, colour, surface and details",
+    }
+    lines = [
+        f"Reference image {i} {roles.get(role, 'is a visual reference')}." for i, role in enumerate(reference_roles, 1)
+    ]
+    if lines:
+        lines.append("Do not copy any reference's background, lighting or framing.")
+    return "\n".join([*lines, f"SHOT: {shot.prompt_6part}", SYNTH_FRAME_SUFFIX])
+
+
+def synthesize_first_frame(prompt: str, out_path: Path, reference_paths: List[Path]) -> Path:
+    """Render a scene first frame from references (Flow2API, several images in one message)."""
+    from pipeline.continuity import media
+
+    media.flow2api_image(prompt, out_path, reference_paths=reference_paths)
+    raw = cv2.imread(str(out_path))
+    if raw is None:
+        raise IdentityReferenceError(f"Synthesized frame is unreadable: {out_path}")
+    cleaned, _ = inpaint_watermark_array(raw)
+    cv2.imwrite(str(out_path), cleaned)
+    return out_path
+
+
+def _identity_vs_anchor(face_anchor: Optional[Path], image: Path) -> Optional[float]:
+    if face_anchor is None:
+        return None
+    try:
+        from pipeline import face_identity
+
+        sim = face_identity.identity_similarity(face_anchor, image)
+    except Exception:  # noqa: BLE001 - face models unavailable must not block the stage
+        return None
+    return round(sim, 4) if sim is not None else None
+
+
 class IdentityReferenceError(RuntimeError):
     """An identity/product reference is missing or unusable. Never papered over with a fallback."""
 
@@ -323,8 +370,16 @@ def generate_clean_keyframes(
     reference_overrides: Optional[Dict[str, Any]] = None,
     character_path: Optional[Path] = None,
     strict_resolution: bool = False,
+    synthesize_frames: bool = False,
 ) -> AssetManifestArtifact:
     """Generates identity-locked, watermark-cleaned keyframes for all storyboard shots.
+
+    With ``synthesize_frames`` each shot's first frame is rendered from its scene prompt with the
+    face anchor and/or product hero as references (assets are references, never frames). Without
+    it, or when a shot sets ``"synthesize": false``, the reference itself is padded into 9:16:
+    that frame shows a studio portrait or a catalogue photo, not the planned scene, and is marked
+    ``keyframe_source: "reference_pad"`` in the manifest. A failed synthesis falls back to the pad
+    and records ``synthesis_error``; it is never hidden.
 
     Agents can direct identity with `reference_overrides` (or a `reference_overrides.json`
     in the artifacts/ or input/ directory), see `load_reference_overrides`, and a custom
@@ -379,6 +434,11 @@ def generate_clean_keyframes(
             "references": [
                 _resolve_user_path(r, f"{shot_id}.references", workspace) for r in (entry.get("references") or [])
             ],
+            "synthesis_references": [
+                _resolve_user_path(r, f"{shot_id}.synthesis_references", workspace)
+                for r in (entry.get("synthesis_references") or [])
+            ],
+            "synthesize": entry.get("synthesize", True),
         }
 
     face_anchor: Optional[Path] = None
@@ -390,7 +450,7 @@ def generate_clean_keyframes(
         identity_ref = resolve_canonical_identity_reference(archetype_val, char_data, face_anchor)
     if "r2v" in modes:
         char_sheet = _override("character_sheet") or resolve_canonical_character_sheet(archetype_val, char_data)
-    if "product_hero" in modes:
+    if "product_hero" in modes or synthesize_frames:
         product_hero_ref = _override("product_hero") or resolve_product_hero_reference(wardrobe, workspace=workspace)
 
     needed = {
@@ -453,6 +513,34 @@ def generate_clean_keyframes(
             ref_assets = [_repo_rel(p) for p in (extra_refs or [ref_path])]
         clean_keyframe_path = target_keyframes_dir / f"{shot.shot_id}_clean.jpg"
 
+        keyframe_source = "override" if frame_override else "reference_pad"
+        synthesis_error: Optional[str] = None
+        identity_score: Optional[float] = None
+        synth_refs: List[Path] = []
+        if synthesize_frames and not frame_override and per_shot.get("synthesize", True):
+            if per_shot.get("synthesis_references"):
+                synth_refs = list(per_shot["synthesis_references"])
+                synth_roles = ["reference"] * len(synth_refs)
+            elif gen_mode == "product_hero":
+                synth_refs, synth_roles = [product_hero_ref], ["product_hero"]
+            else:
+                synth_refs, synth_roles = [face_anchor], ["face_anchor"]
+                if product_hero_ref is not None:
+                    synth_refs.append(product_hero_ref)
+                    synth_roles.append("product_hero")
+            synth_path = target_keyframes_dir / f"{shot.shot_id}_synth.png"
+            try:
+                synthesize_first_frame(compose_synthesis_prompt(shot, synth_roles), synth_path, synth_refs)
+                ref_path = synth_path
+                keyframe_source = "synthesized"
+                if gen_mode != "product_hero":
+                    identity_score = _identity_vs_anchor(face_anchor, synth_path)
+            except Exception as exc:  # noqa: BLE001 - recorded in the manifest, never hidden
+                synthesis_error = str(exc)[:300]
+                telemetry.note(f"{shot.shot_id}: first-frame synthesis failed, padded reference used: {synthesis_error}", ok=False)
+            if gen_mode != "r2v" and not extra_refs:
+                ref_assets = [_repo_rel(ref_path)]
+
         # Format and fit into 9:16 target with Telea Inpainting (guarded; raises on unreadable input).
         wm_stats: Dict[str, Any] = {}
         w, h = prepare_9_16_frame(ref_path, clean_keyframe_path, target_width=1080, target_height=1920, stats=wm_stats)
@@ -490,6 +578,8 @@ def generate_clean_keyframes(
                 "reference_origin": origin,
                 "generation_mode": gen_mode,
                 "reference_assets": ref_assets,
+                "keyframe_source": keyframe_source,
+                "identity_vs_anchor": identity_score,
             },
         )
 
@@ -503,6 +593,10 @@ def generate_clean_keyframes(
                 height=h,
                 generation_mode=gen_mode,
                 reference_assets=ref_assets,
+                keyframe_source=keyframe_source,
+                synthesis_references=[_repo_rel(p) for p in synth_refs] or None,
+                synthesis_error=synthesis_error,
+                identity_vs_anchor=identity_score,
             )
         )
     total_shots = len(scene_plan.shots)

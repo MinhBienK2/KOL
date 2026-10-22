@@ -70,6 +70,10 @@ Cập nhật mỗi khi đổi phase. Không có file thì bắt đầu vòng 1.
 - Theo dõi log/transcript bằng công cụ theo dõi sự kiện của bạn (hoặc tự hẹn giờ kiểm tra lại), lọc
   `director.py`, `continuity_director.py <step>`, `PAUSED after stage`, `Traceback`, lỗi, kết thúc tiến trình. Không đứng chờ bằng sleep dài.
 
+**Kiểm gateway trước khi giao việc** (mỗi lần đánh thức có bước cần ảnh/video): gọi thử
+`pipeline.identity_keyframe.synthesize_first_frame` với một reference. Flow2API báo `Failed to obtain reCAPTCHA token`
+hai lần cách nhau ≥ 30 phút là bị chặn (mục 8): dừng, không giao omp chạy Stage 4–5.
+
 ## 3. Cổng duyệt từng bước (bạn tự kiểm, không tin omp tự khen)
 
 Một bước trượt thì omp **không được** sang bước sau. Gửi phản hồi cụ thể (cái gì sai, bằng chứng, yêu
@@ -83,10 +87,10 @@ lượng sáng tạo và hình ảnh là việc của bạn.
 
 | Stage | Bạn kiểm (artifact) | Đạt khi |
 |---|---|---|
-| 1 Brief | `artifacts/brief.json`, `competitor_research.json`, `creative_concept.json` | USP đúng sản phẩm thật, không bịa thông số; persona và nỗi đau cụ thể; concept có ý tưởng chủ đạo 1 câu |
-| 2 Script | `artifacts/script.json` | 6 nhịp phục vụ concept; VO chỉ dùng claim có căn cứ; thời lượng nói vừa từng nhịp; không sáo rỗng |
-| 3 Storyboard | `scene_plan.json`, `storyboard_contact_sheet.jpg` | mỗi shot minh họa đúng nhịp của nó; ngôn ngữ máy quay đa dạng có chủ đích; cảnh sản phẩm có ảnh sản phẩm thật (ADR 0006) |
-| 4 Keyframes | `keyframes/`, `asset_manifest.json`, `identity_preflight.json`; mở **từng** ảnh | đúng sản phẩm (hình, màu, chữ in), đúng nhân vật và trang phục theo archetype, không watermark, bố cục khớp scene plan; các shot cùng bối cảnh thì ánh sáng và màu nhất quán |
+| 1 Brief | `artifacts/brief.json`, `competitor_research.json`, `creative_concept.json` (thiếu hai file sau nghĩa là omp không truyền `--url`) | USP đúng sản phẩm thật, không bịa thông số; persona và nỗi đau cụ thể; concept có ý tưởng chủ đạo 1 câu; mỗi stage LLM chạy lại tối đa 3 lần |
+| 2 Script | `artifacts/script.json` | các nhịp phục vụ concept; ý tưởng chủ đạo **hiện ra trong hình** (không chỉ trong VO), có nỗi đau và phần thưởng; mạch thời gian vật lý nhất quán giữa các shot (không lau ngăn đang nấu); VO chỉ dùng claim có căn cứ, không kê lại điều hình đã nói; thời lượng nói vừa từng nhịp; mỗi shot một hành động chính; không sáo rỗng |
+| 3 Storyboard | `scene_plan.json` (đọc **`prompt_6part` từng shot**), `storyboard_contact_sheet.jpg` | mỗi shot minh họa đúng nhịp của nó; prompt không có hai bối cảnh (SET archetype vs hành động), hai kiểu tóc (WEAR vs identity) hay chi tiết mâu thuẫn visual cue; ngôn ngữ máy quay đa dạng có chủ đích; cảnh sản phẩm có ảnh sản phẩm thật (ADR 0006) |
+| 4 Keyframes | `keyframes/`, `asset_manifest.json`, `identity_preflight.json`; mở **từng** ảnh; so hash các keyframe | mọi shot `keyframe_source: "synthesized"` (hoặc `override` có lý do), không có `synthesis_error`, không hai shot trùng ảnh; đúng sản phẩm (hình, màu, chữ in), đúng nhân vật và trang phục theo archetype, không watermark, bố cục khớp scene plan; các shot cùng bối cảnh thì ánh sáng và màu nhất quán |
 | 5 Raw clips | `media/raw_clips/*.mp4` (dải frame từng clip) | chuyển động đúng prompt, không slideshow, sản phẩm không biến dạng, mặt không trôi (`chain.identity_consistency` so với keyframe) |
 | 6 Voice/lip-sync | `media/audio`, `media/synced_clips`, `speech_report.json` | VO đúng chữ (ASR), giọng tự nhiên, khẩu hình khớp khi nhân vật nói |
 | 7 Master | `master.mp4`, `edit_decisions.json`, `audio_mix_report.json` | nhịp dựng đúng kịch bản, chuyển cảnh có lý do, phụ đề không che mặt/sản phẩm, nhạc không lấn lời |
@@ -197,3 +201,9 @@ mạnh/yếu của omp, đề xuất tiếp theo.
   script/scene plan, luân phiên và so sánh A/B). `agent_trace_audit` đọc được run director.py
   (thiếu `--pause-after-stage`, chạy tiếp mà không mở keyframe/clip, không tới stage 8). Gate escape
   đã biết: `campaign_thongnhat_mtb_01/v1` qua 8 gate nhưng QA chấm trượt.
+- 2026-10-22 · v3 · Vòng 1 (A, chảo 4 ngăn). Lọt lỗi: Stage 4 của director.py chỉ đệm face_anchor/product_hero vào
+  9:16 (01=02=06, 03=04=05 trùng hash), cổng 4 cũ không bắt vì chỉ hỏi "đúng sản phẩm/nhân vật". Đây có thể là gốc của
+  "first frame kém" ở thongnhat_mtb. Thêm vào 3A: Stage 1 thiếu research/concept, giới hạn 3 lần chạy lại LLM; Stage 2 ý
+  tưởng phải hiện trong hình và mạch thời gian vật lý; Stage 3 đọc `prompt_6part` tìm mâu thuẫn SET/WEAR; Stage 4
+  `keyframe_source: synthesized` và không trùng ảnh. Thêm bước kiểm gateway trước khi giao việc (vòng 1 dừng vì Flow2API
+  reCAPTCHA sau khi omp đã dùng 4 stage). Đề bài: bẫy "2 ngăn tròn nhỏ" vs ảnh tim/tròn có ích, giữ kiểu bẫy này.

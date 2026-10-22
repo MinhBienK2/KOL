@@ -84,3 +84,109 @@ def test_product_isolation_and_wardrobe_consistency(tmp_path: Path):
             assert face_anchor_name in kf.image_path
             assert kf.generation_mode in ("i2v", "r2v")
             assert kf.reference_assets is not None
+
+
+def _fashion_plan(tmp_path: Path):
+    from pipeline.archetypes import ProductArchetype
+
+    brief = create_product_brief(
+        campaign_id="campaign_synth", product_name="Áo Khoác Blazer Nữ",
+        archetype=ProductArchetype.FASHION_APPAREL, output_dir=tmp_path,
+    )
+    script = generate_commercial_script(brief=brief, output_dir=tmp_path)
+    plan = generate_scene_plan(script=script, output_dir=tmp_path)
+    product = tmp_path / "product_hero.jpg"
+    Image.new("RGB", (1200, 1200), (200, 180, 160)).save(product)
+    return plan, product
+
+
+def test_synthesized_first_frames_follow_the_scene_prompt(tmp_path: Path, monkeypatch):
+    # QA r1: Stage 4 only padded face_anchor/product_hero into 9:16, so every presenter shot was
+    # the same studio portrait and every product shot the same catalogue photo.
+    from pipeline import identity_keyframe
+    from pipeline.archetypes import CharacterRole
+
+    calls = []
+
+    def fake_synth(prompt, out_path, reference_paths):
+        calls.append((prompt, [Path(p).name for p in reference_paths]))
+        Image.new("RGB", (1080, 1920), (90, 60, 30)).save(out_path)
+        return out_path
+
+    monkeypatch.setattr(identity_keyframe, "synthesize_first_frame", fake_synth)
+    plan, product = _fashion_plan(tmp_path)
+    manifest = generate_clean_keyframes(
+        scene_plan=plan, output_dir=tmp_path, keyframes_dir=tmp_path / "keyframes",
+        reference_overrides={"product_hero": str(product)}, synthesize_frames=True,
+    )
+    assert len(calls) == len(plan.shots)
+    kf_map = {kf.shot_id: kf for kf in manifest.keyframes}
+    for shot, (prompt, refs) in zip(plan.shots, calls):
+        kf = kf_map[shot.shot_id]
+        assert kf.keyframe_source == "synthesized"
+        assert shot.prompt_6part in prompt and "No text" in prompt
+        if kf.generation_mode != "r2v":  # i2v starts from the synthesized frame, not the reference
+            assert kf.reference_assets[0].endswith(f"{shot.shot_id}_synth.png")
+        if shot.character_role == CharacterRole.PRODUCT_ONLY:
+            assert refs == ["product_hero.jpg"]  # product isolation holds for synthesis too
+        else:
+            assert refs[0] == Path(json.loads(Path("assets/characters/kol_main/character.json").read_text())["face_anchor"]).name
+            assert "product_hero.jpg" in refs
+
+
+def test_failed_synthesis_falls_back_to_pad_and_is_recorded(tmp_path: Path, monkeypatch):
+    from pipeline import identity_keyframe
+
+    def boom(prompt, out_path, reference_paths):
+        raise RuntimeError("Failed to obtain reCAPTCHA token")
+
+    monkeypatch.setattr(identity_keyframe, "synthesize_first_frame", boom)
+    plan, product = _fashion_plan(tmp_path)
+    manifest = generate_clean_keyframes(
+        scene_plan=plan, output_dir=tmp_path, keyframes_dir=tmp_path / "keyframes",
+        reference_overrides={"product_hero": str(product)}, synthesize_frames=True,
+    )
+    for kf in manifest.keyframes:
+        assert kf.keyframe_source == "reference_pad"
+        assert "reCAPTCHA" in kf.synthesis_error
+        assert Path(kf.cleaned_image_path).exists()
+
+
+def test_per_shot_synthesis_references_and_opt_out(tmp_path: Path, monkeypatch):
+    from pipeline import identity_keyframe
+
+    seen = {}
+
+    def fake_synth(prompt, out_path, reference_paths):
+        seen[out_path.name] = [Path(p).name for p in reference_paths]
+        Image.new("RGB", (1080, 1920), (1, 2, 3)).save(out_path)
+        return out_path
+
+    monkeypatch.setattr(identity_keyframe, "synthesize_first_frame", fake_synth)
+    plan, product = _fashion_plan(tmp_path)
+    face = Path("assets/characters/kol_main/face_anchor.png").resolve()
+    first, second = plan.shots[0].shot_id, plan.shots[1].shot_id
+    manifest = generate_clean_keyframes(
+        scene_plan=plan, output_dir=tmp_path, keyframes_dir=tmp_path / "keyframes",
+        reference_overrides={
+            "product_hero": str(product),
+            "shots": {first: {"synthesis_references": [str(face)]}, second: {"synthesize": False}},
+        },
+        synthesize_frames=True,
+    )
+    kf_map = {kf.shot_id: kf for kf in manifest.keyframes}
+    assert seen[f"{first}_synth.png"] == ["face_anchor.png"]
+    assert f"{second}_synth.png" not in seen
+    assert kf_map[second].keyframe_source == "reference_pad"
+
+
+def test_director_synthesizes_keyframes_only_for_real_video():
+    from pipeline.director import _synthesize_keyframes
+    from pipeline.offline import offline_mode
+
+    assert _synthesize_keyframes("auto", "api") is True
+    assert _synthesize_keyframes("auto", "ffmpeg") is False
+    with offline_mode(True):
+        assert _synthesize_keyframes("auto", "api") is False
+    assert _synthesize_keyframes("reference", "api") is False
+    assert _synthesize_keyframes("synth", "ffmpeg") is True

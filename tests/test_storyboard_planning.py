@@ -181,3 +181,65 @@ def test_scene_plan_carries_spatial_staging_contract(tmp_path: Path):
     assert contract["continuity_ok"] is True
     assert all(s.spatial_staging for s in plan.shots)
     assert all(re.search(r"\d+K", s.spatial_staging) for s in plan.shots)
+
+
+def test_set_direction_override_replaces_archetype_set(tmp_path: Path):
+    # QA r1: home_lifestyle always staged a "living room" while the shots happened at a stove.
+    brief = create_product_brief(output_dir=tmp_path, archetype=ProductArchetype.HOME_LIFESTYLE, campaign_id="c_set")
+    script = generate_commercial_script(brief=brief, output_dir=tmp_path, archetype=ProductArchetype.HOME_LIFESTYLE)
+    plan = generate_scene_plan(
+        script=script, output_dir=tmp_path, shot_overrides={"shot_01": {"set_direction": "Bright family kitchen at a gas stove"}}
+    )
+    assert "SET: Bright family kitchen at a gas stove" in plan.shots[0].prompt_6part
+    assert "living room" not in plan.shots[0].prompt_6part
+    assert "living room" in plan.shots[1].prompt_6part
+
+
+def test_bare_camera_words_in_free_text_are_not_expanded():
+    # QA r1: "four-compartment pan" became "four-compartment slow horizontal pan".
+    out = humanize_directive_tokens("She sets the four-compartment pan on the truck bed. Camera move: pan.")
+    assert "four-compartment pan on the truck bed" in out
+    assert out.endswith("Camera move: slow horizontal pan.")
+    assert humanize_directive_tokens("Camera movement: orbit and zoom_in") == (
+        "Camera movement: smooth slow orbit around the subject and slow push-in toward the subject"
+    )
+
+
+def test_wardrobe_never_restyles_identity_hair():
+    # QA r1: cozy knit WEAR said "messy bun" while kol_main's identity is a chin-length bob.
+    from pipeline.wardrobe import CANON_HAIR, WARDROBE_CATALOG
+
+    hair_words = re.compile(r"\b(bun|updo|chignon|blowout|ponytail|braid|hair)\b", re.I)
+    for item in WARDROBE_CATALOG.values():
+        assert not hair_words.search(item.prompt_wear_directive), item.costume_id
+        assert item.hair_styling == CANON_HAIR
+
+
+def test_contact_sheet_renders_vietnamese_with_truetype_font(tmp_path: Path):
+    from pipeline.cinematography import _contact_sheet_font, generate_storyboard_contact_sheet
+    from PIL import ImageFont
+
+    font = _contact_sheet_font()
+    if not isinstance(font, ImageFont.FreeTypeFont):
+        pytest.skip("no TrueType font with Vietnamese coverage installed")
+    # Distinct diacritics must not collapse onto one fallback box glyph.
+    masks = {ch: bytes(font.getmask(ch)) for ch in "ẬỮĐữ"}
+    assert len(set(masks.values())) == 4
+    out = generate_storyboard_contact_sheet(
+        [{"shot_id": "shot_01", "spoken_text": "Lật không vỡ", "on_screen_text": "LẬT KHÔNG VỠ"}], tmp_path / "sheet.jpg"
+    )
+    assert Path(out).stat().st_size > 0
+
+
+def test_locked_off_camera_is_a_real_static_choice():
+    # QA r1: the director wanted a still frame for the "chaotic morning" hook but the enum had
+    # no static move, so it settled for a dutch angle.
+    from pipeline.archetypes import CameraChoreography
+    from pipeline.slideshow_risk import _is_static_camera
+
+    locked = CameraChoreography("locked_off")
+    assert camera_phrase(locked, short=False) == "locked-off static camera, no camera movement"
+    assert humanize_directive_tokens("Camera move: locked_off.") == (
+        "Camera move: locked-off static camera, no camera movement."
+    )
+    assert _is_static_camera(locked.value)
