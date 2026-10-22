@@ -16,7 +16,11 @@ Một AI Director Agent xuất sắc không bao giờ dừng lại đầu hàng 
      - Nếu thiếu ảnh nhân vật hoặc ảnh mờ: Bổ sung ảnh chất lượng cao vào `--references`.
      - Sau khi bổ sung, tiếp tục pipeline bằng lệnh:
        `python3 tools/director.py --campaign <id> --from-stage 4`
-  5. *Nếu Stage 5 lỗi (Diffusion API 422 / Network Timeout):* Lỗi API dịch vụ sinh video bên ngoài. Chạy lại với `--from-stage 5 --video-mode ffmpeg` để tiếp tục luồng sản xuất hoàn chỉnh.
+     - Nếu lỗi là `FirstFrameSynthesisError` (gateway ảnh Flow2API lỗi khi vẽ first frame): Stage 4 dừng, không có ảnh
+       thay thế. Kiểm gateway, rồi chạy lại `--from-stage 4`. Lỗi `Failed to obtain reCAPTCHA token` thì dừng và báo người
+       dùng. Không tự đổi sang model ảnh khác trừ khi người dùng yêu cầu.
+  5. *Nếu Stage 5 lỗi (Diffusion API 422 / Network Timeout):* Lỗi API dịch vụ sinh video bên ngoài. Kiểm gateway rồi chạy lại `--from-stage 5`. Không chuyển `--video-mode ffmpeg` để đi tiếp: clip placeholder không phải video thật và bị `prompt_ledger_audit_gate` chặn.
+     - Nếu lỗi là `First-frame gate`: shot được nêu chưa có first frame đã vẽ. Chạy lại `--from-stage 4`.
   6. *Nếu Stage 6 lỗi:* Audio TTS lỗi kết nối hoặc stem bị rỗng. Chạy lại với `--from-stage 6`.
   7. *Nếu Stage 7 lỗi:* Lỗi ghép FFmpeg hoặc sidechain ducking. Chạy lại với `--from-stage 7`.
 

@@ -258,20 +258,24 @@ def _plan(prompts: dict[str, str]) -> ScenePlanArtifact:
     )
 
 
-def _manifest(shot_ids) -> AssetManifestArtifact:
+def _manifest(shot_ids, keyframe_source="synthesized") -> AssetManifestArtifact:
     return AssetManifestArtifact(
         campaign_id="c1",
-        keyframes=[KeyframeAsset(shot_id=s, cleaned_image_path=str(PORTRAIT), generation_mode="i2v") for s in shot_ids],
+        keyframes=[
+            KeyframeAsset(shot_id=s, cleaned_image_path=str(PORTRAIT), generation_mode="i2v",
+                          keyframe_source=keyframe_source)
+            for s in shot_ids
+        ],
     )
 
 
-def _batch(tmp_path: Path, prompts: dict[str, str], **kwargs):
+def _batch(tmp_path: Path, prompts: dict[str, str], manifest=None, **kwargs):
     art = tmp_path / "artifacts"
     art.mkdir(exist_ok=True)
     with patch("pipeline.video_engine.score_slideshow_risk", return_value=MagicMock(passed=True, hard_reject_reasons=[])):
         return ve.render_all_video_clips(
             scene_plan=_plan(prompts),
-            manifest=_manifest(prompts),
+            manifest=manifest or _manifest(prompts),
             artifacts_dir=art,
             raw_clips_dir=tmp_path / "clips",
             initial_retry_delay=0.0,
@@ -289,6 +293,18 @@ def test_batch_reuses_current_clips_but_rerenders_when_prompt_changed(tmp_path: 
         assert sub.call_count == 2  # fully cached, no new paid jobs
         _batch(tmp_path, {"shot_01": "prompt A", "shot_02": "prompt B EDITED"})
         assert sub.call_count == 3  # only the edited shot is re-rendered
+
+
+def test_first_frame_gate_refuses_padded_references_before_any_paid_call(tmp_path: Path):
+    prompts = {"shot_01": "a", "shot_02": "b"}
+    manifest = _manifest(prompts)
+    manifest.keyframes[1].keyframe_source = "reference_pad"
+    with patch("pipeline.video_engine.render_single_video_clip") as render:
+        with pytest.raises(VideoGenerationError, match=r"First-frame gate.*shot_02 \(reference_pad\)"):
+            _batch(tmp_path, prompts, manifest=manifest)
+        with pytest.raises(VideoGenerationError, match=r"shot_02 \(no keyframe\)"):
+            _batch(tmp_path, prompts, manifest=AssetManifestArtifact(campaign_id="c1", keyframes=manifest.keyframes[:1]))
+    assert render.call_count == 0
 
 
 def test_batch_fails_fast_and_does_not_submit_remaining_shots(tmp_path: Path):

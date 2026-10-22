@@ -61,6 +61,8 @@ DEFAULT_R2V_MODEL = os.environ.get("KOL_R2V_MODEL", "S2V-01")
 DEFAULT_R2V_STRATEGY = os.environ.get("KOL_R2V_STRATEGY", "subject_reference")
 #: Optional output resolution (``768P``/``1080P``); unset keeps the API default (768P). 1080P forces 6s clips.
 DEFAULT_RESOLUTION: Optional[str] = os.environ.get("KOL_VIDEO_RESOLUTION") or None
+#: Stage-4 ``keyframe_source`` values a real (paid) clip may start from.
+READY_KEYFRAME_SOURCES = ("synthesized", "override")
 
 #: Stage-5 batch progress, shared with the threaded per-shot renderer.
 _progress_lock = threading.Lock()
@@ -802,6 +804,20 @@ def render_all_video_clips(
             manifest = AssetManifestArtifact.model_validate(json.load(f))
 
     keyframes_by_shot = {kf.shot_id: kf for kf in manifest.keyframes}
+    if not local:
+        # First-frame gate: real diffusion starts only from a rendered scene frame (or an agent-supplied
+        # one). A padded reference is a studio portrait / catalogue photo, not the planned scene.
+        not_ready = [
+            f"{shot.shot_id} ({getattr(kf, 'keyframe_source', None) or 'no keyframe'})"
+            for shot in scene_plan.shots
+            for kf in [keyframes_by_shot.get(shot.shot_id)]
+            if kf is None or kf.keyframe_source not in READY_KEYFRAME_SOURCES or kf.synthesis_error
+        ]
+        if not_ready:
+            raise VideoGenerationError(
+                f"First-frame gate: {len(not_ready)} shot(s) have no synthesized first frame: "
+                f"{', '.join(not_ready)}. Rerun Stage 4 (--from-stage 4) before paying for video."
+            )
 
     n_shots = len(scene_plan.shots)
     _progress_state["total"] = n_shots

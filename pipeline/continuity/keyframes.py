@@ -67,31 +67,29 @@ def _identity(bible: ShotBible, base_dir: Path, image: Path) -> Optional[float]:
 
 
 def generate_anchor(bible: ShotBible, shot: Shot, base_dir: Path, out_dir: Path, *,
-                    candidates: int = 3, provider: str = "auto") -> dict:
-    """Render, clean and score candidates for one anchor shot; returns the QC record."""
+                    candidates: int = 3, provider: str = "flow2api") -> dict:
+    """Render, clean and score candidates for one anchor shot; returns the QC record.
+
+    Only ``provider`` is used: a failing gateway is never swapped for another image model.
+    """
+    if provider not in ("flow2api", "minimax"):
+        raise ValueError(f"provider must be flow2api|minimax, got {provider!r}")
     out_dir.mkdir(parents=True, exist_ok=True)
     talent_refs = [base_dir / r for r in bible.talent.reference_images]
     product_ref = base_dir / bible.product.hero_image
     records: List[dict] = []
-    chosen_provider = provider
     for idx in range(candidates):
         path = out_dir / f"{shot.shot_id}_cand{idx + 1}.png"
         record: dict = {"candidate": path.name}
         try:
-            if chosen_provider in ("auto", "flow2api"):
-                try:
-                    media.flow2api_image(compose_keyframe_prompt(bible, shot, with_reference_roles=True), path,
-                                         reference_paths=[talent_refs[0], product_ref])
-                    record["provider"] = "flow2api"
-                    raw = cv2.imread(str(path))
-                    cleaned, _ = inpaint_watermark_array(raw)
-                    cv2.imwrite(str(path), cleaned)
-                except Exception as exc:  # noqa: BLE001
-                    if chosen_provider == "flow2api":
-                        raise
-                    record["flow2api_error"] = str(exc)[:200]
-                    chosen_provider = "minimax"  # do not retry a dead gateway for every candidate
-            if chosen_provider == "minimax":
+            if provider == "flow2api":
+                media.flow2api_image(compose_keyframe_prompt(bible, shot, with_reference_roles=True), path,
+                                     reference_paths=[talent_refs[0], product_ref])
+                record["provider"] = "flow2api"
+                raw = cv2.imread(str(path))
+                cleaned, _ = inpaint_watermark_array(raw)
+                cv2.imwrite(str(path), cleaned)
+            else:
                 # image-01 on this gateway does not hold a face from a reference (measured SFace
                 # 0.03-0.13), so the talent is described in text and identity is locked by the
                 # approved keyframe for the rest of the chain.

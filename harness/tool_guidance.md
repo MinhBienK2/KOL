@@ -46,13 +46,15 @@ Khi truyền cờ `--json`, stdout chỉ in ra duy nhất MỘT object JSON duy 
 
 ## 3. CÁC CỜ CHỈ ĐẠO CHUYÊN SÂU (AGENT DIRECTION FLAGS)
 - `--beats PATH.json`: (Stage 2) Truyền danh sách nhịp thoại kịch bản đã định hình sẵn; hệ thống sẽ validate nghiêm ngặt theo schema.
-- `--keyframe-source auto|synth|reference`: (Stage 4) `synth` vẽ first frame từng shot từ `prompt_6part` với face anchor
-  và/hoặc ảnh sản phẩm làm reference (Flow2API). `reference` chỉ đệm chính ảnh reference vào 9:16, nên frame là ảnh chân dung
-  studio hoặc ảnh catalogue, **không phải cảnh đã phân**. `auto` = synth trừ khi `--video-mode ffmpeg` hoặc `--offline`.
-  Trong `--references`, mỗi shot có thể đặt `"synthesis_references": [..]` (vd shot có chảo cũ: chỉ face anchor, không ảnh sản phẩm)
-  hoặc `"synthesize": false`. Đọc `asset_manifest.json`: shot nào `keyframe_source: "reference_pad"` hoặc có `synthesis_error`
-  là chưa có first frame thật, không được sang Stage 5. Flow2API báo `Failed to obtain reCAPTCHA token` là lỗi gateway: dừng
-  và báo, không chạy lại vòng lặp.
+- `--keyframe-source auto|synth`: (Stage 4) `synth` vẽ first frame từng shot từ `prompt_6part` với face anchor
+  và/hoặc ảnh sản phẩm làm reference (Flow2API). `auto` = synth trừ khi `--video-mode ffmpeg` hoặc `--offline`.
+  Trong `--references`, mỗi shot có thể đặt `"synthesis_references": [..]` (vd shot có chảo cũ: chỉ face anchor, không ảnh
+  sản phẩm) hoặc `"first_frame": PATH` để tự đưa first frame. Không có chế độ đệm ảnh reference (ảnh chân dung studio, ảnh
+  catalogue) làm first frame: `"synthesize": false` bị từ chối. Một shot vẽ lỗi thì Stage 4 dừng với
+  `FirstFrameSynthesisError`, không ghi `asset_manifest.json`; sửa gateway ảnh rồi `--from-stage 4`. Stage 5 (video thật)
+  từ chối mọi shot có `keyframe_source` khác `synthesized`/`override` (First-frame gate), trước mọi lệnh gọi trả phí.
+  Provider ảnh không tự đổi khi lỗi. Flow2API báo `Failed to obtain reCAPTCHA token` là lỗi gateway: dừng và báo, không
+  chạy lại vòng lặp.
 - `--shot-overrides PATH.json`: (Stage 3) Ghi đè thông số camera motion, framing hoặc lighting cho từng shot cụ thể trong scene plan.
   Khoá hợp lệ theo shot (`shot_01` hoặc `scene_id`): `shot_scale`, `lens`, `angle`, `extra_direction` (nối thêm vào prompt),
   `set_direction` (thay câu `SET:` mặc định của archetype, ví dụ home_lifestyle mặc định là phòng khách; cảnh ở bếp phải ghi

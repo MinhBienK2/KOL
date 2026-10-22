@@ -74,6 +74,10 @@ class IdentityReferenceError(RuntimeError):
     """An identity/product reference is missing or unusable. Never papered over with a fallback."""
 
 
+class FirstFrameSynthesisError(RuntimeError):
+    """A shot's first frame could not be rendered. Stage 4 stops; no reference is padded in its place."""
+
+
 ARCHETYPE_IDENTITY_MAP = {
     ProductArchetype.FASHION_APPAREL: "kol_main_fashion",
     ProductArchetype.TECH_GADGETS: "kol_main_techwear",
@@ -375,11 +379,12 @@ def generate_clean_keyframes(
     """Generates identity-locked, watermark-cleaned keyframes for all storyboard shots.
 
     With ``synthesize_frames`` each shot's first frame is rendered from its scene prompt with the
-    face anchor and/or product hero as references (assets are references, never frames). Without
-    it, or when a shot sets ``"synthesize": false``, the reference itself is padded into 9:16:
-    that frame shows a studio portrait or a catalogue photo, not the planned scene, and is marked
-    ``keyframe_source: "reference_pad"`` in the manifest. A failed synthesis falls back to the pad
-    and records ``synthesis_error``; it is never hidden.
+    face anchor and/or product hero as references (assets are references, never frames), unless the
+    shot has an explicit ``first_frame`` override. A failed synthesis raises
+    :class:`FirstFrameSynthesisError` and no manifest is written: a padded studio portrait or
+    catalogue photo is not the planned scene, so it is never used as a stand-in. Without
+    ``synthesize_frames`` (offline / ``ffmpeg`` placeholder runs only) the reference is padded into
+    9:16 and marked ``keyframe_source: "reference_pad"``; Stage 5 refuses such frames for real video.
 
     Agents can direct identity with `reference_overrides` (or a `reference_overrides.json`
     in the artifacts/ or input/ directory), see `load_reference_overrides`, and a custom
@@ -438,8 +443,12 @@ def generate_clean_keyframes(
                 _resolve_user_path(r, f"{shot_id}.synthesis_references", workspace)
                 for r in (entry.get("synthesis_references") or [])
             ],
-            "synthesize": entry.get("synthesize", True),
         }
+        if entry.get("synthesize") is False:
+            raise IdentityReferenceError(
+                f'{shot_id}: "synthesize": false is not supported: a padded reference is not a first frame; '
+                f'give "first_frame" to supply the frame yourself'
+            )
 
     face_anchor: Optional[Path] = None
     char_sheet: Optional[Path] = None
@@ -514,10 +523,9 @@ def generate_clean_keyframes(
         clean_keyframe_path = target_keyframes_dir / f"{shot.shot_id}_clean.jpg"
 
         keyframe_source = "override" if frame_override else "reference_pad"
-        synthesis_error: Optional[str] = None
         identity_score: Optional[float] = None
         synth_refs: List[Path] = []
-        if synthesize_frames and not frame_override and per_shot.get("synthesize", True):
+        if synthesize_frames and not frame_override:
             if per_shot.get("synthesis_references"):
                 synth_refs = list(per_shot["synthesis_references"])
                 synth_roles = ["reference"] * len(synth_refs)
@@ -531,13 +539,16 @@ def generate_clean_keyframes(
             synth_path = target_keyframes_dir / f"{shot.shot_id}_synth.png"
             try:
                 synthesize_first_frame(compose_synthesis_prompt(shot, synth_roles), synth_path, synth_refs)
-                ref_path = synth_path
-                keyframe_source = "synthesized"
-                if gen_mode != "product_hero":
-                    identity_score = _identity_vs_anchor(face_anchor, synth_path)
-            except Exception as exc:  # noqa: BLE001 - recorded in the manifest, never hidden
-                synthesis_error = str(exc)[:300]
-                telemetry.note(f"{shot.shot_id}: first-frame synthesis failed, padded reference used: {synthesis_error}", ok=False)
+            except Exception as exc:
+                telemetry.note(f"{shot.shot_id}: first-frame synthesis failed: {str(exc)[:300]}", ok=False)
+                raise FirstFrameSynthesisError(
+                    f"{shot.shot_id}: first-frame synthesis failed ({exc}). Stage 4 stopped; fix the image "
+                    f"provider and resume with --from-stage 4"
+                ) from exc
+            ref_path = synth_path
+            keyframe_source = "synthesized"
+            if gen_mode != "product_hero":
+                identity_score = _identity_vs_anchor(face_anchor, synth_path)
             if gen_mode != "r2v" and not extra_refs:
                 ref_assets = [_repo_rel(ref_path)]
 
@@ -595,7 +606,6 @@ def generate_clean_keyframes(
                 reference_assets=ref_assets,
                 keyframe_source=keyframe_source,
                 synthesis_references=[_repo_rel(p) for p in synth_refs] or None,
-                synthesis_error=synthesis_error,
                 identity_vs_anchor=identity_score,
             )
         )
