@@ -1,4 +1,0 @@
-QA Stage 3: GẦN ĐẠT. Set/wear/i2v/lint đều tốt. Còn một lỗi ở shot_03:
-- Frame đầu "seal còn dán (attached) mà thấy bề mặt kem bên dưới" là trạng thái không thể (seal bạc che kín miệng hũ), và motion có 2 hành động (bóc seal + chấm kem) trong 3s.
-Sửa: frame đầu = hũ mở nắp, seal bạc còn nguyên che kín miệng hũ, hai đầu ngón tay đang kẹp mép seal. Motion = một hành động: bóc seal ra, lộ bề mặt kem trắng ngà phẳng mịn (trạng thái kết thúc). Việc chấm kem để diễn ra giữa hai shot (shot_04 đã mở bằng đầu ngón tay có kem). Kiểm tra shot_04/05 khớp (hũ đã bóc seal).
-Sửa trong script_v3.json (validate ra []), inject --pause-after-stage 2, chạy lại --from-stage 3 --pause-after-stage 3 --shot-overrides projects/qa/preprod/r4/shot_overrides.json --json < /dev/null, rồi prompt_pack. Cấm như cũ. Báo cáo ngắn: visual_cue_en/motion_cue_en shot_03, prompt ảnh shot_03 toàn văn, lint.

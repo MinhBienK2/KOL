@@ -5,22 +5,9 @@ __pycache__/
 # Legacy output directory
 output/
 
-# Projects directory media binaries
-projects/**/media/
-projects/**/keyframes/
-projects/**/input/
-projects/**/*.mp4
-projects/**/*.wav
-projects/**/*.mp3
-projects/**/*.jpg
-projects/**/*.jpeg
-projects/**/*.png
+# Project workspaces (runs, inputs, QA records) stay local
+projects/
 
-# Retain canonical metadata and prompt ledgers in projects
-!projects/**/project.json
-!projects/**/prompt_ledger.json
-!projects/**/artifacts/
-!projects/**/telemetry/
 .venv/
 
 # Face Identity Gate ONNX models (downloaded on demand; default cache is ~/.cache/kol/models)
