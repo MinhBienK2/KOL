@@ -131,10 +131,10 @@ def build_parser() -> argparse.ArgumentParser:
                              "assets/characters/ (e.g. kol_main)")
     direct.add_argument("--strict-resolution", action="store_true",
                         help="Stage 4: fail instead of accepting low-resolution character references")
-    direct.add_argument("--keyframe-source", choices=("auto", "synth", "reference"), default="auto",
+    direct.add_argument("--keyframe-source", choices=("auto", "synth"), default="auto",
                         help="Stage 4: 'synth' renders each shot's first frame from its scene prompt with the "
-                             "face anchor / product hero as references; 'reference' pads the reference itself "
-                             "(not the planned scene); 'auto' = synth unless --video-mode ffmpeg or --offline")
+                             "face anchor / product hero as references; 'auto' = synth unless --video-mode "
+                             "ffmpeg or --offline. A failed synthesis stops Stage 4")
     direct.add_argument("--strict-tts", action="store_true",
                         help="Stage 6: fail instead of falling back to a degraded TTS voice")
     direct.add_argument("--transitions", metavar="PATH.json", default=None,

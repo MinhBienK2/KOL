@@ -146,7 +146,8 @@ def main() -> int:
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--shots", nargs="*", default=[], help="Limit keyframes/render to these shot ids (forces re-render)")
     parser.add_argument("--candidates", type=int, default=3)
-    parser.add_argument("--provider", default="auto", choices=["auto", "flow2api", "minimax"])
+    parser.add_argument("--provider", default="flow2api", choices=["flow2api", "minimax"],
+                        help="keyframe image provider; never switched automatically on failure")
     parser.add_argument("--attempts", type=int, default=2)
     parser.add_argument("--one", action="store_true", help="render: only the next shot that needs rendering, then stop for review")
     parser.add_argument("--resolution", default="1080P", choices=["768P", "1080P"])

@@ -261,8 +261,15 @@ def test_ffmpeg_mode_works_without_kol_offline_env_and_scopes_guard(tmp_path, mo
 
 
 def test_api_mode_discards_stale_placeholder_instead_of_caching_it(tmp_path, monkeypatch):
+    from pipeline import identity_keyframe
+
+    def fake_synth(prompt, out_path, reference_paths):
+        Image.new("RGB", (1080, 1920), (90, 60, 30)).save(out_path)
+        return out_path
+
+    monkeypatch.setattr(identity_keyframe, "synthesize_first_frame", fake_synth)
     ws, _, plan = _build_workspace(tmp_path)
-    generate_clean_keyframes(scene_plan=plan, workspace=ws)
+    generate_clean_keyframes(scene_plan=plan, workspace=ws, synthesize_frames=True)  # api mode needs real first frames
     render_all_video_clips(mode="ffmpeg", workspace=ws)
     called = []
 

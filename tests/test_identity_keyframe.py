@@ -1,12 +1,13 @@
 from pathlib import Path
 import json
 import cv2
+import pytest
 from PIL import Image
 
 from pipeline.briefing import create_product_brief
 from pipeline.scriptwriter import generate_commercial_script
 from pipeline.storyboard import generate_scene_plan
-from pipeline.identity_keyframe import generate_clean_keyframes, prepare_9_16_frame
+from pipeline.identity_keyframe import IdentityReferenceError, generate_clean_keyframes, prepare_9_16_frame
 from pipeline.schemas import AssetManifestArtifact
 
 
@@ -134,7 +135,7 @@ def test_synthesized_first_frames_follow_the_scene_prompt(tmp_path: Path, monkey
             assert "product_hero.jpg" in refs
 
 
-def test_failed_synthesis_falls_back_to_pad_and_is_recorded(tmp_path: Path, monkeypatch):
+def test_failed_synthesis_stops_stage_4_without_padding_a_reference(tmp_path: Path, monkeypatch):
     from pipeline import identity_keyframe
 
     def boom(prompt, out_path, reference_paths):
@@ -142,17 +143,16 @@ def test_failed_synthesis_falls_back_to_pad_and_is_recorded(tmp_path: Path, monk
 
     monkeypatch.setattr(identity_keyframe, "synthesize_first_frame", boom)
     plan, product = _fashion_plan(tmp_path)
-    manifest = generate_clean_keyframes(
-        scene_plan=plan, output_dir=tmp_path, keyframes_dir=tmp_path / "keyframes",
-        reference_overrides={"product_hero": str(product)}, synthesize_frames=True,
-    )
-    for kf in manifest.keyframes:
-        assert kf.keyframe_source == "reference_pad"
-        assert "reCAPTCHA" in kf.synthesis_error
-        assert Path(kf.cleaned_image_path).exists()
+    with pytest.raises(identity_keyframe.FirstFrameSynthesisError, match="reCAPTCHA"):
+        generate_clean_keyframes(
+            scene_plan=plan, output_dir=tmp_path, keyframes_dir=tmp_path / "keyframes",
+            reference_overrides={"product_hero": str(product)}, synthesize_frames=True,
+        )
+    assert not (tmp_path / "asset_manifest.json").exists()
+    assert not list((tmp_path / "keyframes").glob("*_clean.jpg"))
 
 
-def test_per_shot_synthesis_references_and_opt_out(tmp_path: Path, monkeypatch):
+def test_per_shot_synthesis_references(tmp_path: Path, monkeypatch):
     from pipeline import identity_keyframe
 
     seen = {}
@@ -170,14 +170,23 @@ def test_per_shot_synthesis_references_and_opt_out(tmp_path: Path, monkeypatch):
         scene_plan=plan, output_dir=tmp_path, keyframes_dir=tmp_path / "keyframes",
         reference_overrides={
             "product_hero": str(product),
-            "shots": {first: {"synthesis_references": [str(face)]}, second: {"synthesize": False}},
+            "shots": {first: {"synthesis_references": [str(face)]}},
         },
         synthesize_frames=True,
     )
     kf_map = {kf.shot_id: kf for kf in manifest.keyframes}
     assert seen[f"{first}_synth.png"] == ["face_anchor.png"]
-    assert f"{second}_synth.png" not in seen
-    assert kf_map[second].keyframe_source == "reference_pad"
+    assert kf_map[second].keyframe_source == "synthesized"
+
+
+def test_per_shot_synthesis_opt_out_is_rejected(tmp_path: Path):
+    plan, product = _fashion_plan(tmp_path)
+    with pytest.raises(IdentityReferenceError, match="first_frame"):
+        generate_clean_keyframes(
+            scene_plan=plan, output_dir=tmp_path, keyframes_dir=tmp_path / "keyframes",
+            reference_overrides={"product_hero": str(product), "shots": {plan.shots[1].shot_id: {"synthesize": False}}},
+            synthesize_frames=True,
+        )
 
 
 def test_director_synthesizes_keyframes_only_for_real_video():
@@ -188,5 +197,6 @@ def test_director_synthesizes_keyframes_only_for_real_video():
     assert _synthesize_keyframes("auto", "ffmpeg") is False
     with offline_mode(True):
         assert _synthesize_keyframes("auto", "api") is False
-    assert _synthesize_keyframes("reference", "api") is False
+    with pytest.raises(ValueError):
+        _synthesize_keyframes("reference", "api")
     assert _synthesize_keyframes("synth", "ffmpeg") is True

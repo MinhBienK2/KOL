@@ -63,13 +63,13 @@ def resolve_character_path(value: Any) -> Optional[Path]:
 
 
 def _synthesize_keyframes(keyframe_source: str, video_mode: str) -> bool:
-    """Stage 4 renders scene first frames from references unless told to pad the references.
+    """Stage 4 renders scene first frames from references.
 
     ``auto`` synthesizes whenever real video is produced (not ``ffmpeg`` test mode, not offline):
     an i2v clip that starts from a padded studio portrait cannot show the planned scene.
     """
-    if keyframe_source not in ("auto", "synth", "reference"):
-        raise ValueError(f"keyframe_source must be auto|synth|reference, got {keyframe_source!r}")
+    if keyframe_source not in ("auto", "synth"):
+        raise ValueError(f"keyframe_source must be auto|synth, got {keyframe_source!r}")
     if keyframe_source == "auto":
         from pipeline.offline import is_offline
 
