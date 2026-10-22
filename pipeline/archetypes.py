@@ -78,6 +78,9 @@ class LightingContract(str, Enum):
     CYBERPUNK_NEON = "cyberpunk_neon"          # Cyan and magenta edge rim, low-key ambient (mixed K)
     NORDIC_MINIMALIST = "nordic_minimalist"    # Soft diffused daylight, muted warm wood tones (4500K)
     BEAUTY_HIGH_KEY = "beauty_high_key"        # Radiant diffuse softbox, ring light eye reflection (5600K)
+    NATURAL_DAYLIGHT = "natural_daylight"      # Real outdoor/indoor daylight, sun up, crisp natural shadows (5600K)
+    OVERCAST_SOFT = "overcast_soft"            # Overcast / after-rain sky, shadowless soft light, wet sheen (6500K)
+    PRACTICAL_NIGHT = "practical_night"        # Night interior lit by an in-frame lamp, deep falloff to shadow (4000K)
 
 
 # ==============================================================================
@@ -719,7 +722,7 @@ PERSONA_CATALOG: Dict[str, CharacterPersona] = {
         base_face_prompt=(
             "Vietnamese young woman, early 20s, refined oval face shape, natural chin-length black "
             "bob hairstyle, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, "
-            "natural soft lips, smooth warm fair skin, calm intelligent and approachable expression, 8k"
+            "natural soft lips, smooth warm fair skin, calm intelligent and approachable expression"
         ),
         character_file="assets/characters/kol_main/character.json",
         supported_archetypes=[
@@ -890,21 +893,22 @@ class DynamicPromptBuilder:
                 f"Camera movement: {camera_phrase(active_camera, short=False)} with shallow depth of field, sharp focal plane on product geometry and surface materials",
                 f"Environment and staging: {rule.environment_directive}",
                 f"Lighting key: {LIGHTING_PHRASES.get(active_lighting.value, active_lighting.value)} at {config.nominal_color_temp_kelvin}K, realistic reflections and highlights",
-                "Cinematic 8k commercial quality, photorealistic, zero character face, hyper-detailed textures",
+                "Photorealistic commercial product shot, zero character face",
             ]
             return ". ".join(parts)
 
         if character_role == CharacterRole.MODEL:
             # Visual acting model - NO mouth speaking cues
             parts = [
-                f"Commercial fashion and lifestyle video featuring {p.character_tag} {p.name}",
+                f"Commercial lifestyle video featuring {p.character_tag} {p.name}",
                 f"Subject: {p.base_face_prompt}",
                 f"Wardrobe and styling: {rule.wardrobe_directive}",
                 f"Visual acting action: {scene_action}",
-                f"Poise: {config.character_guidance}",
+                # character_guidance coaches a presenter (eye contact, gestures); a model acts unaware of camera.
+                "Candid natural body language, gaze on what she is doing, not looking at the camera",
                 f"Camera movement: {camera_phrase(active_camera, short=False)}",
                 f"Environment: {rule.environment_directive}",
-                f"Lighting: {LIGHTING_PHRASES.get(active_lighting.value, active_lighting.value)} with elegant skin tones, 8k cinematic master shot",
+                f"Lighting: {LIGHTING_PHRASES.get(active_lighting.value, active_lighting.value)} with natural skin tones",
             ]
             return ". ".join(parts)
 
@@ -916,7 +920,7 @@ class DynamicPromptBuilder:
             f"Delivery action: Direct eye contact to camera, {scene_action}, speaking with clear engaged expression",
             f"Camera move: {camera_phrase(active_camera, short=False)}",
             f"Environment: {rule.environment_directive}",
-            f"Lighting: {LIGHTING_PHRASES.get(active_lighting.value, active_lighting.value)}, studio portrait quality, crystal clear 8k resolution",
+            f"Lighting: {LIGHTING_PHRASES.get(active_lighting.value, active_lighting.value)}",
         ]
         return ". ".join(parts)
 

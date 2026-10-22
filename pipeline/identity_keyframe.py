@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -31,18 +33,65 @@ SYNTH_FRAME_SUFFIX = (
 )
 
 
+#: Sentences of ``prompt_6part`` that direct motion or speech: a still frame cannot show them, and
+#: "jaw and lip movements in rhythm" or "slow orbit" invite motion blur and a gaping mouth (QA preprod r1).
+_STILL_FRAME_DROP_PREFIXES = ("Camera movement:", "Camera move:")
+_STILL_FRAME_REWRITES = (
+    (re.compile(r"Presenter speaking directly to camera with active mouth articulation[^.]*\."),
+     "Eyes on the lens, lips softly parted mid-word, engaged natural expression."),
+    (re.compile(r"Subject is focused on physical visual action; relaxed closed mouth[^.]*\."),
+     "Relaxed closed mouth, natural expression, absorbed in what she is doing."),
+    (re.compile(r",?\s*speaking with clear engaged expression"), ""),
+)
+
+
+def still_frame_prompt(prompt_6part: str) -> str:
+    """``prompt_6part`` as a still: camera-move and speech-articulation sentences removed or rewritten."""
+    out = prompt_6part
+    for rx, repl in _STILL_FRAME_REWRITES:
+        out = rx.sub(repl, out)
+    out = re.sub(r"\.{2,}", ".", out)
+    sentences = re.split(r"(?<=[.!?])\s+(?=[A-Z\[])", out)
+    return " ".join(x for x in sentences if not x.startswith(_STILL_FRAME_DROP_PREFIXES)).strip()
+
+
 def compose_synthesis_prompt(shot: Any, reference_roles: List[str]) -> str:
-    """Scene prompt for a first-frame image: reference roles first, then the shot's own prompt."""
+    """Scene prompt for a first-frame image: reference roles first, then the shot's own prompt as a still."""
     roles = {
         "face_anchor": "is the woman: keep her exact face, facial proportions and hairstyle",
-        "product_hero": "is the product: reproduce this exact object, its shape, colour, surface and details",
+        "product_hero": (
+            "is the product: reproduce this exact object, its shape, colour, surface and details, "
+            "but not any printed text or logo on it; where the shot text describes a detail differently, follow the text"
+        ),
     }
     lines = [
         f"Reference image {i} {roles.get(role, 'is a visual reference')}." for i, role in enumerate(reference_roles, 1)
     ]
     if lines:
         lines.append("Do not copy any reference's background, lighting or framing.")
-    return "\n".join([*lines, f"SHOT: {shot.prompt_6part}", SYNTH_FRAME_SUFFIX])
+    return "\n".join([*lines, f"SHOT: {still_frame_prompt(shot.prompt_6part)}", SYNTH_FRAME_SUFFIX])
+
+
+def plan_synthesis_references(
+    gen_mode: str,
+    explicit: Optional[List[Path]],
+    face_anchor: Optional[Path],
+    product_hero: Optional[Path],
+) -> tuple[List[Path], List[str]]:
+    """References (and their roles) for one shot's first-frame synthesis.
+
+    An agent's per-shot ``synthesis_references`` win; product shots get only the product hero
+    (Product Isolation); character shots get the face anchor plus the product hero when known.
+    """
+    if explicit:
+        return list(explicit), ["reference"] * len(explicit)
+    if gen_mode == "product_hero":
+        return [product_hero], ["product_hero"]
+    refs, roles = [face_anchor], ["face_anchor"]
+    if product_hero is not None:
+        refs.append(product_hero)
+        roles.append("product_hero")
+    return refs, roles
 
 
 def synthesize_first_frame(prompt: str, out_path: Path, reference_paths: List[Path]) -> Path:
@@ -360,7 +409,9 @@ def _shot_dispatch(shot: Any) -> str:
     role_val = getattr(role, "value", role)
     if role_val == CharacterRole.PRODUCT_ONLY.value:
         return "product_hero"
-    if role_val == CharacterRole.MODEL.value or getattr(shot, "generation_mode", None) == "r2v":
+    # ADR 0009: model shots start from the synthesized first frame (face + product + scene) like presenters;
+    # R2V sends only the face and redraws product, set and wardrobe from text, so it is the director's opt-in.
+    if getattr(shot, "generation_mode", None) == "r2v":
         return "r2v"
     return "i2v"
 
@@ -503,12 +554,12 @@ def generate_clean_keyframes(
             ref_path = frame_override or product_hero_ref
             ref_assets = [_repo_rel(p) for p in (extra_refs or [ref_path])]
         elif gen_mode == "r2v":
-            # Model role / kinetic action: Directorial Dispatch routes to R2V with Dual-Anchor.
+            # Director opted this shot into R2V (ADR 0009): Dual-Anchor references, no scene frame sent.
             # The multi-panel sheet is a reference, never a frame: the clean frame is the single-view face anchor.
             ref_path = frame_override or face_anchor
             ref_assets = [_repo_rel(p) for p in (extra_refs or [char_sheet, face_anchor])]
         else:
-            # Presenter role (or direct speech): Directorial Dispatch routes to I2V with First Frame
+            # Presenter and Model roles: I2V from the First Frame (ADR 0009)
             if frame_override:
                 ref_path = frame_override
             elif shot.reference_expression and (BASE_DIR / shot.reference_expression).exists():
@@ -526,16 +577,9 @@ def generate_clean_keyframes(
         identity_score: Optional[float] = None
         synth_refs: List[Path] = []
         if synthesize_frames and not frame_override:
-            if per_shot.get("synthesis_references"):
-                synth_refs = list(per_shot["synthesis_references"])
-                synth_roles = ["reference"] * len(synth_refs)
-            elif gen_mode == "product_hero":
-                synth_refs, synth_roles = [product_hero_ref], ["product_hero"]
-            else:
-                synth_refs, synth_roles = [face_anchor], ["face_anchor"]
-                if product_hero_ref is not None:
-                    synth_refs.append(product_hero_ref)
-                    synth_roles.append("product_hero")
+            synth_refs, synth_roles = plan_synthesis_references(
+                gen_mode, per_shot.get("synthesis_references"), face_anchor, product_hero_ref
+            )
             synth_path = target_keyframes_dir / f"{shot.shot_id}_synth.png"
             try:
                 synthesize_first_frame(compose_synthesis_prompt(shot, synth_roles), synth_path, synth_refs)

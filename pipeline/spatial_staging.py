@@ -123,6 +123,9 @@ class LightingContractType(str, enum.Enum):
     GOLDEN_HOUR_NATURAL = "golden_hour_natural"
     CYBERPUNK_NEON = "cyberpunk_neon"
     MINIMALIST_NORDIC_INTERIOR = "minimalist_nordic_interior"
+    NATURAL_DAYLIGHT = "natural_daylight"
+    OVERCAST_DAYLIGHT = "overcast_daylight"
+    PRACTICAL_NIGHT = "practical_night"
 
 
 class LightingContractSpec(BaseModel):
@@ -192,6 +195,39 @@ LIGHTING_CONTRACT_REGISTRY: Dict[LightingContractType, LightingContractSpec] = {
         color_palette=["natural birch wood", "matte chalk white", "soft sage", "pale cream"],
         atmosphere_notes="Soft wraparound indirect daylight from large Scandinavian window bay, ultra-smooth gradient falloff, clean zen aesthetic.",
     ),
+    LightingContractType.NATURAL_DAYLIGHT: LightingContractSpec(
+        contract_type=LightingContractType.NATURAL_DAYLIGHT,
+        name="Natural Daylight",
+        nominal_kelvin=5600,
+        key_light_azimuth=50,
+        key_light_elevation=55,
+        fill_ratio=0.45,
+        rim_intensity="subtle",
+        color_palette=["true-to-life colours", "neutral whites", "clear sky blue", "natural greens"],
+        atmosphere_notes="Unstyled real-world daylight from a high sun, crisp natural shadows, honest documentary colour.",
+    ),
+    LightingContractType.OVERCAST_DAYLIGHT: LightingContractSpec(
+        contract_type=LightingContractType.OVERCAST_DAYLIGHT,
+        name="Overcast Soft Daylight",
+        nominal_kelvin=6500,
+        key_light_azimuth=0,
+        key_light_elevation=80,
+        fill_ratio=0.8,
+        rim_intensity="subtle",
+        color_palette=["cool grey", "muted greens", "wet asphalt sheen", "soft whites"],
+        atmosphere_notes="Shadowless cloud-diffused skylight, slightly cool, wet surfaces with soft reflections.",
+    ),
+    LightingContractType.PRACTICAL_NIGHT: LightingContractSpec(
+        contract_type=LightingContractType.PRACTICAL_NIGHT,
+        name="Practical Lamp at Night",
+        nominal_kelvin=4000,
+        key_light_azimuth=45,
+        key_light_elevation=60,
+        fill_ratio=0.15,
+        rim_intensity="subtle",
+        color_palette=["neutral white pool", "deep shadow", "dark window", "warm wood"],
+        atmosphere_notes="An in-frame practical (lamp, screen) is the key light; dark room, dark window, strong falloff, no ambient fill.",
+    ),
 }
 
 
@@ -210,6 +246,7 @@ LIGHTING_ALIASES: Dict[str, LightingContractType] = {
     "beauty_high_key": LightingContractType.THREE_POINT_STUDIO,
     "golden_hour": LightingContractType.GOLDEN_HOUR_NATURAL,
     "nordic_minimalist": LightingContractType.MINIMALIST_NORDIC_INTERIOR,
+    "overcast_soft": LightingContractType.OVERCAST_DAYLIGHT,
 }
 
 

@@ -195,3 +195,53 @@ def test_create_product_brief_from_concept(tmp_path: Path):
     assert brief.archetype == ProductArchetype.TECH_GADGETS
     assert brief.character_role == CharacterRole.PRESENTER
     assert (tmp_path / "brief.json").exists()
+
+
+AUDIENCE = "Sinh viên năm nhất 18-20 tuổi mới lên thành phố, ở trọ, đi học và đi làm thêm bằng xe đạp"
+
+
+def test_client_audience_becomes_persona_and_every_segment(tmp_path: Path):
+    # QA preprod r1: the audience was in --url and the concepts still targeted "người dùng phổ thông 18-45".
+    from pipeline.briefing import create_product_brief_from_concept
+
+    research_art, concept_art = run_research_pipeline(
+        product_input="Xe đạp Thống Nhất MTB 26-02, một tốc độ, phanh đĩa",
+        campaign_id="aud", archetype=ProductArchetype.GENERAL_COMMERCIAL,
+        output_dir=tmp_path, use_llm=False, audience=AUDIENCE,
+    )
+    assert research_art.primary_persona == AUDIENCE
+    assert {a.target_audience_segment for a in concept_art.concept_options} == {AUDIENCE}
+    brief = create_product_brief_from_concept(concept_art, research_art, output_dir=tmp_path)
+    assert brief.target_persona == AUDIENCE
+
+
+def test_llm_concepts_are_asked_for_the_audience_and_a_controlling_idea(tmp_path: Path, monkeypatch):
+    from pipeline import researcher
+
+    research_art, _ = run_research_pipeline(
+        product_input="Xe đạp Thống Nhất MTB 26-02", campaign_id="aud_llm",
+        archetype=ProductArchetype.GENERAL_COMMERCIAL, output_dir=tmp_path, use_llm=False,
+    )
+    seen = {}
+    angle = {
+        "angle_id": "angle_c_problem_agitation", "angle_archetype": "direct_problem_agitation", "title": "T",
+        "target_audience_segment": "Người dùng phổ thông 18-45", "controlling_idea": "Ở thành phố lạ, chiếc xe là tự do đầu tiên.",
+        "key_visual": "Chiếc xe đỏ dựng ở cửa phòng trọ lúc 6 giờ sáng", "character_role": "presenter",
+        "audio_strategy": "on_camera_speech",
+        "hook_strategy": {"spoken_hook": "Tuần đầu ở trọ.", "visual_hook": "v", "on_screen_text": "TUẦN ĐẦU", "retention_trigger": "r"},
+        "narrative_arc": ["a"], "conversion_thesis": "c",
+    }
+
+    def fake_llm(system, user, **_):
+        seen["system"], seen["user"] = system, user
+        others = [dict(angle, angle_id=i, angle_archetype=i) for i in ("angle_a_shock_interrupt", "angle_b_aesthetic_sensory")]
+        return json.dumps({"concept_options": [angle, *others], "winning_concept": {}})
+
+    monkeypatch.setattr(researcher, "call_llm", fake_llm)
+    monkeypatch.setattr(researcher, "is_offline", lambda: False)
+    concept = generate_creative_concepts(research_art, use_llm=True, audience=AUDIENCE)
+    assert AUDIENCE in seen["user"] and "controlling_idea" in seen["system"]
+    assert "strawman" in seen["system"] and "comparison" in seen["system"]
+    llm_angle = next(a for a in concept.concept_options if a.angle_id == "angle_c_problem_agitation")
+    assert llm_angle.target_audience_segment == AUDIENCE
+    assert llm_angle.controlling_idea.startswith("Ở thành phố lạ")

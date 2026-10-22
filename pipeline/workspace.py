@@ -40,9 +40,11 @@ def canonical_artifact_models() -> Dict[str, Type[BaseModel]]:
 
     Imported lazily: pipeline.schemas pulls in pipeline.researcher, which imports this module.
     """
+    from pipeline.researcher import CreativeConceptArtifact
     from pipeline.schemas import AssetManifestArtifact, BriefArtifact, ScenePlanArtifact, ScriptArtifact
 
     return {
+        "creative_concept": CreativeConceptArtifact,
         "brief": BriefArtifact,
         "script": ScriptArtifact,
         "scene_plan": ScenePlanArtifact,
@@ -50,7 +52,7 @@ def canonical_artifact_models() -> Dict[str, Type[BaseModel]]:
     }
 
 # Stage that normally produces each injectable artifact.
-ARTIFACT_PRODUCER_STAGE: Dict[str, int] = {"brief": 1, "script": 2, "scene_plan": 3, "asset_manifest": 4}
+ARTIFACT_PRODUCER_STAGE: Dict[str, int] = {"creative_concept": 1, "brief": 1, "script": 2, "scene_plan": 3, "asset_manifest": 4}
 
 # Canonical artifacts that must exist and validate before a stage may start.
 STAGE_PREREQUISITES: Dict[int, tuple] = {
@@ -373,6 +375,13 @@ class ProjectWorkspace:
             model_cls.model_validate(raw)
         except ValidationError as exc:
             raise ValueError(f"{name}: {src} violates the {model_cls.__name__} schema: {_first_error(exc)}") from exc
+        if name == "script":
+            # Schema-valid is not shootable: a lip-synced line with no face, or golden hour at noon.
+            from pipeline.scriptwriter import shot_language_issues
+
+            issues = [i for beat in model_cls.model_validate(raw).beats for i in shot_language_issues(beat)]
+            if issues:
+                raise ValueError(f"script: {src} is not shootable: " + "; ".join(issues))
 
         self.ensure_dirs()
         target = self.artifacts_dir / f"{name}.json"

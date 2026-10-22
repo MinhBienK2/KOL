@@ -1,0 +1,143 @@
+{
+  "campaign_id": "pp_r3",
+  "product_name": "Túi tote canvas sọc navy",
+  "target_duration": 15.5,
+  "beats": [
+    {
+      "scene_id": "shot_01",
+      "beat_type": "hook",
+      "spoken_text": "Đựng vừa vặn cho cả buổi chiều.",
+      "on_screen_text": "GỌN GÀNG DẠO PHỐ",
+      "visual_cue": "Cận cảnh miệng túi tote canvas mộc ba sọc navy mở rộng trên ghế gỗ hè phố Hà Nội trong ánh nắng chiều muộn; bàn tay đặt cuốn sổ tay vào trong rồi bấm nhẹ cúc kim loại đóng lại.",
+      "estimated_duration": 2.5,
+      "archetype": "fashion_apparel",
+      "character_role": "product_only",
+      "audio_strategy": "off_camera_vo",
+      "camera_choreography": "macro_push_in",
+      "lighting_contract": "golden_hour",
+      "narrative_purpose": "Thị giác hook trong 1.5s đầu: khoang túi rộng đựng vừa vặn đồ dạo phố và thao tác cúc bấm nhanh gọn",
+      "visual_cue_en": "A two-tone natural beige canvas tote bag with three horizontal navy blue stripes, a solid navy bottom, and a plain blank beige fabric label without text, resting upright on a weathered wooden bench on a Hanoi street sidewalk in late afternoon, with a folded light jacket inside its wide open mouth while a woman's hand rests on a hardcover notebook.",
+      "motion_cue_en": "The hand smoothly slides the hardcover notebook into the wide bag opening and firmly fastens the silver metal snap button shut, leaving the bag closed.",
+      "shot_scale": "close_up",
+      "lens": "50mm_prime",
+      "angle": "high_angle_35deg",
+      "transition": null
+    },
+    {
+      "scene_id": "shot_02",
+      "beat_type": "pain",
+      "spoken_text": "",
+      "on_screen_text": "CANVAS MỘC TỰ NHIÊN",
+      "visual_cue": "Người mẫu trong trang phục dạo phố tông sáng không logo đeo túi tote sọc navy trên vai phải, thong thả sải bước trên vỉa hè phố cổ Hà Nội trong ánh nắng chiều muộn, tay vịn nhẹ quai vải navy.",
+      "estimated_duration": 2.5,
+      "archetype": "fashion_apparel",
+      "character_role": "model",
+      "audio_strategy": "music_and_sfx_only",
+      "camera_choreography": "truck",
+      "lighting_contract": "golden_hour",
+      "narrative_purpose": "Minh họa cảm giác thong thả, nhẹ nhõm khi dạo phố cùng túi canvas mộc đeo vai",
+      "visual_cue_en": "A 22-year-old Vietnamese woman with natural makeup, wearing a sleeveless plain light cream linen top and ivory wide-leg trousers without logos, walking along an ancient Hanoi sidewalk in late afternoon, carrying the natural beige canvas tote bag with three horizontal navy stripes on her right shoulder, with her right hand resting on the navy strap.",
+      "motion_cue_en": "The model strides forward at a relaxed walking pace along the sidewalk, her right hand resting on the navy strap, then slows to a gentle halt.",
+      "shot_scale": "cowboy_shot",
+      "lens": "35mm_street",
+      "angle": "eye_level",
+      "transition": {
+        "type": "fade",
+        "duration": 0.3
+      }
+    },
+    {
+      "scene_id": "shot_03",
+      "beat_type": "solution",
+      "spoken_text": "",
+      "on_screen_text": "THAO TÁC DỄ DÀNG",
+      "visual_cue": "Bên bàn gỗ quán cà phê trong nắng chiều muộn, người mẫu ngồi thong thả, tay mở cúc bấm túi tote sọc navy đặt cạnh chiếc áo khoác mỏng, lấy bình nước nhỏ đặt lên bàn gỗ.",
+      "estimated_duration": 2.5,
+      "archetype": "fashion_apparel",
+      "character_role": "model",
+      "audio_strategy": "music_and_sfx_only",
+      "camera_choreography": "locked_off",
+      "lighting_contract": "golden_hour",
+      "narrative_purpose": "Chứng minh miệng túi rộng và cúc bấm lấy đồ dễ dàng tại quán cà phê",
+      "visual_cue_en": "A 22-year-old Vietnamese woman with natural makeup, wearing a sleeveless plain light cream linen top and ivory wide-leg trousers without logos, seated at a wooden cafe table beside an open street window in late afternoon, with the closed canvas tote bag standing upright on the table next to a folded light jacket and a hardcover notebook.",
+      "motion_cue_en": "The model pops open the silver snap button, lifts a compact water bottle out of the bag, and sets it securely onto the wooden table beside the notebook.",
+      "shot_scale": "medium_close_up",
+      "lens": "50mm_prime",
+      "angle": "eye_level",
+      "transition": {
+        "type": "fade",
+        "duration": 0.3
+      }
+    },
+    {
+      "scene_id": "shot_04",
+      "beat_type": "demo",
+      "spoken_text": "",
+      "on_screen_text": "BA SỌC NAVY ĐÁY NAVY",
+      "visual_cue": "Cận cảnh túi tote canvas mộc với ba sọc navy ngang thân, đáy navy và nhãn vải be trơn không chữ đứng tĩnh trên bàn gỗ quán cà phê dưới vệt nắng chiều muộn chiếu nghiêng.",
+      "estimated_duration": 2.5,
+      "archetype": "fashion_apparel",
+      "character_role": "product_only",
+      "audio_strategy": "music_and_sfx_only",
+      "camera_choreography": "orbit",
+      "lighting_contract": "golden_hour",
+      "narrative_purpose": "Tôn vinh chất liệu canvas mộc, ba sọc navy và đáy navy chuẩn ảnh hero",
+      "visual_cue_en": "The two-tone natural beige canvas tote bag with three horizontal navy blue stripes, a solid navy bottom, navy fabric handles, and a plain blank beige fabric label without text, standing upright on a wooden cafe table in late afternoon, with a compact water bottle, a hardcover notebook, and a folded light jacket resting beside it.",
+      "motion_cue_en": "The bag stands perfectly still on the wooden tabletop as its navy fabric handles gently settle in place, remaining motionless.",
+      "shot_scale": "close_up",
+      "lens": "85mm_portrait",
+      "angle": "low_angle_15deg",
+      "transition": {
+        "type": "fade",
+        "duration": 0.3
+      }
+    },
+    {
+      "scene_id": "shot_05",
+      "beat_type": "demo",
+      "spoken_text": "",
+      "on_screen_text": "ĐEO VAI HOẶC XÁCH TAY",
+      "visual_cue": "Người mẫu đứng dậy bên ô cửa quán cà phê trong nắng chiều muộn, cất sổ và bình nước vào túi, bấm cúc lại rồi chuyển túi từ đeo vai sang xách tay bằng quai vải navy bước ra ngoài.",
+      "estimated_duration": 2.5,
+      "archetype": "fashion_apparel",
+      "character_role": "model",
+      "audio_strategy": "music_and_sfx_only",
+      "camera_choreography": "pedestal",
+      "lighting_contract": "golden_hour",
+      "narrative_purpose": "Chứng minh tính linh hoạt khi chuyển đổi từ đeo vai sang xách tay",
+      "visual_cue_en": "A 22-year-old Vietnamese woman with natural makeup, wearing a sleeveless plain light cream linen top and ivory wide-leg trousers without logos, standing at a cafe doorway in late afternoon, holding the navy handles of the canvas tote bag in her right hand at her side, with the jacket, notebook, and water bottle packed inside.",
+      "motion_cue_en": "The model carries the bag by its handles at her side and walks smoothly out onto the sidewalk, continuing at an even pace.",
+      "shot_scale": "medium_shot",
+      "lens": "50mm_prime",
+      "angle": "eye_level",
+      "transition": {
+        "type": "fade",
+        "duration": 0.3
+      }
+    },
+    {
+      "scene_id": "shot_06",
+      "beat_type": "cta",
+      "spoken_text": "Bấm giỏ hàng bên dưới để chọn túi tote sọc navy.",
+      "on_screen_text": "BẤM GIỎ HÀNG",
+      "visual_cue": "Người mẫu đứng thong dong bên góc phố Hà Nội ngập tràn ánh hoàng hôn vàng muộn, tay xách túi tote sọc navy buông dọc theo thân, mỉm cười nhẹ về phía ống kính.",
+      "estimated_duration": 3.0,
+      "archetype": "fashion_apparel",
+      "character_role": "model",
+      "audio_strategy": "off_camera_vo",
+      "camera_choreography": "locked_off",
+      "lighting_contract": "golden_hour",
+      "narrative_purpose": "Khung hình tĩnh chốt CTA bấm giỏ hàng, kết thúc trọn vẹn cảm xúc buổi chiều",
+      "visual_cue_en": "A 22-year-old Vietnamese woman with natural makeup, wearing a sleeveless plain light cream linen top and ivory wide-leg trousers without logos, standing on a Hanoi street corner in late afternoon, holding the navy handles of the canvas tote bag at her right side with a gentle smile.",
+      "motion_cue_en": "The model remains stationary with a calm smile, holding the bag at her side as her hair sways faintly in the gentle breeze, holding her stance.",
+      "shot_scale": "medium_shot",
+      "lens": "50mm_prime",
+      "angle": "eye_level",
+      "transition": {
+        "type": "fade",
+        "duration": 0.4
+      }
+    }
+  ],
+  "archetype": "fashion_apparel"
+}

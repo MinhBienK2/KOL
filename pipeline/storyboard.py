@@ -11,6 +11,7 @@ from pipeline.config import ARTIFACTS_DIR, CHARACTER_PATH
 from pipeline.schemas import ScenePlanArtifact, ScriptArtifact, StoryboardShot
 from pipeline.workspace import ProjectWorkspace
 from pipeline.archetypes import (
+    AudioStrategy,
     CharacterPersona,
     CharacterRole,
     DynamicPromptBuilder,
@@ -20,16 +21,20 @@ from pipeline.archetypes import (
 from pipeline.slideshow_risk import score_slideshow_risk
 from pipeline.wardrobe import resolve_wardrobe_and_environment
 from pipeline.cinematography import (
+    LIGHTING_PHRASES,
     CameraAngle,
     CameraLens,
     ShotScale,
     build_framing_directive,
+    build_motion_prompt,
     camera_phrase,
     compact_video_prompt,
+    hailuo_camera_command,
+    validate_camera_command,
     generate_storyboard_contact_sheet,
     plan_shot_scales,
 )
-from pipeline.spatial_staging import SpatialContinuityContract
+from pipeline.spatial_staging import LIGHTING_CONTRACT_REGISTRY, SpatialContinuityContract, resolve_lighting_type
 from pipeline.lip_sync_engine import determine_lip_sync_strategy
 from pipeline.scriptwriter import LEGACY_MUG_CAMPAIGN_ID, LEGACY_MUG_SCENE_IDS
 
@@ -105,7 +110,14 @@ def generate_scene_plan(
     (ShotScale value/name), ``lens`` (CameraLens), ``angle`` (CameraAngle),
     ``extra_direction`` (free text appended to the generation prompt) and ``set_direction``
     (replaces the archetype's ``SET:`` clause, e.g. a kitchen instead of the default living
-    room). Unknown scale, lens or angle values raise ``ValueError``.
+    room), ``wear_direction`` (replaces the archetype's ``WEAR:`` clause, e.g. a student's casual
+    clothes instead of the general-commercial blazer), ``camera_command`` (Hailuo bracket command for the video prompt, e.g. "[Truck left]" or
+    "[Pan left,Pedestal up]") and ``motion_direction`` (replaces the beat's ``motion_cue_en`` in the
+    video prompt) and ``generation_mode`` ("i2v" starts a model shot from its synthesized first frame
+    instead of R2V, which sends only the face, when the product must match). Unknown scale, lens, angle or camera-move values raise ``ValueError``.
+
+    Each shot gets two prompts: ``prompt_6part`` describes the still first frame (Stage 4) and
+    ``motion_prompt`` = camera command + motion only (Stage 5 image-to-video).
     """
     shot_overrides = shot_overrides or {}
     target_artifacts_dir = workspace.artifacts_dir if workspace is not None else (output_dir or ARTIFACTS_DIR)
@@ -172,6 +184,8 @@ def generate_scene_plan(
             )
             # English cue for video models; the Vietnamese visual_cue stays the fallback.
             scene_action = beat.visual_cue_en or beat.visual_cue
+            # Prompts are English; a Vietnamese product name risks being painted as text.
+            prompt_product = script.product_name if script.product_name.isascii() else "the product"
             shot_type_label = f"{shot_scale.value.upper()} • {beat.beat_type.capitalize()}"
             telemetry.stage_progress(
                 3,
@@ -185,7 +199,7 @@ def generate_scene_plan(
                 scale=shot_scale,
                 lens=lens_override,
                 angle=angle_override,
-                focal_point=script.product_name if is_prod_only else persona.name,
+                focal_point=prompt_product if is_prod_only else persona.name,
             )
             framing_meta[shot_id] = {"shot_scale": shot_scale.name, "lens": framing.lens.value}
             lip_decision = determine_lip_sync_strategy(
@@ -199,7 +213,7 @@ def generate_scene_plan(
             base_prompt = DynamicPromptBuilder.build_subject_and_action_prompt(
                 character_role=beat.character_role,
                 archetype=script.archetype,
-                product_name=script.product_name,
+                product_name=prompt_product,
                 scene_action=scene_action,
                 persona=persona,
                 lighting=beat.lighting_contract,
@@ -209,13 +223,26 @@ def generate_scene_plan(
             set_directive = str(override.get("set_direction", "")).strip() or environment.prompt_set_directive
             if not set_directive.upper().startswith("SET:"):
                 set_directive = f"SET: {set_directive}"
+            wear_directive = str(override.get("wear_direction", "")).strip() or wardrobe.prompt_wear_directive
+            if not wear_directive.upper().startswith("WEAR:"):
+                wear_directive = f"WEAR: {wear_directive}"
+            # An agent's directive without a full stop glued onto the next one ("...on the right LIGHT: ...").
+            set_directive, wear_directive = (d if d.endswith((".", "!", "?")) else f"{d}." for d in (set_directive, wear_directive))
             prompt_parts = [
                 framing_clause,
                 base_prompt,
                 set_directive,
             ]
+            # SET: bakes in the environment's default light; a beat with its own lighting contract
+            # (daylight street vs the archetype's 3200K room) must say so or the still keeps the default.
+            if beat.lighting_contract and beat.lighting_contract != environment.lighting_contract:
+                lighting_spec = LIGHTING_CONTRACT_REGISTRY[resolve_lighting_type(beat.lighting_contract.value)]
+                prompt_parts.append(
+                    f"LIGHT: {LIGHTING_PHRASES.get(beat.lighting_contract.value, beat.lighting_contract.value)}, "
+                    f"{lighting_spec.nominal_kelvin}K; this light replaces any light described in SET."
+                )
             if not is_prod_only:
-                prompt_parts.append(wardrobe.prompt_wear_directive)
+                prompt_parts.append(wear_directive)
                 if lip_decision.prompt_articulation_directive:
                     prompt_parts.append(lip_decision.prompt_articulation_directive)
 
@@ -225,6 +252,32 @@ def generate_scene_plan(
 
             # Model-ready: plain camera/lighting wording, no duplicate/filler sentences, word budget.
             full_cinematic_prompt = compact_video_prompt(" ".join(prompt_parts))
+
+            # The shot's colour temperature follows its own lighting contract (a daylight street beat is not
+            # the archetype's 3200K default room); the environment default only applies when none is set.
+            shot_kelvin = (
+                LIGHTING_CONTRACT_REGISTRY[resolve_lighting_type(beat.lighting_contract.value)].nominal_kelvin
+                if beat.lighting_contract
+                else environment.nominal_color_temp_kelvin
+            )
+
+            # Image-to-video prompt: the first frame already carries identity/set/wear, so only motion.
+            camera_command = (
+                validate_camera_command(str(override["camera_command"]))
+                if override.get("camera_command")
+                else hailuo_camera_command(beat.camera_choreography)
+            )
+            motion_text = str(override.get("motion_direction", "")).strip() or beat.motion_cue_en or scene_action
+            motion_prompt = build_motion_prompt(
+                camera_command, motion_text, speaking=beat.audio_strategy == AudioStrategy.ON_CAMERA_SPEECH
+            )
+
+            generation_mode = str(override.get("generation_mode", "")).strip().lower() or None
+            if generation_mode not in (None, "i2v", "r2v"):
+                raise ValueError(f"{shot_id}: generation_mode must be 'i2v' or 'r2v', got '{generation_mode}'")
+            if generation_mode == "r2v" and beat.audio_strategy == AudioStrategy.ON_CAMERA_SPEECH:
+                # ADR 0008: lip-sync needs the head and gaze fixed by a first frame; R2V lets them drift.
+                raise ValueError(f"{shot_id}: generation_mode 'r2v' cannot carry on_camera_speech (lip-sync needs I2V)")
 
             # Prompt ledger: the supervisor must see the exact cinematic prompt before rendering.
             telemetry.record_prompt(
@@ -242,7 +295,7 @@ def generate_scene_plan(
                     {"label": "Framing & optics", "text": framing_clause},
                     {"label": "Subject & action", "text": base_prompt},
                     {"label": "Set & environment", "text": set_directive},
-                    *([{"label": "Wardrobe", "text": wardrobe.prompt_wear_directive}] if not is_prod_only else []),
+                    *([{"label": "Wardrobe", "text": wear_directive}] if not is_prod_only else []),
                     *(
                         [{"label": "Articulation", "text": lip_decision.prompt_articulation_directive}]
                         if not is_prod_only and lip_decision.prompt_articulation_directive
@@ -264,16 +317,18 @@ def generate_scene_plan(
                     style_constraints=f"{arch_config.display_name} commercial aesthetic | Avoid: {style_neg}",
                     scene_description=scene_action,
                     prompt_6part=full_cinematic_prompt,
+                    motion_prompt=motion_prompt,
+                    generation_mode=generation_mode,
                     estimated_duration=beat.estimated_duration,
                     character_role=beat.character_role,
                     camera_choreography=beat.camera_choreography.value if beat.camera_choreography else None,
                     lighting_contract=beat.lighting_contract.value if beat.lighting_contract else None,
                     narrative_purpose=beat.narrative_purpose,
-                    color_temp_kelvin=environment.nominal_color_temp_kelvin,
+                    color_temp_kelvin=shot_kelvin,
                     shot_intent=_shot_intent(beat),
                     transition=beat.transition,
                     spatial_staging=(
-                        f"{environment.name} @ {environment.nominal_color_temp_kelvin}K, "
+                        f"{environment.name} @ {shot_kelvin}K, "
                         f"key light locked to {spatial_contract.locked_key_light_azimuth} degrees camera-left"
                     ),
                     is_hero_moment=idx in (2, 3) or "solution" in beat.beat_type or "reveal" in beat.beat_type,

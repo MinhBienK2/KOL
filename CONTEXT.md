@@ -97,7 +97,7 @@ Distinction between Presenter (direct talking-head with lip-sync), Model (visual
 _Avoid_: Talking-head obsession, forced face in macro shots
 
 **Directorial Dispatch**:
-The automated routing mechanism mapping each shot's Character Role to its optimal generation mode (Presenter to I2V with First Frame, Model to R2V with Character Sheet and Face Anchor, and Product-Only to Product Hero Reference).
+The automated routing mechanism mapping each shot's Character Role to its optimal generation mode (Presenter and Model to I2V from the synthesized First Frame, R2V with Character Sheet and Face Anchor only when the director opts a shot in, and Product-Only to Product Hero Reference; ADR 0009).
 _Avoid_: Hardcoded video mode, manual shot toggling
 
 **Audio Strategy Routing**:

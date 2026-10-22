@@ -1,0 +1,146 @@
+{
+  "campaign_id": "pp_r4",
+  "product_name": "Kem dưỡng ẩm hũ thuỷ tinh",
+  "target_duration": 18.5,
+  "archetype": "beauty_skincare",
+  "beats": [
+    {
+      "scene_id": "shot_01",
+      "beat_type": "hook",
+      "spoken_text": "Ngồi điều hoà, ngại kem bí da?",
+      "on_screen_text": "BUỔI SÁNG NHẸ TÊNH",
+      "visual_cue": "Mai Ly trong trang phục buổi sáng ngồi cạnh cửa sổ căn hộ ngập nắng sớm, hũ kem nắp xanh đóng kín đặt trên bàn cạnh tay.",
+      "estimated_duration": 2.5,
+      "archetype": "beauty_skincare",
+      "character_role": "presenter",
+      "audio_strategy": "on_camera_speech",
+      "camera_choreography": "locked_off",
+      "lighting_contract": "natural_daylight",
+      "narrative_purpose": "Hook đặt câu hỏi trúng nỗi e ngại kem bí da của dân văn phòng.",
+      "visual_cue_en": "A young woman in neat morning loungewear sits at a wooden vanity table beside a bright apartment window with her face toward the camera, looking forward with a relaxed smile, a thick-walled clear glass jar with a cobalt blue screw cap resting closed on the table beside her hand.",
+      "motion_cue_en": "She speaks to the camera while resting both forearms on the table surface, nodding gently and ending with a warm engaging expression.",
+      "shot_scale": "medium_close_up",
+      "lens": "50mm_prime",
+      "angle": "eye_level",
+      "transition": {
+        "type": "cut",
+        "duration": 0.0
+      }
+    },
+    {
+      "scene_id": "shot_02",
+      "beat_type": "pain",
+      "spoken_text": "Chỉ cần một bước thật nhẹ.",
+      "on_screen_text": "NẮP VẶN XANH DƯƠNG",
+      "visual_cue": "Cận cảnh hũ thuỷ tinh trong suốt không nhãn mác trên bàn gỗ bên cửa sổ nắng sớm, bàn tay vặn mở nắp xanh dương đặt cạnh hũ, để lộ màng seal bạc nguyên vẹn.",
+      "estimated_duration": 2.5,
+      "archetype": "beauty_skincare",
+      "character_role": "product_only",
+      "audio_strategy": "asmr_hybrid",
+      "camera_choreography": "locked_off",
+      "lighting_contract": "natural_daylight",
+      "narrative_purpose": "Âm thanh ASMR vặn nắp mở đầu chu trình buổi sáng gọn nhẹ.",
+      "visual_cue_en": "A thick-walled clear glass jar without label rests on the wooden vanity table beside the window, its cobalt blue screw cap loosened, revealing an intact silver foil seal beneath.",
+      "motion_cue_en": "A manicured hand twists off the cobalt blue screw cap from the clear glass jar and rests it on the wooden surface, ending with the intact silver foil seal clearly displayed.",
+      "shot_scale": "close_up",
+      "lens": "100mm_macro",
+      "angle": "high_angle_35deg",
+      "transition": {
+        "type": "cut",
+        "duration": 0.0
+      }
+    },
+    {
+      "scene_id": "shot_03",
+      "beat_type": "solution",
+      "spoken_text": "Chất kem trắng ngà, kết cấu mềm.",
+      "on_screen_text": "KẾT CẤU MỀM MỊN",
+      "visual_cue": "Cận cảnh bàn tay bóc màng seal bạc hũ kem thuỷ tinh, đầu ngón tay chạm nhẹ lấy kem trắng ngà, để lại vệt xoáy mềm trên bề mặt hũ không nhãn.",
+      "estimated_duration": 3.0,
+      "archetype": "beauty_skincare",
+      "character_role": "product_only",
+      "audio_strategy": "asmr_hybrid",
+      "camera_choreography": "locked_off",
+      "lighting_contract": "natural_daylight",
+      "narrative_purpose": "ASMR bóc seal và cận cảnh chất kem trắng ngà mềm mịn.",
+      "visual_cue_en": "The clear glass jar without label rests open on the table, its silver foil seal peeled halfway back, with a smooth off-white cream surface exposed under morning window light.",
+      "motion_cue_en": "Two fingers peel back the silver foil protective seal and an index fingertip gently dips into the off-white cream, ending with a small dab on the fingertip and a soft swirl on the cream surface.",
+      "shot_scale": "close_up",
+      "lens": "100mm_macro",
+      "angle": "high_angle_35deg",
+      "transition": {
+        "type": "cut",
+        "duration": 0.0
+      }
+    },
+    {
+      "scene_id": "shot_04",
+      "beat_type": "demo",
+      "spoken_text": "Tán mỏng nhẹ, dưỡng ẩm cho da.",
+      "on_screen_text": "TÁN MỎNG NHẸ TÊNH",
+      "visual_cue": "Mai Ly quay mặt ba phần tư về phía cửa sổ đón nắng sớm, một đầu ngón tay chạm chấm kem lên gò má, nhẹ nhàng tán mỏng lớp kem lướt êm trên da.",
+      "estimated_duration": 3.0,
+      "archetype": "beauty_skincare",
+      "character_role": "model",
+      "audio_strategy": "off_camera_vo",
+      "camera_choreography": "locked_off",
+      "lighting_contract": "natural_daylight",
+      "narrative_purpose": "Thị phạm tán kem mỏng nhẹ lướt êm trên gò má dưới nắng sớm.",
+      "visual_cue_en": "A young woman in neat morning loungewear sits at the wooden vanity table with her face turned three-quarters toward the window, holding one index fingertip with a dab of cream touching her cheekbone, the opened glass jar resting in soft focus on the table.",
+      "motion_cue_en": "She gently glides her index fingertip across her cheekbone to smooth the thin cream layer softly, ending with her hand lowering away from her face while smiling toward the natural window light.",
+      "shot_scale": "close_up",
+      "lens": "85mm_portrait",
+      "angle": "eye_level",
+      "transition": {
+        "type": "cut",
+        "duration": 0.0
+      }
+    },
+    {
+      "scene_id": "shot_05",
+      "beat_type": "social_proof",
+      "spoken_text": "Ngồi điều hoà cả ngày, mà da mình vẫn thấy mềm, dễ chịu.",
+      "on_screen_text": "DA MỀM DỄ CHỊU",
+      "visual_cue": "Mai Ly ngồi trước bàn trang điểm cạnh cửa sổ ngập nắng sớm, hai tay đặt tự nhiên trên bàn cạnh hũ kem mở, chia sẻ cảm nhận trước máy.",
+      "estimated_duration": 4.0,
+      "archetype": "beauty_skincare",
+      "character_role": "presenter",
+      "audio_strategy": "on_camera_speech",
+      "camera_choreography": "locked_off",
+      "lighting_contract": "natural_daylight",
+      "narrative_purpose": "Chia sẻ cảm nhận thực tế khi ngồi điều hoà cả ngày.",
+      "visual_cue_en": "A young woman in neat morning loungewear sits at the wooden vanity table beside the window with her face toward the camera, resting both hands naturally on the table next to the opened glass jar, looking forward with a relaxed smile.",
+      "motion_cue_en": "She speaks to the camera while resting her hands comfortably on the table surface, smiling naturally and nodding with a relaxed expression.",
+      "shot_scale": "medium_close_up",
+      "lens": "50mm_prime",
+      "angle": "eye_level",
+      "transition": {
+        "type": "cut",
+        "duration": 0.0
+      }
+    },
+    {
+      "scene_id": "shot_06",
+      "beat_type": "cta",
+      "spoken_text": "Bấm giỏ hàng rinh kem dưỡng hũ thuỷ tinh nhé!",
+      "on_screen_text": "BẤM GIỎ HÀNG NGAY",
+      "visual_cue": "Mai Ly hai tay nâng nhẹ giữ hũ kem thuỷ tinh trên bàn cạnh cửa sổ nắng sớm, tươi cười nhìn camera kêu gọi bấm giỏ hàng.",
+      "estimated_duration": 3.5,
+      "archetype": "beauty_skincare",
+      "character_role": "presenter",
+      "audio_strategy": "on_camera_speech",
+      "camera_choreography": "locked_off",
+      "lighting_contract": "natural_daylight",
+      "narrative_purpose": "Kêu gọi bấm giỏ hàng rinh kem dưỡng hũ thuỷ tinh.",
+      "visual_cue_en": "A young woman in neat morning loungewear sits at the wooden vanity table beside the window with her face toward the camera, gently holding the thick-walled clear glass jar on the table surface with her hands, smiling warmly.",
+      "motion_cue_en": "She speaks to the camera while resting the clear glass jar gently on the wooden table, nodding with an inviting friendly smile.",
+      "shot_scale": "medium_close_up",
+      "lens": "50mm_prime",
+      "angle": "eye_level",
+      "transition": {
+        "type": "cut",
+        "duration": 0.0
+      }
+    }
+  ]
+}

@@ -21,6 +21,7 @@ import json
 import logging
 import os
 import random
+import re
 import subprocess
 import threading
 import time
@@ -705,6 +706,36 @@ def _upload_and_submit(req: ClipRequest, out_p: Path, fingerprint: str) -> str:
     return str(task_id)
 
 
+#: Sentences of the still-frame prompt that carry the scene, for requests that start from no scene image.
+_R2V_SCENE_PREFIXES = ("Visual acting action:", "SET:", "LIGHT:", "WEAR:")
+#: Hailuo text prompt hard limit (characters).
+VIDEO_PROMPT_MAX_CHARS = 2000
+
+
+def _starts_without_scene_frame(kf: Any) -> bool:
+    """True when :func:`build_clip_request` will route the shot to R2V (a face reference, no scene frame)."""
+    refs = getattr(kf, "reference_assets", None) or []
+    return getattr(kf, "generation_mode", None) == "r2v" or len(refs) > 1
+
+
+def video_prompt_for(shot: StoryboardShot, kf: Any = None) -> str:
+    """The text prompt Stage 5 sends for ``shot``.
+
+    I2V starts from the synthesized first frame, so the motion prompt alone is right. R2V gets only the
+    face anchor: without the set, light, wardrobe and action sentences of ``prompt_6part`` the model
+    would invent the scene (QA preprod r1), so those are appended to the motion. Pre-motion plans: the
+    scene prompt.
+    """
+    if not shot.motion_prompt:
+        return shot.prompt_6part
+    if kf is None or not _starts_without_scene_frame(kf):
+        return shot.motion_prompt
+    sentences = re.split(r"(?<=[.!?])\s+(?=[A-Z])", shot.prompt_6part)
+    scene = [x.removeprefix("Visual acting action:").strip() for x in sentences if x.startswith(_R2V_SCENE_PREFIXES)]
+    prompt = " ".join([shot.motion_prompt, *scene])
+    return prompt[:VIDEO_PROMPT_MAX_CHARS].rsplit(" ", 1)[0] if len(prompt) > VIDEO_PROMPT_MAX_CHARS else prompt
+
+
 def _shot_request_kwargs(shot: StoryboardShot, kf: Any) -> Dict[str, Any]:
     """The ``build_clip_request`` arguments for ``shot`` (shared by rendering and cost estimation)."""
     return dict(
@@ -735,7 +766,9 @@ def plan_video_jobs(
     for shot in scene_plan.shots:
         kwargs = _shot_request_kwargs(shot, keyframes_by_shot.get(shot.shot_id))
         try:
-            request = build_clip_request(shot.shot_id, shot.prompt_6part, **kwargs)
+            request = build_clip_request(
+                shot.shot_id, video_prompt_for(shot, keyframes_by_shot.get(shot.shot_id)), **kwargs
+            )
         except VideoGenerationError:
             request = None  # would fail loudly in Stage 5; counted as a submission at the default spec
         clip = Path(raw_clips_dir) / f"{shot.shot_id}.mp4"
@@ -876,7 +909,7 @@ def render_all_video_clips(
                 output_path=out_clip_path,
                 image_path=kf_image_path,
                 duration=shot.estimated_duration,
-                prompt=shot.prompt_6part,
+                prompt=video_prompt_for(shot),
             )
             _stage5_progress(
                 {
@@ -893,7 +926,7 @@ def render_all_video_clips(
             return shot.shot_id, clip_path
         request_kwargs = _shot_request_kwargs(shot, kf)
         try:
-            request = build_clip_request(shot.shot_id, shot.prompt_6part, **request_kwargs)
+            request = build_clip_request(shot.shot_id, video_prompt_for(shot, kf), **request_kwargs)
         except VideoGenerationError:
             request = None  # render_single re-raises the same error with full retry bookkeeping
         mode_label = request.mode if request else ("I2V" if kf_image_path else "T2V")
@@ -918,7 +951,7 @@ def render_all_video_clips(
 
         clip_path = render_single_video_clip(
             shot_id=shot.shot_id,
-            prompt=shot.prompt_6part,
+            prompt=video_prompt_for(shot, kf),
             output_path=out_clip_path,
             max_retries=max_retries,
             initial_retry_delay=initial_retry_delay,

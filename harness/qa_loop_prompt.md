@@ -50,7 +50,7 @@ Cập nhật mỗi khi đổi phase. Không có file thì bắt đầu vòng 1.
   khán giả, cảm xúc, bối cảnh, nhịp, thể loại).
 - Giao việc (chạy nền bằng công cụ chạy lệnh nền của bạn, không bao giờ in API key):
   ```
-  cd /home/minhbien/Documents/KOL && omp -p --auto-approve "<lệnh>" > projects/continuity/omp_rN/omp_turnK.log 2>&1
+  cd /home/minhbien/Documents/KOL && omp -p --auto-approve "<lệnh>" < /dev/null > projects/continuity/omp_rN/omp_turnK.log 2>&1
   ```
   Lần đầu `<lệnh>` = nội dung BRIEF + hướng dẫn theo dây chuyền:
   - **A**: "Đọc harness/systemprompt.md, tool_guidance.md, guardrails.md, error_recovery.md. Dùng
@@ -60,7 +60,7 @@ Cập nhật mỗi khi đổi phase. Không có file thì bắt đầu vòng 1.
     Run nằm ở `projects/<topic>/qa_rN/runs/vK/` (artifacts, keyframes, media, master).
   - **B**: "Đọc harness/continuity_director.md và làm đúng quy trình. Làm việc trong
     projects/qa/rN. Dừng sau mỗi bước của continuity_director.py và báo kết quả."
-  Các lần sau dùng `omp -c -p --auto-approve "<phản hồi của QA>"` để tiếp tục cùng phiên.
+  Các lần sau dùng `omp -c -p --auto-approve "<phản hồi của QA>" < /dev/null` để tiếp tục cùng phiên (thiếu `< /dev/null` thì omp chạy nền treo ở `readPipedInput`).
 - **Giới hạn thời gian lệnh của omp**: bash của omp mặc định timeout 300s, còn `render --one` có thể
   mất 3–10 phút, stage 5 của director.py còn lâu hơn (nhiều shot). Lệnh đầu tiên phải dặn omp truyền
   `timeout` ≥ 1200 cho render/keyframes và chia stage 5 thành từng lần chạy ngắn (`--max-video-jobs`).

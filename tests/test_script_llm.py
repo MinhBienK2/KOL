@@ -32,6 +32,7 @@ def _beat(beat_type, spoken, caption, cue_en, duration=3.5, transition=None, **e
         "on_screen_text": caption,
         "visual_cue": "Cận cảnh " + beat_type,
         "visual_cue_en": cue_en,
+        "motion_cue_en": "she lifts the earbuds slowly toward the lens, ending with them held still at chest height",
         "character_role": "presenter",
         "audio_strategy": "on_camera_speech",
         "camera_choreography": "zoom_in",
@@ -51,9 +52,9 @@ GOOD = {
               "Close-up of a tired presenter pulling noisy office chatter away by putting on sleek over-ear headphones, soft studio key light",
               duration=3.5, transition={"type": "cut", "duration": 0.0}),
         _beat("demo", "Bật chống ồn chủ động là mọi tiếng ồn xung quanh dịu hẳn.", "CHỐNG ỒN CHỦ ĐỘNG",
-              "Medium shot of a finger tapping the ANC button on the earcup, slow push-in, clean studio lighting", duration=4.5),
+              "Medium shot of the presenter tapping the ANC button on her earcup, slow push-in, clean studio lighting", duration=4.5),
         _beat("proof", "Pin 30 giờ, dùng cả tuần không lo hết pin.", "PIN 30 GIỜ",
-              "Macro shot of the USB-C port as a cable clicks in, shallow depth of field, cool white light", duration=4.0),
+              "Medium close-up of the presenter clicking a USB-C cable into the earcup and smiling to camera, cool white light", duration=4.0),
         _beat("cta", "Xem chi tiết Sonic Air Pro ở link bên dưới nhé!", "XEM CHI TIẾT • LINK BIO",
               "Presenter smiles and holds up the headphones toward the camera, bright studio light", duration=4.0,
               transition={"type": "fade", "duration": 0.4}),
@@ -176,6 +177,15 @@ def test_vietnamese_visual_cue_en_and_long_caption_are_rejected(tmp_path, brief,
     script, fake = _run(tmp_path, brief, monkeypatch, bad, GOOD)
     assert len(fake.calls) == 2
     assert "must be English" in fake.calls[1]["user"] and "max 38" in fake.calls[1]["user"]
+
+
+def test_missing_motion_cue_is_rejected_and_repaired(tmp_path, brief, monkeypatch):
+    # Without a motion cue Stage 5 would send the whole still-frame description as the I2V prompt.
+    bad = copy.deepcopy(GOOD)
+    del bad["beats"][1]["motion_cue_en"]
+    script, fake = _run(tmp_path, brief, monkeypatch, bad, GOOD)
+    assert len(fake.calls) == 2 and "motion_cue_en is required" in fake.calls[1]["user"]
+    assert all(b.motion_cue_en for b in script.beats)
 
 
 def test_provider_error_falls_back_to_templates_without_retry(tmp_path, brief, monkeypatch):

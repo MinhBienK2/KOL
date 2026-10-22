@@ -58,15 +58,28 @@ Khi truyền cờ `--json`, stdout chỉ in ra duy nhất MỘT object JSON duy 
 - `--shot-overrides PATH.json`: (Stage 3) Ghi đè thông số camera motion, framing hoặc lighting cho từng shot cụ thể trong scene plan.
   Khoá hợp lệ theo shot (`shot_01` hoặc `scene_id`): `shot_scale`, `lens`, `angle`, `extra_direction` (nối thêm vào prompt),
   `set_direction` (thay câu `SET:` mặc định của archetype, ví dụ home_lifestyle mặc định là phòng khách; cảnh ở bếp phải ghi
-  `set_direction` cho **mọi** shot cùng bối cảnh, cùng một câu). Sau Stage 3 đọc `prompt_6part` từng shot: không được có hai mô
+  `set_direction` cho **mọi** shot cùng bối cảnh, cùng một câu). `wear_direction` thay câu `WEAR:` mặc định (general_commercial mặc định là blazer công sở: nhân vật
+  đời thường phải ghi `wear_direction` cho **mọi** shot có người, cùng một câu, gồm cả phụ kiện xuyên suốt như mũ, balo). `generation_mode`: mặc định model = I2V từ first frame tổng hợp (ADR 0009); chỉ đặt `"r2v"` khi shot cần chuyển động thân thể lớn và sản phẩm không chiếm khung (R2V/S2V-01 chỉ nhận ảnh mặt, không
+  nhận first frame, nên vẽ lại sản phẩm từ chữ). Shot `on_camera_speech` không được `r2v` (lip-sync cần I2V; Stage 3 từ chối). Sau Stage 3 đọc `prompt_6part` từng shot: không được có hai mô
   tả bối cảnh, hai kiểu tóc hay chi tiết mâu thuẫn với visual cue.
+- **Gói prompt tiền kỳ** (sau Stage 3, không gọi mạng): `python3 tools/prompt_pack.py --run <run_dir>` ghi
+  `artifacts/prompt_pack.json|md`: đúng prompt first frame và reference từng shot mà Stage 4 sẽ gửi, và request video
+  (mode, model, giây sinh, prompt) mà Stage 5 sẽ gửi, kèm lint (ánh sáng studio ở bối cảnh thật, Kelvin tungsten với
+  nắng, tag rác "8k", prompt quá dài, bối cảnh/trang phục mặc định của archetype chưa được xác nhận `default_set`/`default_wear`, R2V vẽ lại sản phẩm, clip bị cắt nhiều) và kết quả gate slideshow của Stage 8 (shot máy tĩnh mà không có hành động → `error`). Đọc toàn văn trước khi sang Stage 4; lint `error` phải sửa ở Stage 3.
+- `validate_script` / `--inject script` còn chặn lỗi khung hình: sản phẩm mang thấp (ở hông, xách quai) trong khung medium/MCU/CU của vai model; sản phẩm của beat CTA đặt trên bàn trong khung MCU/CU.
 - `--references PATH.json`: (Stage 4) Ghi đè reference assets cho nhân vật hoặc sản phẩm khi sinh keyframe.
 - `--character PATH|ID`: (Stage 3/4) Trỏ đến thư mục character tùy chỉnh hoặc ID persona dưới `assets/characters/`.
 - `--strict-resolution`: (Stage 4) Bắt buộc ảnh reference phải đạt chuẩn độ phân giải cao, từ chối ảnh mờ.
 - `--strict-tts`: (Stage 6) Ép buộc model Neural TTS chính thức, không cho phép fallback sang giọng chất lượng thấp.
 - `--transitions PATH.json`: (Stage 7) Thiết lập danh sách hiệu ứng chuyển cảnh chi tiết giữa các beat.
 - `--from-stage N`: Khởi động lại pipeline trực tiếp từ stage N (1-8), giữ nguyên các artifact đã hoàn thành trước đó.
-- `--inject NAME=PATH`: Đạo diễn tự viết artifact (`brief`, `script`, `scene_plan`, `asset_manifest`), CLI validate theo schema rồi cài vào `artifacts/` và tự động resume ở stage kế tiếp.
+- `--audience "<ai, hoàn cảnh, cảm xúc muốn để lại>"`: (Stage 1) khán giả do khách hàng chốt; mọi concept phải viết cho đúng
+  nhóm này (không nhét khán giả vào `--url`: researcher coi `--url` là mô tả sản phẩm).
+- `--inject NAME=PATH`: Đạo diễn tự viết artifact (`creative_concept`, `brief`, `script`, `scene_plan`, `asset_manifest`), CLI validate theo schema rồi cài vào `artifacts/` và tự động resume ở stage kế tiếp. **Không bao giờ sửa trực tiếp file
+  trong `artifacts/`** (edit tay bỏ qua validate và telemetry): chép ra ngoài, sửa, rồi `--inject`. Muốn đổi ý tưởng thì
+  inject `creative_concept` (có `controlling_idea`, `key_visual`) cùng `brief`.
+  `--inject X=... --pause-after-stage N` với N là stage sinh ra X (vd brief/creative_concept → 1) chỉ cài rồi dừng (exit 4,
+  `next_stage`), không chạy gì: dùng để QA duyệt artifact tự viết. Không gọi `ProjectWorkspace.inject_artifact` bằng Python.
 - `--new-version`: Phân nhánh một version mới (v2, v3) kế thừa media đã render qua hardlink để tối ưu chi phí và thời gian.
 - `--check`: Chế độ chỉ đọc, kiểm tra tính hợp lệ của plan và artifact tiền đề mà không thực thi bất kỳ stage nào.
 - `--offline`: Chế độ offline không dùng mạng, đặt `KOL_OFFLINE=1` và ép `--video-mode ffmpeg` để test logic nhanh.

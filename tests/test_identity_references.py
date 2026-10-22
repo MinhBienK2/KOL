@@ -65,6 +65,7 @@ def test_agent_supplied_references_are_used(tmp_path):
     for s, role in zip(plan.shots, roles):
         s.character_role = role
         s.generation_mode = None
+    plan.shots[1].generation_mode = "r2v"  # ADR 0009: R2V (sheet + face) is the director's opt-in
     sheet = _img(tmp_path / "my" / "sheet.png", (2752, 1536))
     face = _img(tmp_path / "my" / "face.png", (1080, 1920))
     prod = _img(tmp_path / "my" / "prod.png", (1200, 1200))
@@ -115,6 +116,7 @@ def test_presenter_first_frame_is_single_view_not_multi_panel_sheet(tmp_path):
 def test_r2v_keeps_dual_anchor_references_but_clean_frame_is_single_view(tmp_path):
     plan = _plan(tmp_path)
     plan.shots[0].character_role = CharacterRole.MODEL
+    plan.shots[0].generation_mode = "r2v"
     manifest = _run(tmp_path, plan)
     k = manifest.keyframes[0]
     assert k.generation_mode == "r2v"
@@ -123,9 +125,20 @@ def test_r2v_keeps_dual_anchor_references_but_clean_frame_is_single_view(tmp_pat
     assert "/outfits/" not in k.image_path
 
 
+def test_model_shot_defaults_to_i2v_from_a_single_view_frame(tmp_path):
+    # ADR 0009: R2V sends only the face, so a model shot carrying the product would redraw it from text.
+    plan = _plan(tmp_path)
+    plan.shots[0].character_role = CharacterRole.MODEL
+    plan.shots[0].generation_mode = None
+    k = _run(tmp_path, plan).keyframes[0]
+    assert k.generation_mode == "i2v" and len(k.reference_assets) == 1
+    assert "/outfits/" not in k.image_path
+
+
 def test_preflight_missing_sheet_blocks_before_any_output(tmp_path):
     plan = _plan(tmp_path)
     plan.shots[0].character_role = CharacterRole.MODEL
+    plan.shots[0].generation_mode = "r2v"
     with pytest.raises(IdentityReferenceError, match="character_sheet"):
         _run(tmp_path, plan, reference_overrides={"character_sheet": str(tmp_path / "gone.png")})
     assert not list((tmp_path / "keyframes").glob("*.jpg"))

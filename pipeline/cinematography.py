@@ -193,6 +193,66 @@ CAMERA_MOTION_LABELS: Dict[str, str] = {
     "locked_off": "locked-off",
 }
 
+# MiniMax Hailuo 2.x camera commands (official API reference): up to 3 simultaneous moves share one
+# bracket ("[Pan left,Pedestal up]"); sequential moves are separate brackets in order.
+HAILUO_CAMERA_MOVES = (
+    "Truck left", "Truck right", "Pan left", "Pan right", "Push in", "Pull out", "Pedestal up",
+    "Pedestal down", "Tilt up", "Tilt down", "Zoom in", "Zoom out", "Shake", "Tracking shot", "Static shot",
+)
+# Default Hailuo command per CameraChoreography value (Hailuo has no orbit/drone primitive: combined moves).
+HAILUO_CAMERA_COMMANDS: Dict[str, str] = {
+    "orbit": "[Truck left,Pan right]",
+    "truck": "[Truck right]",
+    "pedestal": "[Pedestal up]",
+    "pan": "[Pan right]",
+    "tilt": "[Tilt up]",
+    "zoom_in": "[Push in]",
+    "drone_flythrough": "[Push in,Pedestal up]",
+    "dutch_angle": "[Push in]",
+    "macro_push_in": "[Push in]",
+    "top_down_flat_lay": "[Static shot]",
+    "locked_off": "[Static shot]",
+}
+_HAILUO_BRACKET_RE = re.compile(r"\[([^\]]*)\]")
+
+
+def hailuo_camera_command(choreography: Any) -> str:
+    """The Hailuo bracket command for a CameraChoreography enum/value (``[Static shot]`` when unset)."""
+    value = getattr(choreography, "value", choreography)
+    return HAILUO_CAMERA_COMMANDS.get(str(value), "[Static shot]") if value else "[Static shot]"
+
+
+def validate_camera_command(command: str) -> str:
+    """Normalise an agent-written Hailuo command; ``ValueError`` on unknown moves or > 3 per bracket."""
+    brackets = _HAILUO_BRACKET_RE.findall(command or "")
+    if not brackets or _HAILUO_BRACKET_RE.sub("", command).strip(" ,then"):
+        raise ValueError(f"camera_command must be Hailuo bracket commands like '[Push in]', got {command!r}")
+    canon = {m.lower(): m for m in HAILUO_CAMERA_MOVES}
+    out = []
+    for inner in brackets:
+        moves = [m.strip() for m in inner.split(",") if m.strip()]
+        unknown = [m for m in moves if m.lower() not in canon]
+        if unknown or not moves:
+            raise ValueError(f"Unknown Hailuo camera move(s) {unknown}; valid: {', '.join(HAILUO_CAMERA_MOVES)}")
+        if len(moves) > 3:
+            raise ValueError(f"At most 3 simultaneous Hailuo camera moves per bracket, got {len(moves)}")
+        out.append("[" + ",".join(canon[m.lower()] for m in moves) + "]")
+    return ", then ".join(out)
+
+
+def build_motion_prompt(camera_command: str, motion: str, *, speaking: bool = False) -> str:
+    """Image-to-video prompt: camera command + what moves and how it ends, never the image itself.
+
+    The first frame already fixes identity, wardrobe, set and light; re-describing them competes
+    with the image (Kling/Runway I2V guides), so the motion prompt carries only motion.
+    """
+    text = " ".join((motion or "").split()).rstrip(".")
+    parts = [camera_command.strip(), f"{text}." if text else ""]
+    if speaking:
+        parts.append("She speaks to camera with natural lip movement.")
+    return " ".join(p for p in parts if p)
+
+
 # Keyed by the LightingContract enum *values* in pipeline.archetypes.
 LIGHTING_PHRASES: Dict[str, str] = {
     "studio_3point": "soft three-point studio lighting",
@@ -201,6 +261,10 @@ LIGHTING_PHRASES: Dict[str, str] = {
     "cyberpunk_neon": "cyan and magenta neon edge light",
     "nordic_minimalist": "soft diffused window daylight",
     "beauty_high_key": "radiant high-key softbox light",
+    "natural_daylight": "clear natural daylight with crisp natural shadows",
+    "overcast_soft": "soft overcast daylight with no hard shadows",
+    # Generic on purpose: before the lamp is switched on, a phone or laptop screen is the practical (QA preprod r2).
+    "practical_night": "night interior lit only by the light sources visible in frame, soft pools of light falling off into deep shadow",
 }
 
 

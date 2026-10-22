@@ -133,6 +133,10 @@ class CreativeAngle(BaseModel):
     hook_strategy: HookStrategy
     narrative_arc: List[str] = Field(default_factory=list)
     conversion_thesis: str
+    # One sentence about the audience's life the whole film argues (not a feature list), and the one
+    # image that carries it on screen.
+    controlling_idea: Optional[str] = None
+    key_visual: Optional[str] = None
     projected_retention_score: float = 8.0  # 1.0 - 10.0
     projected_conversion_score: float = 8.0  # 1.0 - 10.0
 
@@ -648,13 +652,25 @@ CREATIVE_CONCEPT_SYSTEM_PROMPT = """You are an Executive Commercial Director.
 You formulate 3 DISTINCT, un-compromised commercial video concepts for an e-commerce campaign:
 - Angle A: Shock / Pattern Interrupt / Contrarian (High energy, immediate disruption, stress test or debunking)
 - Angle B: Aesthetic / Sensory / ASMR Demonstration (Cinematic macro visuals, aspirational lifestyle, tactile immersion)
-- Angle C: Direct Problem-Agitation / Value Tear-Down (Hard DR, relatable daily misery vs immediate victory, side-by-side ROI)
+- Angle C: Direct Problem-Agitation (Hard DR, a relatable daily frustration of the audience vs the moment it is solved)
 
 For each angle:
+0. Write controlling_idea: ONE sentence about the target audience's life that the whole film argues (not a list of
+   features, not a slogan), and key_visual: the ONE concrete image that carries that idea on screen without words.
 1. Define character_role ("presenter", "model", or "product_only") and audio_strategy ("on_camera_speech", "off_camera_vo", "music_and_sfx_only", "asmr_hybrid").
 2. Construct the 0-3s Hook Strategy (spoken, visual, text overlay, retention mechanism).
 3. Outline the 5-beat Narrative Arc (0-3s hook, 3-7s agitation, 7-15s demonstration, 15-20s objection proof, 20-25s cta).
 4. Score projected retention (1-10) and conversion (1-10).
+
+Rules:
+- If a client-fixed target audience is given, every angle targets exactly that audience and dramatizes a concrete
+  moment of THEIR day (where, when, what goes wrong), not a generic product objection.
+- The pain must be one the audience really has. Never invent a strawman problem the product category does not cause
+  (e.g. "waiting to adjust gears" for a bike nobody adjusts before riding).
+- No comparison with, or depiction of, a competitor or "other product" (Vietnamese advertising law bans direct
+  comparison), no split-screen versus shots, no on-screen timers or numbers that are not in the facts.
+- Features are proven inside the story's action (she brakes hard at a real moment), never as a tour of parts.
+- Avoid the category's cliches listed in Whitespace and in your own knowledge; say which one each angle avoids.
 
 Finally, evaluate and select the WINNING concept based on category dynamics, audience awareness, and conversion probability. Provide precise directorial directives for camera, lighting, and pacing.
 Always output strict JSON adhering to schema.
@@ -663,12 +679,19 @@ Always output strict JSON adhering to schema.
 def generate_creative_concepts(
     research: CompetitorResearchArtifact,
     use_llm: bool = True,
+    audience: Optional[str] = None,
 ) -> CreativeConceptArtifact:
-    """Generates 3 distinct creative concepts and objectively selects the winning angle."""
+    """Generates 3 distinct creative concepts and objectively selects the winning angle.
+
+    ``audience`` is the client-fixed target audience: the LLM must write every angle for it and every
+    angle's ``target_audience_segment`` is set to it (models drift to generic segments otherwise).
+    """
     product = research.product_intel
     use_llm = use_llm and not is_offline()  # offline: deterministic fallbacks only
+    artifact: Optional[CreativeConceptArtifact] = None
     if use_llm:
-        user_prompt = f"""Campaign ID: {research.campaign_id}
+        audience_line = f"Client-fixed target audience (write every angle for exactly them): {audience}\n" if audience else ""
+        user_prompt = f"""{audience_line}Campaign ID: {research.campaign_id}
 Product: {product.title} ({product.category})
 Archetype: {product.product_archetype.value}
 Price: {product.pricing.current_price} {product.pricing.currency} (Discount: {product.pricing.discount_percent}%)
@@ -687,6 +710,8 @@ Output JSON schema:
       "angle_archetype": "shock_pattern_interrupt",
       "title": "Compelling Title",
       "target_audience_segment": "Audience segment",
+      "controlling_idea": "One sentence about the audience's life the film argues",
+      "key_visual": "The one image that carries the idea",
       "character_role": "presenter",
       "audio_strategy": "on_camera_speech",
       "hook_strategy": {{
@@ -761,18 +786,22 @@ Output JSON schema:
                     )
                 except Exception:
                     winning = None
-                return _finalize_concepts(research, options, winning, generator="llm_gemini")
+                artifact = _finalize_concepts(research, options, winning, generator="llm_gemini")
             except Exception:
-                pass
-        telemetry.note(
-            "Deterministic fallback replaced LLM output for the 3-angle creative concept selection",
-            phase="creative_concepts",
-            fallback="deterministic_creative_concepts",
-        )
+                artifact = None
+        if artifact is None:
+            telemetry.note(
+                "Deterministic fallback replaced LLM output for the 3-angle creative concept selection",
+                phase="creative_concepts",
+                fallback="deterministic_creative_concepts",
+            )
 
-    return _finalize_concepts(
-        research, _deterministic_angles(research), None, generator="deterministic_fallback"
-    )
+    if artifact is None:
+        artifact = _finalize_concepts(research, _deterministic_angles(research), None, generator="deterministic_fallback")
+    if audience:
+        for angle in artifact.concept_options:
+            angle.target_audience_segment = audience
+    return artifact
 
 
 # ------------------------------------------------------------------------------
@@ -1113,10 +1142,12 @@ def run_research_pipeline(
     use_llm: bool = True,
     workspace: Optional[ProjectWorkspace] = None,
     auto_detect_archetype: bool = True,
+    audience: Optional[str] = None,
 ) -> tuple[CompetitorResearchArtifact, CreativeConceptArtifact]:
     """Autonomous entry point: analyzes affiliate link or raw product text,
 
     discovers competitor landscape, synthesizes hooks, and outputs both artifacts.
+    ``audience`` (client-fixed target audience) becomes the primary persona and every angle's segment.
     """
     if workspace is not None:
         target_dir = workspace.artifacts_dir
@@ -1244,12 +1275,12 @@ def run_research_pipeline(
         product_intel=product_intel,
         competitor_landscape=landscape,
         viral_hook_library=hooks,
-        primary_persona=product_intel.target_personas[0] if product_intel.target_personas else "Người tiêu dùng hiện đại",
+        primary_persona=audience or (product_intel.target_personas[0] if product_intel.target_personas else "Người tiêu dùng hiện đại"),
         price_anchor_strategy=_price_anchor_strategy(product_intel.pricing),
     )
 
     # Step 3: 3-Angle Creative Concepts & Winning Angle Selection
-    creative_concept_artifact = generate_creative_concepts(research_artifact, use_llm=use_llm)
+    creative_concept_artifact = generate_creative_concepts(research_artifact, use_llm=use_llm, audience=audience)
     telemetry.stage_progress(
         STAGE_RESEARCH,
         4,

@@ -167,3 +167,25 @@ def test_list_projects(tmp_path: Path):
     # Filter by non-existent topic
     empty = ProjectWorkspace.list_projects(topic="beauty_skincare", base_dir=tmp_path)
     assert empty == []
+
+
+def test_creative_concept_is_injectable_and_resumes_at_stage_2(tmp_path):
+    # A director who rewrites the concept must go through --inject, not hand-edit artifacts/.
+    from pipeline.researcher import run_research_pipeline
+    from pipeline.archetypes import ProductArchetype
+    from pipeline.workspace import ARTIFACT_PRODUCER_STAGE
+
+    _, concept = run_research_pipeline(product_input="Xe đạp", campaign_id="inj", output_dir=tmp_path,
+                                       archetype=ProductArchetype.GENERAL_COMMERCIAL, use_llm=False)
+    data = concept.model_dump()
+    data["concept_options"][0]["controlling_idea"] = "Ở thành phố lạ, chiếc xe là tự do đầu tiên."
+    src = tmp_path / "concept.json"
+    src.write_text(json.dumps(data, ensure_ascii=False))
+    ws = ProjectWorkspace(topic="general_commercial", project_id="inj", base_dir=tmp_path / "projects")
+    target = ws.inject_artifact("creative_concept", src)
+    assert json.loads(target.read_text())["concept_options"][0]["controlling_idea"].startswith("Ở thành phố")
+    assert ARTIFACT_PRODUCER_STAGE["creative_concept"] == 1
+    bad = tmp_path / "bad.json"
+    bad.write_text("{}")
+    with pytest.raises(ValueError):
+        ws.inject_artifact("creative_concept", bad)

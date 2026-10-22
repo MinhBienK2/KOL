@@ -1,0 +1,7 @@
+QA Stage 3 lần 2: 0 lint, tiến bộ lớn. Còn 3 vấn đề trước khi chốt vòng. Vẫn cấm Stage ≥4, tạo ảnh/video/TTS, sửa tay artifacts/, sửa code.
+
+1. shot_05 mâu thuẫn mở/kết: first frame là cô ấy ĐÃ dừng, chân chạm đất; motion lại "giảm tốc dừng lại, đặt chân xuống". visual_cue_en là trạng thái MỞ ĐẦU: cô ấy đang lăn bánh chậm tới vạch dừng, hai chân trên bàn đạp, tay đặt lên tay phanh. motion_cue_en đi từ đó đến kết thúc.
+2. Clip sinh 6s nhưng chỉ dùng thời lượng beat (prompt_pack có warn mới `clip_heavily_trimmed` cho shot 2.5s). Hành động chính phải xảy ra ngay từ giây 0: shot_01 (2.5s) chỉ một hành động: cô ấy nói câu hook trong lúc bắt đầu đẩy xe qua ngưỡng cửa; shot_02 (2.5s) xe đã lăn bánh từ frame đầu (first frame là cô ấy đang đạp, không phải "chuẩn bị đạp"). Viết lại motion_cue_en cho gọn, 1 hành động chính + trạng thái kết thúc.
+3. Sáng tạo: shot_03 → 04 → 05 là ba beat tính năng liên tiếp (phuộc, lốp+chắn bùn, phanh) = cảm giác "tour bộ phận". Giữ đủ claim nhưng gắn vào hành trình: ví dụ đổi shot_04 thành shot vai model có cô ấy (bánh sau lướt qua vũng nước, thấy ống quần/giày sạch khô bên cạnh chắn bùn: lợi ích nhìn thấy được, không nói "sạch tinh"), hoặc thứ tự khác có nhịp cảm xúc. Không vượt 30s, mỗi beat 2.5–6s.
+Sau đó: script_v5.json (validate ra []) → inject --pause-after-stage 2 → Stage 3 với overrides cập nhật (nhớ set/wear/generation_mode cho shot mới) → prompt_pack. Mục tiêu 0 error; warn còn lại phải có lý do.
+Báo cáo ngắn: bảng beat (visual_cue_en, motion_cue_en, VO, caption, vai, generation_mode) + lint còn lại.

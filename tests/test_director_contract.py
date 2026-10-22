@@ -298,3 +298,47 @@ def test_cli_check_fails_when_resume_is_impossible(tmp_path: Path, capsys: pytes
     assert payload["stages_to_run"] == [5, 6, 7, 8]
     assert payload["problems"]
     run.assert_not_called()
+
+
+def test_inject_with_matching_pause_installs_and_pauses_without_running(tmp_path: Path, capsys: pytest.CaptureFixture):
+    # QA preprod r1: "--inject brief=... --pause-after-stage 1" installed the brief but exited 2, so the
+    # director bypassed the CLI with a Python call to get "install my concept, then let QA review".
+    src = _write(tmp_path / "brief_src.json", BRIEF)
+    with patch("tools.director.run_pipeline") as run:
+        code = _run_cli(tmp_path, "--inject", f"brief={src}", "--pause-after-stage", "1", "--json")
+    payload = json.loads(capsys.readouterr().out)
+    assert code == 4 and payload["status"] == "paused"
+    assert payload["next_stage"] == 2 and payload["injected"] == ["brief"]
+    run.assert_not_called()
+    assert (Path(payload["artifacts_dir"]) / "brief.json").exists()
+
+
+def test_inject_script_rejects_lip_sync_without_a_face_and_noon_golden_hour(tmp_path: Path):
+    # QA preprod r1: a tyre close-up was on_camera_speech and an 11:45 street was golden_hour.
+    ws = _ws(tmp_path)
+    bad = json.loads(json.dumps(SCRIPT))
+    bad["beats"][0].update({
+        "audio_strategy": "on_camera_speech", "character_role": "presenter",
+        "visual_cue_en": "Extreme close-up of the knobby tyre rolling over a puddle at midday",
+        "lighting_contract": "golden_hour",
+    })
+    src = _write(tmp_path / "bad_script.json", bad)
+    with pytest.raises(ValueError) as exc:
+        ws.inject_artifact("script", src)
+    assert "lip-sync impossible" in str(exc.value) and "golden_hour" in str(exc.value)
+    assert not (ws.artifacts_dir / "script.json").exists()
+
+
+def test_resume_keeps_the_brief_product_name_not_the_cli_default(tmp_path: Path, monkeypatch):
+    # QA preprod r1: --from-stage 3 without --product retitled the bicycle project "Ly Giữ Nhiệt…".
+    from pipeline import director as pipeline_director
+    from pipeline.briefing import create_product_brief
+    from pipeline.scriptwriter import generate_commercial_script
+
+    ws = _ws(tmp_path)
+    brief = create_product_brief(campaign_id="c1", product_name="Xe đạp Thống Nhất", output_dir=ws.artifacts_dir)
+    generate_commercial_script(brief=brief, output_dir=ws.artifacts_dir)
+    seen = {}
+    monkeypatch.setattr(ws, "update_project_meta", lambda **kw: seen.update(kw))
+    pipeline_director.run_pipeline(campaign_id="c1", workspace=ws, resume_from_stage=3, pause_after_stage=3)
+    assert seen["title"] == "Xe đạp Thống Nhất"

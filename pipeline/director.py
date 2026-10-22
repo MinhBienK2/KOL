@@ -161,12 +161,13 @@ def run_pipeline(
     result: Optional[dict] = None,
     archetype_source: Optional[str] = None,
     max_video_jobs: Optional[int] = None,
+    audience: Optional[str] = None,
     **kwargs: Any,
 ) -> bool:
     """Executes the complete 8-stage commercial production pipeline.
 
     Agent direction (all optional; objects or JSON file paths where noted):
-      ``beats`` -> stage 2 (strict), ``shot_overrides`` -> stage 3, ``reference_overrides`` /
+      ``audience`` (client-fixed target audience) -> stage 1 research/concepts, ``beats`` -> stage 2 (strict), ``shot_overrides`` -> stage 3, ``reference_overrides`` /
       ``character_path`` / ``strict_resolution`` / ``keyframe_source`` -> stage 4, ``strict_tts`` -> stage 6,
       ``transitions`` -> stage 7 (default: per-beat ``transition`` in script.json).
     ``pause_after_stage`` stops cleanly after that stage (returns False, ``result["status"] ==
@@ -243,7 +244,15 @@ def run_pipeline(
     target_keyframes_dir = workspace.keyframes_dir
     out_master_video = workspace.master_video_path
 
-    # Telemetry: one recorder per run, persisted under {workspace.root}/telemetry/.
+    # A resumed run's product is the one in its brief, not the CLI default ("Ly Giữ Nhiệt…" retitled a
+    # bicycle project on --from-stage 3, QA preprod r1).
+    brief_path = target_artifacts_dir / "brief.json"
+    if resume_from_stage > 1 and brief_path.is_file():
+        try:
+            product_name = json.loads(brief_path.read_text(encoding="utf-8")).get("product_name") or product_name
+        except (OSError, json.JSONDecodeError):
+            pass
+
     # Update project metadata with product title
     workspace.update_project_meta(title=product_name, archetype=selected_archetype.value)
 
@@ -401,6 +410,7 @@ def run_pipeline(
                             workspace=workspace,
                             use_llm=True,
                             auto_detect_archetype=False,  # decided once, up front, by the Director
+                            audience=audience,
                         )
                         telemetry.register_artifact(target_artifacts_dir / "competitor_research.json", stage=1)
                         telemetry.register_artifact(target_artifacts_dir / "creative_concept.json", stage=1)
@@ -424,6 +434,7 @@ def run_pipeline(
                         archetype=selected_archetype,
                         output_dir=target_artifacts_dir,
                         workspace=workspace,
+                        **({"target_persona": audience} if audience else {}),
                     )
                     return f"Brief created for '{product_name}' (no product link supplied)"
 

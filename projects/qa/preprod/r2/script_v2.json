@@ -1,0 +1,143 @@
+{
+  "campaign_id": "pp_r2",
+  "product_name": "Đèn bàn LED Acrylic đế gỗ",
+  "target_duration": 17.5,
+  "beats": [
+    {
+      "scene_id": "shot_01_hook_light",
+      "beat_type": "hook",
+      "spoken_text": "Chỉ cần cắm nguồn USB.",
+      "on_screen_text": "CẮM NGUỒN BẬT SÁNG",
+      "visual_cue": "Trong căn phòng tối chỉ có ánh màn hình điện thoại le lói từ xa, bàn tay cầm đầu cáp USB màu trắng cắm dứt khoát vào sạc dự phòng đặt cạnh đế gỗ, chiếc đèn acrylic chữ L đang tắt lập tức bừng sáng dải LED phẳng phát ra ánh sáng trắng rực rỡ mặt bàn bên cửa sổ đêm.",
+      "visual_cue_en": "In the dark room with only faint smartphone screen glow and faint city lights outside the window, a slender hand holds a white USB cable connector poised next to a power bank beside the unlit clear L-shaped acrylic desk lamp with wooden base on the narrow wooden desk.",
+      "motion_cue_en": "The hand firmly inserts the white USB connector into the power bank, immediately turning on the flat LED strip at the horizontal top of the clear acrylic lamp to cast bright white light across the wooden tabletop.",
+      "estimated_duration": 2.5,
+      "archetype": "tech_gadgets",
+      "character_role": "product_only",
+      "audio_strategy": "asmr_hybrid",
+      "shot_scale": "close_up",
+      "lens": "50mm_prime",
+      "angle": "high_angle_35deg",
+      "camera_choreography": "zoom_in",
+      "lighting_contract": "practical_night",
+      "narrative_purpose": "Hook thị giác ngay trong 1s đầu: cắm USB vào sạc dự phòng, đèn đang tắt lập tức bừng sáng ánh sáng trắng.",
+      "transition": null
+    },
+    {
+      "scene_id": "shot_02_hook_reveal",
+      "beat_type": "hook",
+      "spoken_text": "Về phòng muộn, góc riêng đã sáng.",
+      "on_screen_text": "GÓC NHỎ RIÊNG MÌNH",
+      "visual_cue": "Mai Ly mặc bộ đồ ngủ ở nhà màu xám than ngồi bên bàn làm việc hẹp kê sát cửa sổ đêm, gương mặt cô được ánh sáng trắng từ chiếc đèn acrylic đế gỗ vừa bật chiếu rọi, ngoài cửa sổ là ánh đèn thành phố mờ ảo.",
+      "visual_cue_en": "A young Vietnamese woman wearing dark gray cotton home loungewear sits at the narrow wooden desk beside the night window, illuminated by the steady white light of the powered clear L-shaped acrylic desk lamp with wooden base, beside an open notebook and laptop.",
+      "motion_cue_en": "She rests her smartphone flat on the wooden desk and exhales with a relieved smile under the white light of the acrylic lamp.",
+      "estimated_duration": 2.5,
+      "archetype": "tech_gadgets",
+      "character_role": "model",
+      "audio_strategy": "off_camera_vo",
+      "shot_scale": "medium_shot",
+      "lens": "35mm_street",
+      "angle": "eye_level",
+      "camera_choreography": "truck",
+      "lighting_contract": "practical_night",
+      "narrative_purpose": "Lộ diện nhân vật được ánh đèn mới chiếu rọi gương mặt, thở phào nhẹ nhõm khi góc làm việc đã sáng.",
+      "transition": {
+        "type": "cut",
+        "duration": 0.0
+      }
+    },
+    {
+      "scene_id": "shot_03_space_saving",
+      "beat_type": "solution",
+      "spoken_text": "Thân acrylic chữ L, chiếm ít chỗ trên bàn hẹp.",
+      "on_screen_text": "GỌN GÀNG BÀN HẸP",
+      "visual_cue": "Mai Ly mặc bộ đồ ngủ ở nhà màu xám than ngồi trước bàn hẹp bên cửa sổ đêm, mở laptop và cuốn sổ tay ngay cạnh chân đèn acrylic đế gỗ, mặt bàn vẫn còn khoảng trống rộng rãi.",
+      "visual_cue_en": "A young Vietnamese woman wearing dark gray cotton home loungewear sits at the narrow wooden desk beside the night window, with a laptop on the left, an open paper notebook in the middle, and the slender L-shaped clear acrylic desk lamp on the right.",
+      "motion_cue_en": "She slides the laptop slightly to the left and turns a page of the paper notebook comfortably on the wooden desk, leaving ample open space around the slender lamp.",
+      "estimated_duration": 3.5,
+      "archetype": "tech_gadgets",
+      "character_role": "model",
+      "audio_strategy": "off_camera_vo",
+      "shot_scale": "over_the_shoulder",
+      "lens": "35mm_street",
+      "angle": "high_angle_35deg",
+      "camera_choreography": "pan",
+      "lighting_contract": "practical_night",
+      "narrative_purpose": "Chứng minh thân acrylic chữ L và đế gỗ thanh mảnh, không chiếm chỗ, bàn hẹp vẫn đủ chỗ cho laptop và sổ tay.",
+      "transition": {
+        "type": "cut",
+        "duration": 0.0
+      }
+    },
+    {
+      "scene_id": "shot_04_feature_light",
+      "beat_type": "demo",
+      "spoken_text": "Dải LED phẳng ở đầu đèn phát ánh sáng trắng.",
+      "on_screen_text": "TẬP TRUNG LÀM VIỆC",
+      "visual_cue": "Cận cảnh dải LED phẳng ở đầu thân acrylic uốn cong chữ L đang tỏa ánh sáng trắng rõ nét xuống cuốn sổ mở và bàn phím laptop, thân acrylic trong suốt phản chiếu vệt sáng tinh tế bên cửa sổ đêm.",
+      "visual_cue_en": "The flat LED strip at the horizontal head of the clear L-shaped acrylic lamp with wooden base casting bright white light directly downward onto an open notebook and laptop keyboard on the narrow wooden desk beside the night window.",
+      "motion_cue_en": "Fingers type smoothly on the laptop keyboard beneath the focused downward white light beam of the flat LED strip.",
+      "estimated_duration": 3.0,
+      "archetype": "tech_gadgets",
+      "character_role": "product_only",
+      "audio_strategy": "asmr_hybrid",
+      "shot_scale": "close_up",
+      "lens": "100mm_macro",
+      "angle": "eye_level",
+      "camera_choreography": "macro_push_in",
+      "lighting_contract": "practical_night",
+      "narrative_purpose": "Trình diễn dải LED phẳng chiếu ánh sáng trắng tập trung xuống mặt bàn và thân acrylic bắt sáng, âm thanh gõ phím ASMR.",
+      "transition": {
+        "type": "cut",
+        "duration": 0.0
+      }
+    },
+    {
+      "scene_id": "shot_05_presenter",
+      "beat_type": "proof",
+      "spoken_text": "Góc nhỏ của riêng mình, vừa yên vừa gọn.",
+      "on_screen_text": "YÊN TĨNH VÀ GỌN",
+      "visual_cue": "Mai Ly mặc bộ đồ ngủ ở nhà màu xám than, ngồi bên bàn làm việc cạnh cửa sổ đêm, nhìn vào máy quay với ánh mắt tập trung và nụ cười nhẹ nhàng, chiếc đèn acrylic đế gỗ phát ánh sáng trắng bên cạnh.",
+      "visual_cue_en": "A young Vietnamese woman presenter wearing dark gray cotton home loungewear sits at the narrow wooden desk beside the night window, facing forward with a calm focused expression beside the illuminated clear acrylic desk lamp with wooden base.",
+      "motion_cue_en": "The presenter speaks with natural mouth movement and expressive eyes, nodding gently while gesturing slightly toward the illuminated workspace.",
+      "estimated_duration": 3.0,
+      "archetype": "tech_gadgets",
+      "character_role": "presenter",
+      "audio_strategy": "on_camera_speech",
+      "shot_scale": "medium_close_up",
+      "lens": "50mm_prime",
+      "angle": "eye_level",
+      "camera_choreography": "zoom_in",
+      "lighting_contract": "practical_night",
+      "narrative_purpose": "Beat on-camera duy nhất: Mai Ly chia sẻ cảm xúc góc nhỏ của riêng mình, vừa yên vừa gọn.",
+      "transition": {
+        "type": "cut",
+        "duration": 0.0
+      }
+    },
+    {
+      "scene_id": "shot_06_cta",
+      "beat_type": "cta",
+      "spoken_text": "Bấm giỏ hàng sắm ngay đèn acrylic nhé.",
+      "on_screen_text": "BẤM GIỎ HÀNG",
+      "visual_cue": "Mai Ly mặc bộ đồ ngủ ở nhà màu xám than ngồi thư thái bên bàn làm việc cạnh cửa sổ đêm, tay chỉ nhẹ xuống góc dưới màn hình, chiếc đèn acrylic đế gỗ phát ánh sáng trắng trên mặt bàn.",
+      "visual_cue_en": "A young Vietnamese woman wearing dark gray cotton home loungewear sits comfortably at the narrow wooden desk beside the glowing clear acrylic desk lamp with wooden base and night window, smiling warmly toward the viewer.",
+      "motion_cue_en": "She keeps a friendly smile and points her hand gently downward toward the bottom corner of the frame while resting still at the desk.",
+      "estimated_duration": 3.0,
+      "archetype": "tech_gadgets",
+      "character_role": "model",
+      "audio_strategy": "off_camera_vo",
+      "shot_scale": "medium_shot",
+      "lens": "50mm_prime",
+      "angle": "eye_level",
+      "camera_choreography": "locked_off",
+      "lighting_contract": "practical_night",
+      "narrative_purpose": "CTA tĩnh: kêu gọi người xem bấm giỏ hàng để sở hữu chiếc đèn acrylic.",
+      "transition": {
+        "type": "fade",
+        "duration": 0.4
+      }
+    }
+  ],
+  "archetype": "tech_gadgets"
+}

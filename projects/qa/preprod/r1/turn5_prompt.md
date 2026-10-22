@@ -1,0 +1,17 @@
+QA Stage 2 lần 2: ĐẠT CÓ ĐIỀU KIỆN (tốt hơn hẳn: vai/audio đúng, 1 bối cảnh = 1 lighting, key visual có ở shot_06). Sửa nốt các điểm nhỏ rồi làm Stage 3. Vẫn cấm: Stage ≥4, tạo ảnh/video/TTS, sửa tay artifacts/, gọi Python inject_artifact.
+
+A. Sửa script (file mới projects/qa/preprod/r1/script_v3.json, tự validate ra [] như lần trước):
+1. shot_04 VO "bám chắc… che sạch tinh" là claim hiệu năng phóng đại ngoài brief. Chỉ nêu đặc điểm: lốp Kenda gai, có sẵn chắn bùn (vd "Lốp Kenda gai, có sẵn chắn bùn, qua vũng nước vẫn gọn gàng"). shot_03 "êm ru" → nhẹ hơn ("đỡ xóc hơn hẳn" cũng là so sánh ngầm; dùng "phuộc trước giảm xóc đỡ cho cú nảy").
+2. Hook (shot_01) đang là than phiền đường xấu khi đứng yên. Hook phải mở đúng câu hỏi của khán giả (sinh viên năm nhất ở trọ: sáng đi học, trưa đi làm thêm, tự lo đi lại) trong ≤10 âm tiết, và khung đầu phải có một hành động nhìn thấy được ngay giây 0 (vd cô ấy đẩy xe ra khỏi cửa phòng trọ xuống ngõ ướt rồi nhìn vào máy). Giữ presenter + on_camera_speech, medium shot.
+3. Liên tục: visual_cue_en của MỌI shot có cô ấy phải nhắc mũ bảo hiểm nửa đầu đen và balo xanh sẫm trên baga (shot_02 đang thiếu mũ). shot_06: tháo quai mũ bằng hai tay thì không thể đồng thời "holding the handlebars" → sửa motion_cue_en thành một chuỗi hợp lý (dừng, tháo mũ, mỉm cười).
+4. shot_02 beat_type "pain_agitation" nhưng hình là đạp xe trơn tru → đổi beat_type cho đúng vai trò (vd "solution").
+Inject: `python3 tools/director.py --campaign pp_r1 --topic general_commercial --inject script=projects/qa/preprod/r1/script_v3.json --pause-after-stage 2 --json < /dev/null` (giữ đúng flag như lần trước).
+
+B. Stage 3 (storyboard): archetype general_commercial có bối cảnh mặc định là STUDIO cyclorama và trang phục mặc định là BLAZER công sở → sai hoàn toàn cho video này. Tạo projects/qa/preprod/r1/shot_overrides.json với, cho từng shot:
+- `set_direction`: một câu tiếng Anh cho mỗi địa điểm, dùng y hệt cho mọi shot cùng địa điểm (ngõ trọ sau mưa; đường phố/ngã tư; trước quán làm thêm). Mô tả không gian thật Việt Nam (vật liệu, chiều sâu tiền/trung/hậu cảnh), ánh sáng phải khớp lighting_contract của beat (overcast_soft / natural_daylight), không có "studio", "softbox", "cyclorama".
+- `wear_direction`: MỘT câu dùng cho mọi shot có người: trang phục sinh viên đời thường cụ thể (màu, chất liệu), mũ bảo hiểm nửa đầu đen, balo xanh sẫm. Shot product_only không cần.
+- Nếu muốn: `camera_command` (lệnh Hailuo hợp lệ: [Truck left/right], [Pan left/right], [Push in], [Pull out], [Pedestal up/down], [Tilt up/down], [Zoom in/out], [Shake], [Tracking shot], [Static shot]; tối đa 3 lệnh trong ngoặc) khi lệnh tự suy ra không đúng ý.
+Chạy: `python3 tools/director.py --campaign pp_r1 --topic general_commercial --from-stage 3 --pause-after-stage 3 --shot-overrides projects/qa/preprod/r1/shot_overrides.json --json < /dev/null` (exit 4 = đạt).
+Sau đó chạy `python3 tools/prompt_pack.py --run projects/general_commercial/pp_r1/runs/v1` và ĐỌC TOÀN VĂN artifacts/prompt_pack.md. Mọi lint `error` phải sửa bằng overrides rồi chạy lại Stage 3. Tự kiểm: mỗi prompt ảnh chỉ có 1 câu SET, 1 câu WEAR, không có blazer/studio/8k, không mâu thuẫn ánh sáng; prompt video chỉ là lệnh camera + chuyển động.
+
+Báo cáo: lệnh đã chạy + exit code, nội dung shot_overrides.json, bảng shot (shot_id, vai, mode I2V/R2V, thời lượng planned→generated, lệnh camera, số lint warn/error) và nhận xét của bạn về những prompt bạn thấy còn yếu.

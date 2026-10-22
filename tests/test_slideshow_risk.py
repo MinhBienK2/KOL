@@ -159,3 +159,18 @@ def test_slideshow_risk_unsupported_cinematic_claims():
     cinematic_dim = report.dimensions["unsupported_cinematic_claims"]
     assert cinematic_dim.score >= 4.0
     assert "lack camera motion" in cinematic_dim.reason or "without full lighting" in cinematic_dim.reason
+
+
+def test_motion_prompt_carries_the_action_and_the_sent_camera_move():
+    # QA preprod r4: the action and an agent's camera_command live in motion_prompt since the motion/still
+    # split; reading only scene_description/camera_choreography rejected a cap-twisting macro as a slideshow.
+    shot = {
+        "shot_id": "shot_02",
+        "camera_motion": "locked_off",
+        "camera_choreography": "locked_off",
+        "scene_description": "A clear glass jar with a blue cap on a wooden table.",
+        "motion_prompt": "[Static shot] A hand twists off the blue cap and places it beside the jar.",
+    }
+    report = score_slideshow_risk({"shots": [shot, {**shot, "shot_id": "shot_03", "motion_prompt": "[Push in] Fingers peel back the seal."}]})
+    assert report.hard_reject_reasons == []
+    assert report.dimensions["weak_motion"].reason.startswith("1/2 shots have static")

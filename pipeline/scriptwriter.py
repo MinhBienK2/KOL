@@ -119,6 +119,60 @@ def fit_beat_durations_to_speech(beats: Iterable[ScriptBeat]) -> List[str]:
     return warnings
 
 
+#: A lip-synced line needs a person whose mouth is on screen.
+_PERSON_RE = re.compile(r"\b(she|her|he|his|woman|girl|man|person|presenter|model|host|face|mouth)\b", re.I)
+#: Time-of-day words a golden-hour (sunrise/sunset, ~3200K) contract cannot honour.
+# A product carried low (hand at the hip, arm hanging) sits below a waist-up frame.
+_HELD_LOW_RE = re.compile(
+    r"\b(at (her|his) (right |left )?(side|hip)|by (its|the) (navy |fabric )?handles|hand-carry|"
+    r"hanging from (her|his) hand|down by (her|his) side)\b",
+    re.I,
+)
+_WAIST_UP_SCALES = {"medium_shot", "medium_close_up", "close_up"}
+# A product resting on the table sits below a chest-up frame; the CTA frame must show it.
+_ON_SURFACE_RE = re.compile(r"\bon the (\w+ )?(table|desk|counter|vanity)( surface| top)?\b", re.I)
+_CHEST_UP_SCALES = {"medium_close_up", "close_up"}
+_NIGHT_RE = re.compile(r"\b(night|midnight|late evening|after dark|dark room)\b", re.I)
+_NOT_GOLDEN_RE = re.compile(r"\b(midday|noon|overcast|cloudy|rain(?:y|ing)?|after the rain|night)\b", re.I)
+
+
+def shot_language_issues(beat: ScriptBeat) -> List[str]:
+    """Role/audio and lighting contradictions in an agent-authored beat (QA preprod r1)."""
+    issues: List[str] = []
+    cue = beat.visual_cue_en or ""
+    if beat.audio_strategy == AudioStrategy.ON_CAMERA_SPEECH:
+        scale = getattr(beat.shot_scale, "value", beat.shot_scale)
+        if scale == "extreme_macro" or (cue and not _PERSON_RE.search(cue)):
+            issues.append(
+                f"{beat.scene_id}: on_camera_speech but her face is not in the shot (lip-sync impossible); "
+                "use character_role model/product_only with off_camera_vo, or frame her face"
+            )
+    scale = getattr(beat.shot_scale, "value", beat.shot_scale)
+    held_low = _HELD_LOW_RE.search(f"{cue} {beat.motion_cue_en or ''}")
+    if held_low and scale in _WAIST_UP_SCALES and beat.character_role == CharacterRole.MODEL:
+        issues.append(
+            f"{beat.scene_id}: product carried low ('{held_low.group(0)}') falls out of a {scale} frame; "
+            "use cowboy_shot, or wide_shot for a tall product, or hold it higher"
+        )
+    on_surface = _ON_SURFACE_RE.search(cue)
+    if "cta" in beat.beat_type.lower() and on_surface and scale in _CHEST_UP_SCALES:
+        issues.append(
+            f"{beat.scene_id}: the CTA product rests '{on_surface.group(0)}' below a {scale} frame; "
+            "hold it at chest height or use medium_shot"
+        )
+    if beat.lighting_contract in (LightingContract.NATURAL_DAYLIGHT, LightingContract.OVERCAST_SOFT) and _NIGHT_RE.search(cue):
+        issues.append(
+            f"{beat.scene_id}: lighting_contract {beat.lighting_contract.value} contradicts the cue "
+            f"('{_NIGHT_RE.search(cue).group(0)}'); use practical_night"
+        )
+    if beat.lighting_contract == LightingContract.GOLDEN_HOUR and _NOT_GOLDEN_RE.search(cue):
+        issues.append(
+            f"{beat.scene_id}: lighting_contract golden_hour contradicts the cue ('{_NOT_GOLDEN_RE.search(cue).group(0)}'); "
+            "use natural_daylight or overcast_soft"
+        )
+    return issues
+
+
 def validate_script(beats: List[ScriptBeat]) -> List[str]:
     """Check a beat list against short-form ad structure and video-model limits.
 
@@ -145,6 +199,7 @@ def validate_script(beats: List[ScriptBeat]) -> List[str]:
             )
         if beat.estimated_duration < MIN_BEAT_SECONDS:
             issues.append(f"{beat.scene_id}: duration {beat.estimated_duration:.1f}s is below {MIN_BEAT_SECONDS:.1f}s")
+        issues += shot_language_issues(beat)
         if _speaks(beat):
             need = estimate_speech_seconds(beat.spoken_text)
             if need > beat.estimated_duration + 1e-6:

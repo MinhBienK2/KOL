@@ -1,0 +1,13 @@
+{
+ "round": 4,
+ "phase": "done",
+ "campaign": "pp_r4",
+ "topic": "beauty_skincare",
+ "run_dir": "projects/beauty_skincare/pp_r4/runs/v1",
+ "omp_session": null,
+ "consecutive_passes": 2,
+ "attempts": {
+  "stage1": 1
+ },
+ "notes": "Vòng 1 kết: đạt có điều kiện TB 8.44 (có sửa tầng 2 → không tính đạt). Vòng 2 bắt đầu: omp session mới, turn1 = Stage 1. | Stage1 đạt lần 1. Turn2: Stage 2. | Vòng 2 kết TB 8.63 (có tầng 2 → không tính). Vòng 3: túi tote canvas hai màu, fashion_apparel, golden hour ngoài trời. | Vòng 3 đạt TB 8.56, không tầng 2 → chuỗi đạt=1. Sửa tầng 2 giữa vòng 3→4. Vòng 4: kem dưỡng hũ thuỷ tinh, beauty_skincare, presenter 2–3 beat nói, sáng. | Vòng 4 đạt TB 8.63, không tầng 2 → chuỗi đạt=2 → DỪNG. Sửa tầng 2 sau vòng 4."
+}

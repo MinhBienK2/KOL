@@ -39,8 +39,14 @@ def test_lighting_contract_registry_completeness():
         LightingContractType.GOLDEN_HOUR_NATURAL,
         LightingContractType.CYBERPUNK_NEON,
         LightingContractType.MINIMALIST_NORDIC_INTERIOR,
+        LightingContractType.NATURAL_DAYLIGHT,
+        LightingContractType.OVERCAST_DAYLIGHT,
+        LightingContractType.PRACTICAL_NIGHT,
     }
     assert set(LIGHTING_CONTRACT_REGISTRY.keys()) == required_types
+    # Real locations need real daylight, not golden hour or a studio rim (QA preprod r1).
+    assert LIGHTING_CONTRACT_REGISTRY[LightingContractType.NATURAL_DAYLIGHT].nominal_kelvin == 5600
+    assert LIGHTING_CONTRACT_REGISTRY[LightingContractType.OVERCAST_DAYLIGHT].nominal_kelvin == 6500
 
     # Check nominal Kelvins
     assert LIGHTING_CONTRACT_REGISTRY[LightingContractType.THREE_POINT_STUDIO].nominal_kelvin == 5600

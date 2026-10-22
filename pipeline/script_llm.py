@@ -69,13 +69,23 @@ HARD CONSTRAINTS
   EVERY beat needs a non-empty spoken_text, including product-only/ASMR beats (there it is a soft off-camera voiceover
   line over the visuals). Only audio_strategy "music_and_sfx_only" may have an empty spoken_text.
 - on_screen_text: Vietnamese caption, UPPERCASE, at most {MAX_CAPTION_CHARS} characters INCLUDING spaces (aim for 2-4 words), punchy.
-- visual_cue_en: ENGLISH only, written for a video model: subject, ONE action, camera movement/framing, lighting, setting.
-  One action per shot. No Vietnamese words, no character names or tags, no brand-name spelling tricks.
+- visual_cue_en: ENGLISH only, the FIRST FRAME of the shot as one frozen moment: who, where, the pose/action at
+  second 0 and what is visible (product parts, props). No camera moves, framing or lighting words (those come from
+  camera_choreography, shot_scale and lighting_contract), no "then" sequences: what happens next is motion_cue_en. No Vietnamese words, no character names or tags, no brand-name spelling tricks.
+- motion_cue_en: ENGLISH, 8-40 words, ONLY what moves during this ~6s image-to-video clip: one concrete subject action
+  with a speed word, optional background motion, and the ending pose/state ("she swings onto the saddle and pushes
+  off slowly, ending seated and rolling out of frame left"). The first frame already shows her face, clothes, set and
+  light, so never describe appearance, wardrobe, setting, lighting or camera here (the camera move comes from
+  camera_choreography). Refer to people as "she"/"the woman", never by name or tag. Positive phrasing only.
+  It starts FROM the visual_cue_en moment (never re-states its end state as the start: a frame of her already
+  stopped cannot "slow to a halt"). Clips are generated at 6s and cut to the beat, so the key action happens
+  in the beat's first seconds.
 - visual_cue: the same shot described in Vietnamese (for the Vietnamese crew).
 - NO FABRICATION: never invent prices, discounts, percentages, numbers, statistics, awards, certifications, warranties,
   ratings, "best seller" or expert/doctor endorsements. Use a number or offer ONLY if it appears in the brief or research
   facts you are given. Without a supplied offer the CTA is neutral ("xem chi tiết ở link bên dưới").
-- Build on the winning concept: its angle, hook strategy, character role and audio strategy.
+- Build on the winning concept: its angle, hook strategy, character role and audio strategy. Its controlling_idea must
+  be visible in the pictures (visual_cue_en), not only said in the voice-over, and its key_visual must appear on screen.
 
 ENUMS (use these exact strings)
 - character_role: {_values(CharacterRole)}
@@ -89,12 +99,17 @@ ENUMS (use these exact strings)
   transition.duration 0 for cut, otherwise 0.2-0.6)
 - character_role "presenter" speaks to camera (on_camera_speech); "model" and "product_only" use off_camera_vo or
   music_and_sfx_only (nobody lip-syncs).
+  on_camera_speech only when her face and mouth are in frame (medium shot to close-up, visual_cue_en names her);
+  a close-up of a product part is "model" or "product_only" with off_camera_vo.
+- lighting_contract must match the time and place in visual_cue_en: natural_daylight for daytime outdoors or a sunlit
+  room, overcast_soft for cloudy/after-rain, golden_hour only at sunrise/sunset, practical_night when a lamp in frame is the only light at night; studio_3point, editorial_fashion,
+  beauty_high_key and cyberpunk_neon only on a matching set. Keep one lighting per location (no Kelvin jumps).
 
 OUTPUT SCHEMA
 {{"beats": [{{
   "beat_type": "hook|...|cta", "duration_seconds": 3.0,
   "spoken_text": "...", "on_screen_text": "...",
-  "visual_cue": "...", "visual_cue_en": "...",
+  "visual_cue": "...", "visual_cue_en": "...", "motion_cue_en": "...",
   "character_role": "...", "audio_strategy": "...", "camera_choreography": "...", "lighting_contract": "...",
   "shot_scale": "...", "lens": "...", "angle": "...",
   "transition": {{"type": "cut", "duration": 0.0}},
@@ -134,8 +149,8 @@ def build_prompts(
         concept_block = {
             k: winning.get(k)
             for k in (
-                "title", "angle_archetype", "character_role", "audio_strategy", "hook_strategy", "narrative_arc",
-                "conversion_thesis",
+                "title", "angle_archetype", "controlling_idea", "key_visual", "character_role", "audio_strategy",
+                "hook_strategy", "narrative_arc", "conversion_thesis",
             )
             if winning.get(k)
         }
@@ -238,7 +253,7 @@ def parse_beats(
         if audio == AudioStrategy.ON_CAMERA_SPEECH and role != CharacterRole.PRESENTER:
             audio = AudioStrategy.OFF_CAMERA_VO
         fields["character_role"], fields["audio_strategy"] = role, audio
-        for name in ("spoken_text", "on_screen_text", "visual_cue", "visual_cue_en"):
+        for name in ("spoken_text", "on_screen_text", "visual_cue", "visual_cue_en", "motion_cue_en"):
             if raw.get(name) is not None and not isinstance(raw.get(name), str):
                 errors.append(f"{label}.{name}: must be a string")
         try:
@@ -256,6 +271,7 @@ def parse_beats(
                     on_screen_text=(raw.get("on_screen_text") or "").strip(),
                     visual_cue=(raw.get("visual_cue") or "").strip(),
                     visual_cue_en=(raw.get("visual_cue_en") or "").strip() or None,
+                    motion_cue_en=(raw.get("motion_cue_en") or "").strip() or None,
                     estimated_duration=duration,
                     archetype=archetype,
                     narrative_purpose=(raw.get("narrative_purpose") or None),
@@ -277,6 +293,10 @@ def parse_beats(
             english = beat.visual_cue_en.replace(display_name, "").replace(brief.product_name, "")
             if _VIETNAMESE_CHARS.search(english):
                 errors.append(f"{beat.scene_id}: visual_cue_en must be English (no Vietnamese words)")
+        if not beat.motion_cue_en:
+            errors.append(f"{beat.scene_id}: motion_cue_en is required (the image-to-video motion of this shot)")
+        elif _VIETNAMESE_CHARS.search(beat.motion_cue_en.replace(display_name, "").replace(brief.product_name, "")):
+            errors.append(f"{beat.scene_id}: motion_cue_en must be English (no Vietnamese words)")
     return beats, errors
 
 

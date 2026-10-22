@@ -1,0 +1,30 @@
+{
+  "shot_01": {
+    "set_direction": "small cozy Vietnamese studio apartment at night, narrow wooden desk positioned right against a window with faint city lights outside, with fixed placement of laptop on the left, paper notebook in the middle, power bank and the clear L-shaped acrylic lamp with wooden base on the right",
+    "generation_mode": "i2v"
+  },
+  "shot_02": {
+    "set_direction": "small cozy Vietnamese studio apartment at night, narrow wooden desk positioned right against a window with faint city lights outside, with fixed placement of laptop on the left, paper notebook in the middle, power bank and the clear L-shaped acrylic lamp with wooden base on the right",
+    "wear_direction": "wearing dark gray cotton home loungewear, comfortable relaxed evening home clothes, natural hair styled loosely",
+    "generation_mode": "i2v"
+  },
+  "shot_03": {
+    "set_direction": "small cozy Vietnamese studio apartment at night, narrow wooden desk positioned right against a window with faint city lights outside, with fixed placement of laptop on the left, paper notebook in the middle, power bank and the clear L-shaped acrylic lamp with wooden base on the right",
+    "wear_direction": "wearing dark gray cotton home loungewear, comfortable relaxed evening home clothes, natural hair styled loosely",
+    "generation_mode": "i2v"
+  },
+  "shot_04": {
+    "set_direction": "small cozy Vietnamese studio apartment at night, narrow wooden desk positioned right against a window with faint city lights outside, with fixed placement of laptop on the left, paper notebook in the middle, power bank and the clear L-shaped acrylic lamp with wooden base on the right",
+    "generation_mode": "i2v"
+  },
+  "shot_05": {
+    "set_direction": "small cozy Vietnamese studio apartment at night, narrow wooden desk positioned right against a window with faint city lights outside, with fixed placement of laptop on the left, paper notebook in the middle, power bank and the clear L-shaped acrylic lamp with wooden base on the right",
+    "wear_direction": "wearing dark gray cotton home loungewear, comfortable relaxed evening home clothes, natural hair styled loosely",
+    "generation_mode": "i2v"
+  },
+  "shot_06": {
+    "set_direction": "small cozy Vietnamese studio apartment at night, narrow wooden desk positioned right against a window with faint city lights outside, with fixed placement of laptop on the left, paper notebook in the middle, power bank and the clear L-shaped acrylic lamp with wooden base on the right",
+    "wear_direction": "wearing dark gray cotton home loungewear, comfortable relaxed evening home clothes, natural hair styled loosely",
+    "generation_mode": "i2v"
+  }
+}

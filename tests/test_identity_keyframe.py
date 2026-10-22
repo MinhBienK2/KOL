@@ -7,7 +7,7 @@ from PIL import Image
 from pipeline.briefing import create_product_brief
 from pipeline.scriptwriter import generate_commercial_script
 from pipeline.storyboard import generate_scene_plan
-from pipeline.identity_keyframe import IdentityReferenceError, generate_clean_keyframes, prepare_9_16_frame
+from pipeline.identity_keyframe import IdentityReferenceError, generate_clean_keyframes, prepare_9_16_frame, still_frame_prompt
 from pipeline.schemas import AssetManifestArtifact
 
 
@@ -125,7 +125,7 @@ def test_synthesized_first_frames_follow_the_scene_prompt(tmp_path: Path, monkey
     for shot, (prompt, refs) in zip(plan.shots, calls):
         kf = kf_map[shot.shot_id]
         assert kf.keyframe_source == "synthesized"
-        assert shot.prompt_6part in prompt and "No text" in prompt
+        assert still_frame_prompt(shot.prompt_6part) in prompt and "No text" in prompt
         if kf.generation_mode != "r2v":  # i2v starts from the synthesized frame, not the reference
             assert kf.reference_assets[0].endswith(f"{shot.shot_id}_synth.png")
         if shot.character_role == CharacterRole.PRODUCT_ONLY:

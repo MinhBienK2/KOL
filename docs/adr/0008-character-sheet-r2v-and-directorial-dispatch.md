@@ -1,5 +1,7 @@
 # 0008. Character Sheet Reference-to-Video (R2V) & Directorial Dispatch
 
+> Amended by ADR 0009: Model shots now default to I2V from the synthesized first frame; R2V is a per-shot opt-in.
+
 ## Context
 Commercial TVC production requires consistent character identity across disparate camera angles, actions, and costumes. Previous implementations (ADR 0002, ADR 0006) relied primarily on Image-to-Video (I2V) using single padded First Frames with legacy fragmented turnaround crops. This caused two key limitations:
 1. When forcing multi-angle action or dynamic movement (Model shots), I2V's static First Frame constrained the subject's kinematics, producing stiff, unnatural motion.

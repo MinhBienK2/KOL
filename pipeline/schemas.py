@@ -72,6 +72,8 @@ class ScriptBeat(BaseModel):
     narrative_purpose: Optional[str] = None
     # English visual description for video models (spoken_text / on_screen_text stay Vietnamese).
     visual_cue_en: Optional[str] = None
+    # English image-to-video motion for this shot: subject action + speed + ending state, no appearance/set.
+    motion_cue_en: Optional[str] = None
     # Optional agent direction persisted in script.json; storyboard honours it over its own planning.
     shot_scale: Optional[ShotScale] = None
     lens: Optional[CameraLens] = None
@@ -102,7 +104,9 @@ class StoryboardShot(BaseModel):
     identity_lock_directive: Optional[str] = None
     style_constraints: str
     scene_description: str
-    prompt_6part: str
+    prompt_6part: str  # still first-frame description (Stage 4 image prompt)
+    # Stage 5 image-to-video prompt: Hailuo camera command + motion only. Older plans: None (prompt_6part used).
+    motion_prompt: Optional[str] = None
     estimated_duration: float
     reference_expression: Optional[str] = None
     character_role: Optional[CharacterRole] = None

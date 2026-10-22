@@ -42,6 +42,12 @@ KINETIC_ACTION_VERBS: Set[str] = {
     "walk", "walks", "walking", "step", "steps", "stepping", "strides",
     "sway", "sways", "swaying", "flow", "flows", "flowing", "ripple", "ripples",
     "show", "shows", "showing", "present", "presents", "presenting",
+    "twist", "twists", "twisting", "peel", "peels", "peeling", "dip", "dips", "dipping",
+    "place", "places", "placing", "pick", "picks", "picking", "put", "puts", "putting",
+    "pull", "pulls", "pulling", "push", "pushes", "pushing", "reach", "reaches", "reaching",
+    "plug", "plugs", "plugging", "pedal", "pedals", "pedaling", "ride", "rides", "riding",
+    "slip", "slips", "slipping", "fasten", "fastens", "fastening", "point", "points", "pointing",
+    "speak", "speaks", "speaking", "pop", "pops", "popping", "spread", "spreads", "spreading",
     # Vietnamese kinetic action terms
     "bước", "sải", "xoay", "lắc", "chạm", "ấn", "bấm", "nhỏ", "thoa", "rót",
     "uống", "nâng", "cầm", "giơ", "mở", "bóc", "gõ", "vuốt", "đung", "đưa",
@@ -104,6 +110,18 @@ def _is_static_camera(camera_motion: str) -> bool:
     return any(kw in norm for kw in STATIC_CAMERA_KEYWORDS)
 
 
+def _shot_camera(s: Dict[str, Any]) -> str:
+    """The camera move Stage 5 sends: the Hailuo command opening motion_prompt (an agent's camera_command
+    override lands there), else the planned camera_motion/choreography."""
+    m = re.match(r"\s*\[([^\]]+)\]", s.get("motion_prompt") or "")
+    return m.group(1) if m else (s.get("camera_motion") or s.get("camera_choreography") or "")
+
+
+def _shot_action(s: Dict[str, Any]) -> str:
+    """Scene text plus motion_prompt: since the motion/still split (QA preprod r1) the action lives there."""
+    return f"{s.get('scene_description') or ''} {s.get('motion_prompt') or ''}"
+
+
 def _has_kinetic_subject_action(description: str, explicit_kinetic: Optional[str] = None) -> bool:
     """Checks if scene action contains active physical movement verbs."""
     combined = f"{description} {explicit_kinetic or ''}".lower()
@@ -125,7 +143,7 @@ def _score_repetition(shots: List[Dict[str, Any]]) -> DimensionScore:
     type_ratio = most_common_type_count / n
 
     # 2. Camera motion repetition
-    motions = [s.get("camera_motion", "unknown").strip().lower() for s in shots]
+    motions = [(_shot_camera(s) or "unknown").strip().lower() for s in shots]
     motion_counts = Counter(motions)
     most_common_motion, most_common_motion_count = motion_counts.most_common(1)[0]
     motion_ratio = most_common_motion_count / n
@@ -147,7 +165,7 @@ def _score_repetition(shots: List[Dict[str, Any]]) -> DimensionScore:
     if motion_ratio > 0.6:
         score += 2.0
         reasons.append(f"Camera movement '{most_common_motion}' repeats in {motion_ratio:.0%} of shots")
-        flagged.extend([s.get("shot_id", "") for s in shots if s.get("camera_motion", "").lower() == most_common_motion])
+        flagged.extend([s.get("shot_id", "") for s in shots if _shot_camera(s).strip().lower() == most_common_motion])
 
     if duration_std < 0.3 and n >= 4:
         score += 1.0
@@ -205,8 +223,8 @@ def _score_weak_motion(shots: List[Dict[str, Any]]) -> DimensionScore:
 
     for s in shots:
         shot_id = s.get("shot_id", "unknown")
-        cam_motion = s.get("camera_motion") or s.get("camera_choreography") or ""
-        desc = s.get("scene_description") or ""
+        cam_motion = _shot_camera(s)
+        desc = _shot_action(s)
         kinetic = s.get("kinetic_action") or ""
 
         is_cam_static = _is_static_camera(cam_motion)
@@ -316,7 +334,7 @@ def _score_unsupported_cinematic_claims(shots: List[Dict[str, Any]]) -> Dimensio
         if claims_cinematic:
             cinematic_claims += 1
             # Must have structured lighting and non-static motion
-            cam = s.get("camera_motion") or s.get("camera_choreography") or ""
+            cam = _shot_camera(s)
             light = s.get("lighting") or s.get("lighting_contract") or ""
             is_static = _is_static_camera(cam)
             has_lighting = bool(light.strip()) and light.strip().lower() != "natural"
@@ -403,8 +421,8 @@ def score_slideshow_risk(
     # Any shot with static camera motion AND lacking kinetic subject action is rejected immediately
     for s in shots:
         shot_id = s.get("shot_id", "unnamed_shot")
-        cam = s.get("camera_motion") or s.get("camera_choreography") or ""
-        desc = s.get("scene_description") or ""
+        cam = _shot_camera(s)
+        desc = _shot_action(s)
         kinetic = s.get("kinetic_action") or ""
 
         if _is_static_camera(cam) and not _has_kinetic_subject_action(desc, kinetic):

@@ -15,8 +15,9 @@ Agent contract
   its ``status`` is completed | failed | verification_failed | paused | invalid | budget_exceeded | checked.
 * Agent direction flags (all optional): ``--beats``, ``--shot-overrides``, ``--references``,
   ``--character``, ``--strict-resolution``, ``--strict-tts``, ``--transitions``, ``--offline``.
-* ``--inject NAME=PATH`` installs a validated canonical artifact (brief, script, scene_plan,
-  asset_manifest) and resumes after the stage that would have produced it.
+* ``--inject NAME=PATH`` installs a validated canonical artifact (creative_concept, brief, script, scene_plan,
+  asset_manifest) and resumes after the stage that would have produced it; with ``--pause-after-stage`` equal to
+  that stage it only installs and exits paused (4), so the director's own artifact can be reviewed first.
 * ``--check`` validates a plan (stages to run, prerequisites) without executing or writing anything.
 """
 
@@ -79,6 +80,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Affiliate link or raw product description",
     )
     parser.add_argument(
+        "--audience",
+        default=None,
+        help="Stage 1: client-fixed target audience (who, situation, desired feeling); every concept targets it",
+    )
+    parser.add_argument(
         "--topic",
         default=None,
         help="Domain topic or product archetype (e.g. fashion_apparel, tech_gadgets, general_commercial)",
@@ -107,7 +113,7 @@ def build_parser() -> argparse.ArgumentParser:
         action="append",
         default=[],
         metavar="NAME=PATH",
-        help="Supply your own canonical artifact (brief|script|scene_plan|asset_manifest) from PATH; repeatable",
+        help="Supply your own canonical artifact (creative_concept|brief|script|scene_plan|asset_manifest) from PATH; repeatable",
     )
     parser.add_argument(
         "--check",
@@ -314,6 +320,21 @@ def main(argv: list[str] | None = None) -> int:
         injected.append(name.strip())
 
     from_stage = args.from_stage or first_stage_after(injected)
+    if injected and args.from_stage is None and args.pause_after_stage == from_stage - 1 and not args.check:
+        # "Install my artifacts, then stop at this checkpoint": nothing runs, the run is paused for review.
+        result = _res(
+            workspace,
+            from_stage,
+            False,
+            EXIT_PAUSED,
+            status="paused",
+            injected=injected,
+            paused_after_stage=args.pause_after_stage,
+            next_stage=from_stage,
+            resume_hint=f"--from-stage {from_stage}",
+        )
+        _persist(result, workspace)
+        return _emit(result, args.json)
     if args.pause_after_stage is not None and args.pause_after_stage < from_stage:
         error = f"--pause-after-stage {args.pause_after_stage} is before the first stage to run ({from_stage})"
         return _emit(_res(workspace, from_stage, False, EXIT_INVALID_INPUT, error=error), args.json)
@@ -382,6 +403,7 @@ def main(argv: list[str] | None = None) -> int:
             strict_tts=args.strict_tts,
             pause_after_stage=args.pause_after_stage,
             max_video_jobs=args.max_video_jobs,
+            audience=args.audience,
             result=run_status,
         )
 

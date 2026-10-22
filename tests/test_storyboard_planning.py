@@ -243,3 +243,192 @@ def test_locked_off_camera_is_a_real_static_choice():
         "Camera move: locked-off static camera, no camera movement."
     )
     assert _is_static_camera(locked.value)
+
+
+def test_every_shot_gets_a_motion_only_video_prompt(tmp_path):
+    # Research (Kling/Runway I2V guides): the I2V prompt directs motion; the first frame carries the look.
+    from pipeline.briefing import create_product_brief
+    from pipeline.scriptwriter import generate_commercial_script
+    from pipeline.storyboard import generate_scene_plan
+
+    from pipeline.archetypes import ProductArchetype
+
+    brief = create_product_brief(campaign_id="motion_test", product_name="Xe đạp Thống Nhất",
+                                 archetype=ProductArchetype.GENERAL_COMMERCIAL, output_dir=tmp_path)
+    script = generate_commercial_script(brief=brief, output_dir=tmp_path)
+    script.beats[0].motion_cue_en = "she turns her head slowly toward the window, ending in profile"
+    plan = generate_scene_plan(script=script, output_dir=tmp_path)
+    first = plan.shots[0]
+    assert first.motion_prompt.startswith("[")
+    assert "she turns her head slowly toward the window, ending in profile." in first.motion_prompt
+    for shot in plan.shots:
+        assert shot.motion_prompt and "SET:" not in shot.motion_prompt and "WEAR:" not in shot.motion_prompt
+        assert "hairstyle" not in shot.motion_prompt
+
+
+def test_camera_command_and_motion_direction_overrides(tmp_path):
+    import pytest
+    from pipeline.briefing import create_product_brief
+    from pipeline.cinematography import validate_camera_command
+    from pipeline.scriptwriter import generate_commercial_script
+    from pipeline.storyboard import generate_scene_plan
+
+    from pipeline.archetypes import ProductArchetype
+
+    brief = create_product_brief(campaign_id="motion_test", product_name="Xe đạp Thống Nhất",
+                                 archetype=ProductArchetype.GENERAL_COMMERCIAL, output_dir=tmp_path)
+    script = generate_commercial_script(brief=brief, output_dir=tmp_path)
+    sid = script.beats[1].scene_id
+    plan = generate_scene_plan(script=script, output_dir=tmp_path, shot_overrides={
+        "shot_02": {"camera_command": "[pan left, pedestal up]", "motion_direction": "steam rises from the cup"},
+    })
+    assert plan.shots[1].scene_id == sid
+    assert plan.shots[1].motion_prompt.startswith("[Pan left,Pedestal up] steam rises from the cup.")
+    assert validate_camera_command("[Push in], then [Pull out]") == "[Push in], then [Pull out]"
+    for bad in ("[Orbit]", "slow push", "[Pan left,Pan right,Tilt up,Tilt down]"):
+        with pytest.raises(ValueError):
+            validate_camera_command(bad)
+
+
+def test_shot_kelvin_follows_the_beat_lighting_not_the_archetype_room(tmp_path):
+    # QA preprod r1: every shot carried the archetype environment's 3200K whatever its own lighting.
+    from pipeline.archetypes import LightingContract, ProductArchetype
+    from pipeline.briefing import create_product_brief
+    from pipeline.scriptwriter import generate_commercial_script
+    from pipeline.storyboard import generate_scene_plan
+
+    brief = create_product_brief(campaign_id="kelvin_test", product_name="Xe đạp Thống Nhất",
+                                 archetype=ProductArchetype.HOME_LIFESTYLE, output_dir=tmp_path)
+    script = generate_commercial_script(brief=brief, output_dir=tmp_path)
+    script.beats[0].lighting_contract = LightingContract.OVERCAST_SOFT
+    script.beats[1].lighting_contract = LightingContract.NATURAL_DAYLIGHT
+    plan = generate_scene_plan(script=script, output_dir=tmp_path)
+    assert plan.shots[0].color_temp_kelvin == 6500 and "6500K" in plan.shots[0].spatial_staging
+    assert plan.shots[1].color_temp_kelvin == 5600
+    assert "overcast" in plan.shots[0].prompt_6part.lower()
+
+
+def test_wear_direction_replaces_the_archetype_wardrobe(tmp_path):
+    # QA preprod r1: a first-year student cycling to class would have worn the general-commercial blazer.
+    from pipeline.archetypes import ProductArchetype
+    from pipeline.briefing import create_product_brief
+    from pipeline.scriptwriter import generate_commercial_script
+    from pipeline.storyboard import generate_scene_plan
+
+    brief = create_product_brief(campaign_id="wear_test", product_name="Xe đạp", archetype=ProductArchetype.GENERAL_COMMERCIAL,
+                                 output_dir=tmp_path)
+    script = generate_commercial_script(brief=brief, output_dir=tmp_path)
+    wear = "plain black long-sleeve tee, dark jeans, navy backpack, black half-helmet"
+    plan = generate_scene_plan(script=script, output_dir=tmp_path, shot_overrides={"shot_01": {"wear_direction": wear}})
+    assert f"WEAR: {wear}" in plan.shots[0].prompt_6part and "blazer" not in plan.shots[0].prompt_6part.lower()
+
+
+def test_only_on_camera_speech_shots_ask_for_lip_movement(tmp_path):
+    # QA preprod r1: every motion prompt, product-only included, ended "She speaks to camera".
+    from pipeline.archetypes import AudioStrategy, ProductArchetype
+    from pipeline.briefing import create_product_brief
+    from pipeline.scriptwriter import generate_commercial_script
+    from pipeline.storyboard import generate_scene_plan
+
+    brief = create_product_brief(campaign_id="speak_test", product_name="Xe đạp", archetype=ProductArchetype.HOME_LIFESTYLE,
+                                 output_dir=tmp_path)
+    script = generate_commercial_script(brief=brief, output_dir=tmp_path)
+    plan = generate_scene_plan(script=script, output_dir=tmp_path)
+    for beat, shot in zip(script.beats, plan.shots):
+        assert ("speaks to camera" in shot.motion_prompt) == (beat.audio_strategy == AudioStrategy.ON_CAMERA_SPEECH)
+
+
+def test_generation_mode_override_routes_a_model_shot_to_i2v(tmp_path):
+    # QA preprod r1: R2V sends only the face, so a model shot riding the product redraws the product from text.
+    from pipeline.archetypes import CharacterRole, ProductArchetype
+    from pipeline.briefing import create_product_brief
+    from pipeline.identity_keyframe import _shot_dispatch
+    from pipeline.scriptwriter import generate_commercial_script
+    from pipeline.storyboard import generate_scene_plan
+
+    brief = create_product_brief(campaign_id="mode_test", product_name="Xe đạp", archetype=ProductArchetype.HOME_LIFESTYLE,
+                                 output_dir=tmp_path)
+    script = generate_commercial_script(brief=brief, output_dir=tmp_path)
+    script.beats[1].character_role = CharacterRole.MODEL
+    plan = generate_scene_plan(script=script, output_dir=tmp_path, shot_overrides={"shot_02": {"generation_mode": "i2v"}})
+    assert plan.shots[1].generation_mode == "i2v" and _shot_dispatch(plan.shots[1]) == "i2v"
+    # ADR 0009: a model shot defaults to I2V; R2V only when the director asks for it.
+    plan = generate_scene_plan(script=script, output_dir=tmp_path)
+    assert plan.shots[1].generation_mode is None and _shot_dispatch(plan.shots[1]) == "i2v"
+    plan = generate_scene_plan(script=script, output_dir=tmp_path, shot_overrides={"shot_02": {"generation_mode": "r2v"}})
+    assert _shot_dispatch(plan.shots[1]) == "r2v"
+    with pytest.raises(ValueError, match="generation_mode"):
+        generate_scene_plan(script=script, output_dir=tmp_path, shot_overrides={"shot_02": {"generation_mode": "t2v"}})
+
+
+def test_night_desk_scene_needs_the_practical_night_contract():
+    # QA preprod r2 prep: a lamp-lit night desk had no lighting contract except daylight/studio ones.
+    from pipeline.archetypes import AudioStrategy, CharacterRole, LightingContract
+    from pipeline.schemas import ScriptBeat
+    from pipeline.scriptwriter import shot_language_issues
+
+    beat = ScriptBeat(scene_id="shot_02_demo", beat_type="demo", spoken_text="", on_screen_text="", visual_cue="x",
+                      estimated_duration=3.0, character_role=CharacterRole.MODEL, audio_strategy=AudioStrategy.OFF_CAMERA_VO,
+                      visual_cue_en="She reads at a narrow desk at night, the lamp the only light",
+                      lighting_contract=LightingContract.NATURAL_DAYLIGHT)
+    assert any("practical_night" in i for i in shot_language_issues(beat))
+    beat.lighting_contract = LightingContract.PRACTICAL_NIGHT
+    assert shot_language_issues(beat) == []
+
+
+def test_agent_directives_get_a_full_stop_and_speech_shots_refuse_r2v(tmp_path):
+    # QA preprod r2: "...lamp on the right LIGHT: ..." and an on-camera presenter routed to R2V.
+    from pipeline.archetypes import AudioStrategy, CharacterRole, ProductArchetype
+    from pipeline.briefing import create_product_brief
+    from pipeline.scriptwriter import generate_commercial_script
+    from pipeline.storyboard import generate_scene_plan
+
+    brief = create_product_brief(campaign_id="stop_test", product_name="Đèn", archetype=ProductArchetype.TECH_GADGETS,
+                                 output_dir=tmp_path)
+    script = generate_commercial_script(brief=brief, output_dir=tmp_path)
+    script.beats[0].character_role, script.beats[0].audio_strategy = CharacterRole.PRESENTER, AudioStrategy.ON_CAMERA_SPEECH
+    plan = generate_scene_plan(script=script, output_dir=tmp_path, shot_overrides={
+        "shot_01": {"set_direction": "a narrow desk by a night window", "wear_direction": "grey loungewear"}})
+    assert "SET: a narrow desk by a night window." in plan.shots[0].prompt_6part
+    assert "WEAR: grey loungewear." in plan.shots[0].prompt_6part
+    with pytest.raises(ValueError, match="on_camera_speech"):
+        generate_scene_plan(script=script, output_dir=tmp_path, shot_overrides={"shot_01": {"generation_mode": "r2v"}})
+
+
+def test_product_carried_at_her_side_needs_a_frame_below_the_waist():
+    # QA preprod r3: a tote hand-carried at the hip in a waist-up CTA frame dropped out of the shot.
+    from pipeline.archetypes import AudioStrategy, CharacterRole
+    from pipeline.schemas import ScriptBeat
+    from pipeline.scriptwriter import shot_language_issues
+
+    beat = ScriptBeat(scene_id="shot_06_cta", beat_type="cta", spoken_text="", on_screen_text="", visual_cue="x",
+                      estimated_duration=3.0, character_role=CharacterRole.MODEL, audio_strategy=AudioStrategy.OFF_CAMERA_VO,
+                      visual_cue_en="She stands on a street corner holding the tote by its handles at her right side",
+                      shot_scale="medium_shot")
+    assert any("cowboy_shot" in i for i in shot_language_issues(beat))
+    beat.shot_scale = "wide_shot"
+    assert shot_language_issues(beat) == []
+
+
+def test_non_ascii_product_name_stays_out_of_english_prompts(tmp_path):
+    # QA preprod r3: "focus on Túi tote canvas sọc navy" inside an English image prompt.
+    brief = create_product_brief(output_dir=tmp_path, archetype=ProductArchetype.FASHION_APPAREL, campaign_id="c_vi")
+    script = generate_commercial_script(brief=brief, output_dir=tmp_path, archetype=ProductArchetype.FASHION_APPAREL)
+    script.product_name = "Túi tote canvas sọc navy"
+    plan = generate_scene_plan(script=script, output_dir=tmp_path)
+    assert all("Túi" not in shot.prompt_6part for shot in plan.shots)
+
+
+def test_cta_product_on_the_table_needs_a_frame_that_reaches_it():
+    # QA preprod r4: a chest-up CTA with the jar resting on the vanity left the product out of the closing frame.
+    from pipeline.archetypes import AudioStrategy, CharacterRole
+    from pipeline.schemas import ScriptBeat
+    from pipeline.scriptwriter import shot_language_issues
+
+    beat = ScriptBeat(scene_id="shot_06_cta", beat_type="cta", spoken_text="Bấm giỏ hàng nhé!", on_screen_text="", visual_cue="x",
+                      estimated_duration=3.5, character_role=CharacterRole.PRESENTER, audio_strategy=AudioStrategy.ON_CAMERA_SPEECH,
+                      visual_cue_en="A young woman faces the camera, gently holding the glass jar on the table surface",
+                      shot_scale="medium_close_up")
+    assert any("medium_shot" in i for i in shot_language_issues(beat))
+    beat.visual_cue_en = "A young woman faces the camera, holding the glass jar at chest level below her chin"
+    assert shot_language_issues(beat) == []
