@@ -10,7 +10,7 @@ import numpy as np
 from PIL import Image
 
 from pipeline import telemetry
-from pipeline.config import ARTIFACTS_DIR, BASE_DIR, CHARACTER_PATH, KEYFRAMES_DIR
+from pipeline.config import ARTIFACTS_DIR, BASE_DIR, CHARACTER_PATH, KEYFRAME_IMAGE_PROVIDER, KEYFRAMES_DIR
 from pipeline.archetypes import CharacterRole, ProductArchetype
 from pipeline.wardrobe import resolve_wardrobe_and_environment
 from pipeline.schemas import AssetManifestArtifact, KeyframeAsset, ScenePlanArtifact
@@ -45,10 +45,24 @@ def compose_synthesis_prompt(shot: Any, reference_roles: List[str]) -> str:
     return "\n".join([*lines, f"SHOT: {shot.prompt_6part}", SYNTH_FRAME_SUFFIX])
 
 
-def synthesize_first_frame(prompt: str, out_path: Path, reference_paths: List[Path]) -> Path:
-    """Render a scene first frame from references (Flow2API, several images in one message)."""
+#: Stage-4 first-frame image providers. ``flow2api`` takes the references in one message; ``minimax``
+#: (image-01) is text-only here because this gateway ignores reference images for identity.
+KEYFRAME_IMAGE_PROVIDERS = ("flow2api", "minimax")
+
+
+def synthesize_first_frame(prompt: str, out_path: Path, reference_paths: List[Path], *,
+                           provider: str = "flow2api") -> Path:
+    """Render a scene first frame with ``provider`` (references are used by Flow2API only)."""
     from pipeline.continuity import media
 
+    if provider == "minimax":
+        from pipeline.continuity.keyframes import clean_minimax_frame
+
+        media.minimax_image(prompt, out_path)
+        clean_minimax_frame(out_path)
+        if cv2.imread(str(out_path)) is None:
+            raise IdentityReferenceError(f"Synthesized frame is unreadable: {out_path}")
+        return out_path
     media.flow2api_image(prompt, out_path, reference_paths=reference_paths)
     raw = cv2.imread(str(out_path))
     if raw is None:
@@ -375,6 +389,7 @@ def generate_clean_keyframes(
     character_path: Optional[Path] = None,
     strict_resolution: bool = False,
     synthesize_frames: bool = False,
+    image_provider: Optional[str] = None,
 ) -> AssetManifestArtifact:
     """Generates identity-locked, watermark-cleaned keyframes for all storyboard shots.
 
@@ -385,12 +400,16 @@ def generate_clean_keyframes(
     catalogue photo is not the planned scene, so it is never used as a stand-in. Without
     ``synthesize_frames`` (offline / ``ffmpeg`` placeholder runs only) the reference is padded into
     9:16 and marked ``keyframe_source: "reference_pad"``; Stage 5 refuses such frames for real video.
+    ``image_provider`` (default ``KEYFRAME_IMAGE_PROVIDER``) is the only image provider used.
 
     Agents can direct identity with `reference_overrides` (or a `reference_overrides.json`
     in the artifacts/ or input/ directory), see `load_reference_overrides`, and a custom
     `character_path`. Missing/unusable references raise IdentityReferenceError before any
     keyframe is written (Pre-flight Gate); nothing is silently faked.
     """
+    image_provider = image_provider or KEYFRAME_IMAGE_PROVIDER
+    if image_provider not in KEYFRAME_IMAGE_PROVIDERS:
+        raise ValueError(f"image_provider must be one of {'|'.join(KEYFRAME_IMAGE_PROVIDERS)}, got {image_provider!r}")
     target_artifacts_dir = workspace.artifacts_dir if workspace is not None else (output_dir or ARTIFACTS_DIR)
     target_artifacts_dir.mkdir(parents=True, exist_ok=True)
     target_keyframes_dir = workspace.keyframes_dir if workspace is not None else (keyframes_dir or KEYFRAMES_DIR)
@@ -537,13 +556,16 @@ def generate_clean_keyframes(
                     synth_refs.append(product_hero_ref)
                     synth_roles.append("product_hero")
             synth_path = target_keyframes_dir / f"{shot.shot_id}_synth.png"
+            # image-01 gets no reference images, so the prompt must not point at any.
+            prompt_roles = synth_roles if image_provider == "flow2api" else []
             try:
-                synthesize_first_frame(compose_synthesis_prompt(shot, synth_roles), synth_path, synth_refs)
+                synthesize_first_frame(compose_synthesis_prompt(shot, prompt_roles), synth_path, synth_refs,
+                                       provider=image_provider)
             except Exception as exc:
                 telemetry.note(f"{shot.shot_id}: first-frame synthesis failed: {str(exc)[:300]}", ok=False)
                 raise FirstFrameSynthesisError(
-                    f"{shot.shot_id}: first-frame synthesis failed ({exc}). Stage 4 stopped; fix the image "
-                    f"provider and resume with --from-stage 4"
+                    f"{shot.shot_id}: first-frame synthesis with {image_provider} failed ({exc}). Stage 4 stopped; "
+                    f"fix the image provider and resume with --from-stage 4"
                 ) from exc
             ref_path = synth_path
             keyframe_source = "synthesized"
@@ -606,6 +628,7 @@ def generate_clean_keyframes(
                 reference_assets=ref_assets,
                 keyframe_source=keyframe_source,
                 synthesis_references=[_repo_rel(p) for p in synth_refs] or None,
+                synthesis_provider=image_provider if keyframe_source == "synthesized" else None,
                 identity_vs_anchor=identity_score,
             )
         )

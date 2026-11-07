@@ -138,6 +138,7 @@ class KeyframeAsset(BaseModel):
     keyframe_source: Optional[str] = None
     synthesis_references: Optional[List[str]] = None
     synthesis_error: Optional[str] = None
+    synthesis_provider: Optional[str] = None  # image provider of a "synthesized" frame (flow2api | minimax)
     identity_vs_anchor: Optional[float] = None
 class AssetManifestArtifact(BaseModel):
     campaign_id: str

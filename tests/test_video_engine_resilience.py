@@ -115,6 +115,21 @@ def test_r2v_face_anchor_i2v_strategy_is_recorded_as_degraded_i2v(tmp_path: Path
     assert first.kwargs["degraded_from"] == "R2V"
 
 
+@pytest.mark.parametrize("provider, degraded", [("flow2api", None), ("minimax", "R2V"), (None, "R2V")])
+def test_r2v_synth_i2v_starts_from_the_synthesized_frame(tmp_path: Path, provider, degraded):
+    synth = _png(tmp_path / "shot_01_clean.png", "white")
+    face = _png(tmp_path / "face_anchor.png", "gray")
+    req = ve.build_clip_request(
+        "shot_01", "p", synth, generation_mode="r2v", reference_assets=[str(face)],
+        r2v_strategy="synth_i2v", first_frame_provider=provider,
+    )
+    assert (req.mode, req.model, req.first_frame, req.subject_refs) == ("I2V", ve.DEFAULT_VIDEO_MODEL, synth, ())
+    assert req.degraded_from == degraded
+    with pytest.raises(VideoGenerationError, match="synthesized first frame is missing"):
+        ve.build_clip_request("shot_01", "p", None, generation_mode="r2v", reference_assets=[str(face)],
+                              r2v_strategy="synth_i2v")
+
+
 # --- retry classification ---------------------------------------------------------------
 
 

@@ -55,6 +55,9 @@ Khi truyền cờ `--json`, stdout chỉ in ra duy nhất MỘT object JSON duy 
   từ chối mọi shot có `keyframe_source` khác `synthesized`/`override` (First-frame gate), trước mọi lệnh gọi trả phí.
   Provider ảnh không tự đổi khi lỗi. Flow2API báo `Failed to obtain reCAPTCHA token` là lỗi gateway: dừng và báo, không
   chạy lại vòng lặp.
+- `--image-provider flow2api|minimax`: (Stage 4) Provider vẽ first frame, mặc định theo `KEYFRAME_IMAGE_PROVIDER` (không đặt
+  thì `flow2api`). Chỉ đổi khi người dùng yêu cầu. `minimax` (image-01) chỉ nhận prompt chữ, không giữ được mặt theo face
+  anchor: đọc `identity_vs_anchor` trong `asset_manifest.json` và mở từng ảnh trước khi sang Stage 5.
 - `--shot-overrides PATH.json`: (Stage 3) Ghi đè thông số camera motion, framing hoặc lighting cho từng shot cụ thể trong scene plan.
   Khoá hợp lệ theo shot (`shot_01` hoặc `scene_id`): `shot_scale`, `lens`, `angle`, `extra_direction` (nối thêm vào prompt),
   `set_direction` (thay câu `SET:` mặc định của archetype, ví dụ home_lifestyle mặc định là phòng khách; cảnh ở bếp phải ghi

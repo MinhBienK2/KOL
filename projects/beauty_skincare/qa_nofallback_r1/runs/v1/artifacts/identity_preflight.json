@@ -1,0 +1,28 @@
+{
+  "ok": true,
+  "assets": {
+    "character_sheet": {
+      "path": "assets/characters/kol_main/outfits/minimalist_spa_silk/character_sheet.png",
+      "width": 2516,
+      "height": 2056
+    },
+    "face_anchor": {
+      "path": "assets/characters/kol_main/face_anchor.png",
+      "width": 629,
+      "height": 624
+    },
+    "product_hero": {
+      "path": "tasks/beauty_skincare/skin_serum/product_hero.png",
+      "width": 1080,
+      "height": 1920
+    }
+  },
+  "errors": [],
+  "warnings": [
+    {
+      "asset": "face_anchor",
+      "issue": "long edge 629px below minimum resolution 1536px",
+      "path": "/home/pc599/Documents/KOL/assets/characters/kol_main/face_anchor.png"
+    }
+  ]
+}

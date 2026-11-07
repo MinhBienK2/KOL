@@ -1,0 +1,159 @@
+{
+  "campaign_id": "qa_nofallback_r1",
+  "product_name": "Serum dưỡng sáng mờ thâm phục hồi da Niacinamide 10% HA 30ml",
+  "target_duration": 28.0,
+  "beats": [
+    {
+      "scene_id": "shot_01_hook",
+      "beat_type": "hook",
+      "spoken_text": "Từng chi tiết nhỏ... nâng tầm trải nghiệm mỗi ngày.",
+      "on_screen_text": "ĐẲNG CẤP TỪNG ĐƯỜNG NÉT",
+      "visual_cue": "Macro chậm, giọt serum trong suốt hoặc hơi nhớt rơi từ pipette lên mặt kính sáng; camera macro tiến rất chậm, ánh sáng khuếch tán mềm, nền tối giản tinh tế.",
+      "estimated_duration": 3.5,
+      "archetype": "beauty_skincare",
+      "character_role": "product_only",
+      "audio_strategy": "asmr_hybrid",
+      "camera_choreography": "macro_push_in",
+      "lighting_contract": "beauty_high_key",
+      "narrative_purpose": "Creates a premium sensory hook through a slow, satisfying serum release.",
+      "visual_cue_en": "A translucent slightly viscous serum drop falls from a glass pipette onto a bright glass tile, macro push-in in slow motion, soft diffused lighting, minimal studio setting.",
+      "shot_scale": "extreme_macro",
+      "lens": "100mm_macro",
+      "angle": "top_down_90deg",
+      "transition": null
+    },
+    {
+      "scene_id": "shot_02_problem",
+      "beat_type": "problem",
+      "spoken_text": "Khi làn da thiếu nước, bạn cần một điều đơn giản hơn.",
+      "on_screen_text": "LÀN DA CẦN CHĂM SÓC",
+      "visual_cue": "Người mẫu ngồi cạnh cửa sổ với làn da tự nhiên hơi mệt; ánh sáng tự nhiên mềm, camera từ từ nghiêng qua vai.",
+      "estimated_duration": 3.5,
+      "archetype": "beauty_skincare",
+      "character_role": "model",
+      "audio_strategy": "off_camera_vo",
+      "camera_choreography": "orbit",
+      "lighting_contract": "beauty_high_key",
+      "narrative_purpose": "Introduces the need for simple daily care for dehydrated-looking skin.",
+      "visual_cue_en": "A model sits beside a window with naturally tired-looking skin, slow gentle orbit across her shoulder, soft natural window light, calm minimal interior.",
+      "shot_scale": "medium_close_up",
+      "lens": "85mm_portrait",
+      "angle": "eye_level",
+      "transition": {
+        "type": "cut",
+        "duration": 0.0
+      }
+    },
+    {
+      "scene_id": "shot_03_feature",
+      "beat_type": "feature",
+      "spoken_text": "Serum dưỡng 10% HA 30ml kết hợp Niacinamide và HA.",
+      "on_screen_text": "NIACINAMIDE 10% + HA",
+      "visual_cue": "Chai serum 30ml đặt cạnh một giọt thành phần trong suốt trên mặt kính; camera macro trượt nhẹ qua nhãn và kết cấu.",
+      "estimated_duration": 4.0,
+      "archetype": "beauty_skincare",
+      "character_role": "product_only",
+      "audio_strategy": "asmr_hybrid",
+      "camera_choreography": "macro_push_in",
+      "lighting_contract": "beauty_high_key",
+      "narrative_purpose": "Visually identifies the formula and its stated Niacinamide 10% and HA combination.",
+      "visual_cue_en": "A 30ml serum bottle sits beside a translucent ingredient droplet on glass, macro camera glides gently across the label and texture, high-key beauty lighting, clean studio surface.",
+      "shot_scale": "close_up",
+      "lens": "100mm_macro",
+      "angle": "eye_level",
+      "transition": {
+        "type": "dissolve",
+        "duration": 0.4
+      }
+    },
+    {
+      "scene_id": "shot_04_benefit",
+      "beat_type": "benefit",
+      "spoken_text": "Hỗ trợ làn da sáng hơn, đều màu hơn và mờ vết thâm.",
+      "on_screen_text": "SÁNG ĐỀU MÀU, MỜ THÂM",
+      "visual_cue": "Người mẫu nhẹ nhàng thoa serum lên gò má; camera tiến cận chậm, ánh sáng khuếch tán làm nổi độ ẩm tự nhiên của da.",
+      "estimated_duration": 4.5,
+      "archetype": "beauty_skincare",
+      "character_role": "model",
+      "audio_strategy": "asmr_hybrid",
+      "camera_choreography": "macro_push_in",
+      "lighting_contract": "beauty_high_key",
+      "narrative_purpose": "Shows the application ritual and communicates the stated brightening and dark-spot support benefits.",
+      "visual_cue_en": "A model gently applies serum to her cheekbones, slow macro push-in, soft diffused light revealing natural hydrated sheen, refined neutral background.",
+      "shot_scale": "close_up",
+      "lens": "85mm_portrait",
+      "angle": "eye_level",
+      "transition": {
+        "type": "cut",
+        "duration": 0.0
+      }
+    },
+    {
+      "scene_id": "shot_05_experience",
+      "beat_type": "experience",
+      "spoken_text": "Công thức dưỡng và phục hồi giúp chăm sóc làn da thiếu nước.",
+      "on_screen_text": "DƯỠNG VÀ PHỤC HỒI",
+      "visual_cue": "Người mẫu vuốt nhẹ serum trên mu bàn tay; camera orbit chậm quanh bàn tay, bắt ánh sáng trên lớp serum trong suốt.",
+      "estimated_duration": 4.5,
+      "archetype": "beauty_skincare",
+      "character_role": "model",
+      "audio_strategy": "asmr_hybrid",
+      "camera_choreography": "orbit",
+      "lighting_contract": "beauty_high_key",
+      "narrative_purpose": "Makes the moisturizing and skin-recovery positioning tangible through a slow tactile application.",
+      "visual_cue_en": "A model gently spreads serum across the back of her hand, slow orbit around the hand, light catching the translucent serum layer, minimal beauty setup.",
+      "shot_scale": "extreme_macro",
+      "lens": "100mm_macro",
+      "angle": "eye_level",
+      "transition": {
+        "type": "cut",
+        "duration": 0.0
+      }
+    },
+    {
+      "scene_id": "shot_06_proof",
+      "beat_type": "proof",
+      "spoken_text": "Từng đường nét trông đồng đều hơn trong mỗi lần chăm da.",
+      "on_screen_text": "HOÀN THIỆN TỪNG CHI TIẾT",
+      "visual_cue": "Người mẫu quay đầu chậm dưới ánh sáng tự nhiên; camera zoom nhẹ vào gò má, bề mặt da bắt sáng tự nhiên.",
+      "estimated_duration": 4.0,
+      "archetype": "beauty_skincare",
+      "character_role": "model",
+      "audio_strategy": "off_camera_vo",
+      "camera_choreography": "zoom_in",
+      "lighting_contract": "golden_hour",
+      "narrative_purpose": "Delivers the stated more even-looking skin impression in a polished lifestyle moment.",
+      "visual_cue_en": "A model slowly turns her head under natural daylight, gentle zoom toward her cheekbones, natural light moving softly across her skin, quiet refined setting.",
+      "shot_scale": "medium_close_up",
+      "lens": "85mm_portrait",
+      "angle": "eye_level",
+      "transition": {
+        "type": "cut",
+        "duration": 0.0
+      }
+    },
+    {
+      "scene_id": "shot_07_cta",
+      "beat_type": "cta",
+      "spoken_text": "Thêm Serum dưỡng 10% HA 30ml vào góc chăm da của bạn.",
+      "on_screen_text": "XEM CHI TIẾT Ở LINK",
+      "visual_cue": "Chai serum được đặt gọn gàng cạnh góc bàn sạch sẽ; camera orbit chậm quanh sản phẩm, fade nhẹ vào cuối.",
+      "estimated_duration": 4.0,
+      "archetype": "beauty_skincare",
+      "character_role": "product_only",
+      "audio_strategy": "asmr_hybrid",
+      "camera_choreography": "orbit",
+      "lighting_contract": "beauty_high_key",
+      "narrative_purpose": "Invites viewers to learn more without introducing any unprovided offer or price.",
+      "visual_cue_en": "The serum bottle is neatly placed beside a clean tabletop corner, slow orbit around the product, soft light, gentle fade at the end.",
+      "shot_scale": "close_up",
+      "lens": "50mm_prime",
+      "angle": "eye_level",
+      "transition": {
+        "type": "fade",
+        "duration": 0.5
+      }
+    }
+  ],
+  "archetype": "beauty_skincare"
+}

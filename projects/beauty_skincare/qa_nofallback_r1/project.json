@@ -1,0 +1,13 @@
+{
+  "project_id": "qa_nofallback_r1",
+  "topic": "beauty_skincare",
+  "active_version": "v1",
+  "versions": [
+    "v1"
+  ],
+  "created_at": "2026-10-22T03:24:43.771882+00:00",
+  "updated_at": "2026-10-22T05:20:54.159535+00:00",
+  "title": "Ly Giữ Nhiệt Thông Minh Lumina Pro",
+  "archetype": "beauty_skincare",
+  "last_status": "verification_failed"
+}

@@ -1,0 +1,29 @@
+{
+  "campaign_id": "qa_nofallback_r1",
+  "product_name": "Serum dưỡng sáng mờ thâm phục hồi da Niacinamide 10% HA 30ml",
+  "target_persona": "Tín đồ phong cách sống tinh tế, thích thẩm mỹ tối giản và chi tiết hoàn thiện",
+  "pain_points": [
+    "Sản phẩm có thực sự chứa nồng độ Niacinamide được nêu trong mô tả không?",
+    "Một serum có phù hợp với nhu cầu dưỡng sáng và mờ thâm không?",
+    "Sản phẩm có đủ lượng để sử dụng hàng ngày không?",
+    "Sản phẩm có dưỡng và phục hồi da như công bố không?"
+  ],
+  "usps": [
+    "Hỗ trợ làn da sáng hơn và đều màu hơn nhờ thành phần dưỡng sáng Niacinamide 10%.",
+    "Giúp làm mờ các vết thâm để da trông đồng đều hơn.",
+    "Kết hợp HA trong công thức dưỡng và phục hồi da, giúp chăm sóc làn da thiếu nước."
+  ],
+  "visual_tone": "Chuẩn Mực Tinh Tế: Trải Nghiệm Cùng Serum dưỡng sáng mờ thâm | beauty_high_key @ 5600K, ánh sáng khuếch tán mềm làm nổi chất liệu và bề mặt | Nhịp cắt chậm, chuyển động macro mượt bám theo nhịp nhạc, giữ nhịp thở thị giác (chuyển động chính: macro_push_in, orbit) | Bề mặt serum trong suốt hoặc hơi nhớt, đặt lên tay và tạo cảm giác dưỡng khi thoa đều.",
+  "aspect_ratio": "9:16",
+  "presenter": {
+    "name": "Mai Ly",
+    "character_tag": "[KOL_MAIN]",
+    "role": "Lead Model",
+    "character_file": "assets/characters/kol_main/character.json"
+  },
+  "archetype": "beauty_skincare",
+  "category": "Serum dưỡng da",
+  "character_role": "model",
+  "target_audio_strategy": "asmr_hybrid",
+  "offers": []
+}

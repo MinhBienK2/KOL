@@ -1,0 +1,264 @@
+{
+  "campaign_id": "qa_nofallback_r1",
+  "render_runtime": "ffmpeg",
+  "target_aspect_ratio": "9:16",
+  "timeline_clips": [
+    "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_01.mp4",
+    "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_02.mp4",
+    "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_03.mp4",
+    "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_04.mp4",
+    "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_05.mp4",
+    "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_06.mp4",
+    "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_07.mp4"
+  ],
+  "audio_tracks": [
+    {
+      "track_id": "track_voiceover",
+      "type": "voiceover",
+      "file_path": "output/audio/voice_*.wav",
+      "target_lufs": -14.0,
+      "ducking_attenuation_db": null
+    },
+    {
+      "track_id": "track_bgm",
+      "type": "bgm",
+      "file_path": "/home/pc599/Documents/KOL/assets/audio/music/commercial_bgm.mp3",
+      "target_lufs": null,
+      "ducking_attenuation_db": -14.0
+    },
+    {
+      "track_id": "track_sfx",
+      "type": "sfx",
+      "file_path": "/home/pc599/Documents/KOL/assets/audio/sfx/pop.mp3",
+      "target_lufs": null,
+      "ducking_attenuation_db": null
+    }
+  ],
+  "transitions": [
+    {
+      "from": 0,
+      "to": 1,
+      "type": "cut",
+      "duration": 0.0
+    },
+    {
+      "from": 1,
+      "to": 2,
+      "type": "cut",
+      "duration": 0.0
+    },
+    {
+      "from": 2,
+      "to": 3,
+      "type": "dissolve",
+      "duration": 0.4
+    },
+    {
+      "from": 3,
+      "to": 4,
+      "type": "cut",
+      "duration": 0.0
+    },
+    {
+      "from": 4,
+      "to": 5,
+      "type": "cut",
+      "duration": 0.0
+    },
+    {
+      "from": 5,
+      "to": 6,
+      "type": "cut",
+      "duration": 0.0
+    }
+  ],
+  "captions": [
+    {
+      "text": "ĐẲNG CẤP TỪNG ĐƯỜNG NÉT",
+      "lines": [
+        "ĐẲNG CẤP TỪNG ĐƯỜNG",
+        "NÉT"
+      ],
+      "font_size": 51,
+      "start": 0.0,
+      "end": 3.6
+    },
+    {
+      "text": "LÀN DA CẦN CHĂM SÓC",
+      "lines": [
+        "LÀN DA CẦN CHĂM SÓC"
+      ],
+      "font_size": 51,
+      "start": 3.6,
+      "end": 7.1
+    },
+    {
+      "text": "NIACINAMIDE 10% + HA",
+      "lines": [
+        "NIACINAMIDE 10% + HA"
+      ],
+      "font_size": 51,
+      "start": 7.1,
+      "end": 11.31
+    },
+    {
+      "text": "SÁNG ĐỀU MÀU, MỜ THÂM",
+      "lines": [
+        "SÁNG ĐỀU MÀU, MỜ THÂM"
+      ],
+      "font_size": 51,
+      "start": 11.31,
+      "end": 15.81
+    },
+    {
+      "text": "DƯỠNG VÀ PHỤC HỒI",
+      "lines": [
+        "DƯỠNG VÀ PHỤC HỒI"
+      ],
+      "font_size": 51,
+      "start": 15.81,
+      "end": 20.31
+    },
+    {
+      "text": "HOÀN THIỆN TỪNG CHI TIẾT",
+      "lines": [
+        "HOÀN THIỆN TỪNG CHI TIẾT"
+      ],
+      "font_size": 51,
+      "start": 20.31,
+      "end": 24.31
+    },
+    {
+      "text": "XEM CHI TIẾT Ở LINK",
+      "lines": [
+        "XEM CHI TIẾT Ở LINK"
+      ],
+      "font_size": 51,
+      "start": 24.31,
+      "end": 28.88
+    }
+  ],
+  "output_master_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/final_master_qa_nofallback_r1.mp4",
+  "shots": [
+    {
+      "shot_id": "shot_01",
+      "beat_estimated_seconds": 3.5,
+      "voice_seconds": 3.601,
+      "clip_seconds": 5.875,
+      "target_seconds": 3.601,
+      "in_point": 0.0,
+      "out_point": 3.601,
+      "slowdown_factor": 1.0,
+      "held_tail_seconds": 0.0,
+      "voice_padded_seconds": 0.0,
+      "action": "trim",
+      "source": "raw_clip+voice_stem",
+      "clip": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_01.mp4",
+      "timeline_start": 0.0,
+      "timeline_end": 3.601
+    },
+    {
+      "shot_id": "shot_02",
+      "beat_estimated_seconds": 3.5,
+      "voice_seconds": 3.349,
+      "clip_seconds": 5.875,
+      "target_seconds": 3.5,
+      "in_point": 0.0,
+      "out_point": 3.5,
+      "slowdown_factor": 1.0,
+      "held_tail_seconds": 0.0,
+      "voice_padded_seconds": 0.151,
+      "action": "trim",
+      "source": "raw_clip+voice_stem",
+      "clip": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_02.mp4",
+      "timeline_start": 3.601,
+      "timeline_end": 7.101
+    },
+    {
+      "shot_id": "shot_03",
+      "beat_estimated_seconds": 4.0,
+      "voice_seconds": 4.609,
+      "clip_seconds": 5.875,
+      "target_seconds": 4.609,
+      "in_point": 0.0,
+      "out_point": 4.609,
+      "slowdown_factor": 1.0,
+      "held_tail_seconds": 0.0,
+      "voice_padded_seconds": 0.0,
+      "action": "trim",
+      "source": "raw_clip+voice_stem",
+      "clip": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_03.mp4",
+      "timeline_start": 7.101,
+      "timeline_end": 11.71
+    },
+    {
+      "shot_id": "shot_04",
+      "beat_estimated_seconds": 4.5,
+      "voice_seconds": 3.925,
+      "clip_seconds": 5.875,
+      "target_seconds": 4.5,
+      "in_point": 0.0,
+      "out_point": 4.5,
+      "slowdown_factor": 1.0,
+      "held_tail_seconds": 0.0,
+      "voice_padded_seconds": 0.575,
+      "action": "trim",
+      "source": "raw_clip+voice_stem",
+      "clip": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_04.mp4",
+      "timeline_start": 11.31,
+      "timeline_end": 15.81
+    },
+    {
+      "shot_id": "shot_05",
+      "beat_estimated_seconds": 4.5,
+      "voice_seconds": 3.349,
+      "clip_seconds": 5.875,
+      "target_seconds": 4.5,
+      "in_point": 0.0,
+      "out_point": 4.5,
+      "slowdown_factor": 1.0,
+      "held_tail_seconds": 0.0,
+      "voice_padded_seconds": 1.151,
+      "action": "trim",
+      "source": "raw_clip+voice_stem",
+      "clip": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_05.mp4",
+      "timeline_start": 15.81,
+      "timeline_end": 20.31
+    },
+    {
+      "shot_id": "shot_06",
+      "beat_estimated_seconds": 4.0,
+      "voice_seconds": 2.917,
+      "clip_seconds": 5.875,
+      "target_seconds": 4.0,
+      "in_point": 0.0,
+      "out_point": 4.0,
+      "slowdown_factor": 1.0,
+      "held_tail_seconds": 0.0,
+      "voice_padded_seconds": 1.083,
+      "action": "trim",
+      "source": "raw_clip+voice_stem",
+      "clip": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_06.mp4",
+      "timeline_start": 20.31,
+      "timeline_end": 24.31
+    },
+    {
+      "shot_id": "shot_07",
+      "beat_estimated_seconds": 4.0,
+      "voice_seconds": 4.573,
+      "clip_seconds": 5.875,
+      "target_seconds": 4.573,
+      "in_point": 0.0,
+      "out_point": 4.573,
+      "slowdown_factor": 1.0,
+      "held_tail_seconds": 0.0,
+      "voice_padded_seconds": 0.0,
+      "action": "trim",
+      "source": "raw_clip+voice_stem",
+      "clip": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_07.mp4",
+      "timeline_start": 24.31,
+      "timeline_end": 28.883
+    }
+  ],
+  "total_duration_seconds": 28.883
+}

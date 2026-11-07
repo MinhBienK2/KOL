@@ -56,8 +56,9 @@ logger = logging.getLogger(__name__)
 #: R2V (Reference-to-Video) model: MiniMax's subject-reference model takes the Face Anchor as a
 #: single character image (Hailuo-2.3 itself has no ``subject_reference``). Override via env.
 DEFAULT_R2V_MODEL = os.environ.get("KOL_R2V_MODEL", "S2V-01")
-#: ``subject_reference`` (default) or ``face_anchor_i2v`` (degraded: Face Anchor as I2V First Frame,
-#: recorded in the Prompt Ledger as ``degraded_from=R2V``) for gateways without subject-reference support.
+#: ``subject_reference`` (default), ``synth_i2v`` (I2V from the Stage-4 synthesized first frame; for gateways
+#: without subject-reference support; ``degraded_from=R2V`` unless Flow2API drew that frame from the face anchor)
+#: or ``face_anchor_i2v`` (degraded: Face Anchor as I2V First Frame, recorded as ``degraded_from=R2V``).
 DEFAULT_R2V_STRATEGY = os.environ.get("KOL_R2V_STRATEGY", "subject_reference")
 #: Optional output resolution (``768P``/``1080P``); unset keeps the API default (768P). 1080P forces 6s clips.
 DEFAULT_RESOLUTION: Optional[str] = os.environ.get("KOL_VIDEO_RESOLUTION") or None
@@ -366,6 +367,7 @@ def build_clip_request(
     resolution: Optional[str] = None,
     r2v_model: str = DEFAULT_R2V_MODEL,
     r2v_strategy: str = DEFAULT_R2V_STRATEGY,
+    first_frame_provider: Optional[str] = None,
 ) -> ClipRequest:
     """Resolve a shot into a validated :class:`ClipRequest` or raise :class:`VideoGenerationError`.
 
@@ -376,6 +378,19 @@ def build_clip_request(
     """
     gen_duration = normalize_duration(duration, resolution)
     wants_r2v = generation_mode == "r2v" or bool(reference_assets and len(reference_assets) > 1)
+
+    if wants_r2v and r2v_strategy == "synth_i2v":
+        frame = _resolve_existing(image_path) if image_path else None
+        if frame is None:
+            raise VideoGenerationError(
+                f"Shot '{shot_id}' uses R2V strategy synth_i2v but its synthesized first frame is missing "
+                f"({image_path}). Rerun Stage 4; refusing to start from a reference image."
+            )
+        # Only a Flow2API frame is drawn from the face anchor; any other frame does not lock the identity.
+        return ClipRequest(
+            shot_id, prompt, "I2V", model, gen_duration, aspect_ratio, resolution, first_frame=frame,
+            degraded_from=None if first_frame_provider == "flow2api" else "R2V",
+        )
 
     if wants_r2v:
         face = _pick_face_anchor(reference_assets)
@@ -464,6 +479,7 @@ def render_single_video_clip(
     resolution: Optional[str] = DEFAULT_RESOLUTION,
     r2v_model: str = DEFAULT_R2V_MODEL,
     r2v_strategy: str = DEFAULT_R2V_STRATEGY,
+    first_frame_provider: Optional[str] = None,
 ) -> str:
     """Renders a single shot clip using genuine MiniMax Hailuo-2.3 video diffusion.
 
@@ -487,7 +503,7 @@ def render_single_video_clip(
 
     req = build_clip_request(
         shot_id, prompt, image_path, duration, aspect_ratio, model,
-        generation_mode, reference_assets, resolution, r2v_model, r2v_strategy,
+        generation_mode, reference_assets, resolution, r2v_model, r2v_strategy, first_frame_provider,
     )
     fingerprint = req.fingerprint
     task_file = _task_path(out_p)
@@ -715,6 +731,7 @@ def _shot_request_kwargs(shot: StoryboardShot, kf: Any) -> Dict[str, Any]:
         generation_mode=getattr(kf, "generation_mode", None),
         reference_assets=getattr(kf, "reference_assets", None),
         resolution=DEFAULT_RESOLUTION,
+        first_frame_provider=getattr(kf, "synthesis_provider", None),
     )
 
 

@@ -114,6 +114,7 @@ Khi truyền `--json`, stdout chỉ in ra duy nhất MỘT JSON object.
 - `--references PATH.json`: (Stage 4) Ghi đè reference assets cho nhân vật.
 - `--character PATH|ID`: (Stage 3/4) Chỉ định persona tùy chỉnh dưới `assets/characters/`.
 - `--strict-resolution`: (Stage 4) Yêu cầu khắt khe về độ phân giải ảnh tham chiếu.
+- `--image-provider flow2api|minimax`: (Stage 4) Provider vẽ first frame (mặc định `KEYFRAME_IMAGE_PROVIDER`, rồi `flow2api`). Không tự đổi khi lỗi; chỉ đổi khi người dùng yêu cầu.
 - `--strict-tts`: (Stage 6) Yêu cầu khắt khe về model Neural TTS, không fallback.
 - `--transitions PATH.json`: (Stage 7) Tùy chỉnh hiệu ứng chuyển cảnh từng mối nối.
 - `--from-stage N`: Khởi động lại pipeline trực tiếp từ stage N (1-8).

@@ -91,6 +91,8 @@ def test_is_retryable_error_classifies_http_and_network_errors():
     assert gv.is_retryable_error(mk(503)) is True
     assert gv.is_retryable_error(mk(401)) is False
     assert gv.is_retryable_error(mk(402)) is False
+    unavailable = urllib.error.HTTPError("u", 503, 'm: {"error":{"type":"model_unavailable"}}', {}, None)
+    assert gv.is_retryable_error(unavailable) is False
     assert gv.is_retryable_error(TimeoutError("x")) is True
     assert gv.is_retryable_error(urllib.error.URLError("dns")) is True
     assert gv.is_retryable_error(FileNotFoundError("img")) is False

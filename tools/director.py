@@ -135,6 +135,10 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Stage 4: 'synth' renders each shot's first frame from its scene prompt with the "
                              "face anchor / product hero as references; 'auto' = synth unless --video-mode "
                              "ffmpeg or --offline. A failed synthesis stops Stage 4")
+    direct.add_argument("--image-provider", choices=("flow2api", "minimax"), default=None,
+                        help="Stage 4: first-frame image provider (default: KEYFRAME_IMAGE_PROVIDER, else "
+                             "flow2api). Never switched automatically; minimax image-01 is text-only and does "
+                             "not hold the face anchor")
     direct.add_argument("--strict-tts", action="store_true",
                         help="Stage 6: fail instead of falling back to a degraded TTS voice")
     direct.add_argument("--transitions", metavar="PATH.json", default=None,
@@ -378,6 +382,7 @@ def main(argv: list[str] | None = None) -> int:
             character_path=character_path,
             strict_resolution=args.strict_resolution,
             keyframe_source=args.keyframe_source,
+            image_provider=args.image_provider,
             transitions=transitions,
             strict_tts=args.strict_tts,
             pause_after_stage=args.pause_after_stage,

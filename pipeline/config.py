@@ -104,6 +104,9 @@ MINIMAX_API_KEY = _RequiredSecret("MINIMAX_API_KEY")
 FLOW2API_BASE_URL = os.environ.get("FLOW2API_BASE_URL", "http://100.111.37.118:8000").rstrip("/")
 FLOW2API_API_KEY = _RequiredSecret("FLOW2API_API_KEY")
 DEFAULT_IMAGE_MODEL = os.environ.get("DEFAULT_IMAGE_MODEL", "gemini-3.1-flash-image-four-three-2k")
+#: Stage-4 first-frame image provider (``flow2api`` | ``minimax``). Only this provider is used; a failure is
+#: never retried on another one. ``tools/director.py --image-provider`` overrides it per run.
+KEYFRAME_IMAGE_PROVIDER = os.environ.get("KEYFRAME_IMAGE_PROVIDER", "flow2api")
 
 DEFAULT_VIDEO_MODEL = "MiniMax-Hailuo-2.3"
 DEFAULT_TTS_MODEL = "tts-1"

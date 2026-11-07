@@ -155,6 +155,7 @@ def run_pipeline(
     character_path: Any = None,
     strict_resolution: bool = False,
     keyframe_source: str = "auto",
+    image_provider: Optional[str] = None,
     transitions: Any = None,
     strict_tts: bool = False,
     pause_after_stage: Optional[int] = None,
@@ -167,7 +168,8 @@ def run_pipeline(
 
     Agent direction (all optional; objects or JSON file paths where noted):
       ``beats`` -> stage 2 (strict), ``shot_overrides`` -> stage 3, ``reference_overrides`` /
-      ``character_path`` / ``strict_resolution`` / ``keyframe_source`` -> stage 4, ``strict_tts`` -> stage 6,
+      ``character_path`` / ``strict_resolution`` / ``keyframe_source`` / ``image_provider`` -> stage 4,
+      ``strict_tts`` -> stage 6,
       ``transitions`` -> stage 7 (default: per-beat ``transition`` in script.json).
     ``pause_after_stage`` stops cleanly after that stage (returns False, ``result["status"] ==
     "paused"``); resume with ``resume_from_stage=N+1``.  ``result`` (if given) is filled with the
@@ -492,6 +494,7 @@ def run_pipeline(
                             "character_path": character_file,
                             "strict_resolution": strict_resolution,
                             "synthesize_frames": _synthesize_keyframes(keyframe_source, video_mode),
+                            "image_provider": image_provider,
                         },
                     ),
                 )

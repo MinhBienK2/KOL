@@ -1,0 +1,253 @@
+{
+  "campaign_id": "qa_nofallback_r1",
+  "shots": [
+    {
+      "shot_id": "shot_01",
+      "scene_id": "shot_01_hook",
+      "shot_type": "EXTREME_MACRO • Hook",
+      "angle": "top_down_90deg",
+      "camera_motion": "macro_push_in",
+      "lighting": "beauty_high_key",
+      "character_tag": null,
+      "identity_lock_directive": null,
+      "style_constraints": "Sensory Glow & Texture Transformation commercial aesthetic | Avoid: watermark, text, logo overlay, deformed limbs, bad hands, blurry, lowres, oversaturated, 3d render, cartoon",
+      "scene_description": "A translucent slightly viscous serum drop falls from a glass pipette onto a bright glass tile, macro push-in in slow motion, soft diffused lighting, minimal studio setting.",
+      "prompt_6part": "extreme macro close-up, 100mm macro lens, overhead top-down angle, razor-thin macro depth of field, focus on Serum dưỡng sáng mờ thâm phục hồi da Niacinamide 10% HA 30ml. Commercial macro product cinematography of Serum dưỡng sáng mờ thâm phục hồi da Niacinamide 10% HA 30ml. Action and interaction: A translucent slightly viscous serum drop falls from a glass pipette onto a bright glass tile, macro push-in in slow motion, soft diffused lighting, minimal studio setting. Camera movement: slow macro push-in with shallow depth of field, sharp focal plane on product geometry and surface materials. Cinematic commercial quality, photorealistic, zero character face, hyper-detailed textures. SET: Ultra-luxury minimalist penthouse bathroom, white Calacatta gold marble countertops, soft glowing circular vanity mirror, floor-to-ceiling window bay casting bright 5600K diffused morning natural daylight, pure pristine spa ambiance.",
+      "estimated_duration": 3.5,
+      "reference_expression": null,
+      "character_role": "product_only",
+      "camera_choreography": "macro_push_in",
+      "lighting_contract": "beauty_high_key",
+      "spatial_staging": "Phòng Tắm Penthouse Đá Cẩm Thạch Ngập Tràn Ánh Sáng @ 5600K, key light locked to 40 degrees camera-left",
+      "color_temp_kelvin": 5600,
+      "shot_intent": "hook: Creates a premium sensory hook through a slow, satisfying serum release.",
+      "kinetic_action": null,
+      "is_hero_moment": false,
+      "transition": null,
+      "generation_mode": null,
+      "reference_assets": null
+    },
+    {
+      "shot_id": "shot_02",
+      "scene_id": "shot_02_problem",
+      "shot_type": "MEDIUM_CLOSE_UP • Problem",
+      "angle": "eye_level",
+      "camera_motion": "orbit",
+      "lighting": "beauty_high_key",
+      "character_tag": "[KOL_MAIN]",
+      "identity_lock_directive": "Same character [KOL_MAIN], Vietnamese young woman, early 20s, refined oval face shape, natural chin-length black bob hairstyle, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin, calm intelligent and approachable expression, studio portrait lighting, 8k",
+      "style_constraints": "Sensory Glow & Texture Transformation commercial aesthetic | Avoid: watermark, text, logo overlay, deformed limbs, bad hands, blurry, lowres, oversaturated, 3d render, cartoon",
+      "scene_description": "A model sits beside a window with naturally tired-looking skin, slow gentle orbit across her shoulder, soft natural window light, calm minimal interior.",
+      "prompt_6part": "medium close-up, chest up, 85mm portrait lens, eye-level angle, very shallow depth of field with creamy bokeh, focus on Mai Ly. Commercial fashion and lifestyle video featuring [KOL_MAIN] Mai Ly. Subject: Vietnamese young woman, early 20s, refined oval face shape, natural chin-length black bob hairstyle, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin, calm intelligent and approachable expression, studio portrait lighting. Visual acting action: A model sits beside a window with naturally tired-looking skin, slow gentle orbit across her shoulder, soft natural window light, calm minimal interior. No exaggerated speaking head. Camera movement: smooth slow orbit around the subject. SET: Ultra-luxury minimalist penthouse bathroom, white Calacatta gold marble countertops, soft glowing circular vanity mirror, floor-to-ceiling window bay casting bright 5600K diffused morning natural daylight, pure pristine spa ambiance. WEAR: Wearing relaxed luxury pearl-white silk wrap robe with loose kimono sleeves, dewy bare shoulders and collarbones, glowing healthy glass-skin skincare aesthetic. Subject is focused on physical visual action; relaxed closed mouth, subtle natural smile, no speaking mouth movements on camera; audio plays as off-camera narration.",
+      "estimated_duration": 3.5,
+      "reference_expression": null,
+      "character_role": "model",
+      "camera_choreography": "orbit",
+      "lighting_contract": "beauty_high_key",
+      "spatial_staging": "Phòng Tắm Penthouse Đá Cẩm Thạch Ngập Tràn Ánh Sáng @ 5600K, key light locked to 40 degrees camera-left",
+      "color_temp_kelvin": 5600,
+      "shot_intent": "problem: Introduces the need for simple daily care for dehydrated-looking skin.",
+      "kinetic_action": null,
+      "is_hero_moment": true,
+      "transition": {
+        "type": "cut",
+        "duration": 0.0
+      },
+      "generation_mode": null,
+      "reference_assets": null
+    },
+    {
+      "shot_id": "shot_03",
+      "scene_id": "shot_03_feature",
+      "shot_type": "CLOSE_UP • Feature",
+      "angle": "eye_level",
+      "camera_motion": "macro_push_in",
+      "lighting": "beauty_high_key",
+      "character_tag": null,
+      "identity_lock_directive": null,
+      "style_constraints": "Sensory Glow & Texture Transformation commercial aesthetic | Avoid: watermark, text, logo overlay, deformed limbs, bad hands, blurry, lowres, oversaturated, 3d render, cartoon",
+      "scene_description": "A 30ml serum bottle sits beside a translucent ingredient droplet on glass, macro camera glides gently across the label and texture, high-key beauty lighting, clean studio surface.",
+      "prompt_6part": "close-up, 100mm macro lens, eye-level angle, razor-thin macro depth of field, focus on Serum dưỡng sáng mờ thâm phục hồi da Niacinamide 10% HA 30ml. Commercial macro product cinematography of Serum dưỡng sáng mờ thâm phục hồi da Niacinamide 10% HA 30ml. Action and interaction: A 30ml serum bottle sits beside a translucent ingredient droplet on glass, macro camera glides gently across the label and texture, high-key beauty lighting, clean studio surface. Camera movement: slow macro push-in with shallow depth of field, sharp focal plane on product geometry and surface materials. Cinematic commercial quality, photorealistic, zero character face, hyper-detailed textures. SET: Ultra-luxury minimalist penthouse bathroom, white Calacatta gold marble countertops, soft glowing circular vanity mirror, floor-to-ceiling window bay casting bright 5600K diffused morning natural daylight, pure pristine spa ambiance.",
+      "estimated_duration": 4.0,
+      "reference_expression": null,
+      "character_role": "product_only",
+      "camera_choreography": "macro_push_in",
+      "lighting_contract": "beauty_high_key",
+      "spatial_staging": "Phòng Tắm Penthouse Đá Cẩm Thạch Ngập Tràn Ánh Sáng @ 5600K, key light locked to 40 degrees camera-left",
+      "color_temp_kelvin": 5600,
+      "shot_intent": "feature: Visually identifies the formula and its stated Niacinamide 10% and HA combination.",
+      "kinetic_action": null,
+      "is_hero_moment": true,
+      "transition": {
+        "type": "dissolve",
+        "duration": 0.4
+      },
+      "generation_mode": null,
+      "reference_assets": null
+    },
+    {
+      "shot_id": "shot_04",
+      "scene_id": "shot_04_benefit",
+      "shot_type": "CLOSE_UP • Benefit",
+      "angle": "eye_level",
+      "camera_motion": "macro_push_in",
+      "lighting": "beauty_high_key",
+      "character_tag": "[KOL_MAIN]",
+      "identity_lock_directive": "Same character [KOL_MAIN], Vietnamese young woman, early 20s, refined oval face shape, natural chin-length black bob hairstyle, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin, calm intelligent and approachable expression, studio portrait lighting, 8k",
+      "style_constraints": "Sensory Glow & Texture Transformation commercial aesthetic | Avoid: watermark, text, logo overlay, deformed limbs, bad hands, blurry, lowres, oversaturated, 3d render, cartoon",
+      "scene_description": "A model gently applies serum to her cheekbones, slow macro push-in, soft diffused light revealing natural hydrated sheen, refined neutral background.",
+      "prompt_6part": "close-up, 85mm portrait lens, eye-level angle, very shallow depth of field with creamy bokeh, focus on Mai Ly. Commercial fashion and lifestyle video featuring [KOL_MAIN] Mai Ly. Subject: Vietnamese young woman, early 20s, refined oval face shape, natural chin-length black bob hairstyle, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin, calm intelligent and approachable expression, studio portrait lighting. Visual acting action: A model gently applies serum to her cheekbones, slow macro push-in, soft diffused light revealing natural hydrated sheen, refined neutral background. No exaggerated speaking head. Camera movement: slow macro push-in. SET: Ultra-luxury minimalist penthouse bathroom, white Calacatta gold marble countertops, soft glowing circular vanity mirror, floor-to-ceiling window bay casting bright 5600K diffused morning natural daylight, pure pristine spa ambiance. WEAR: Wearing relaxed luxury pearl-white silk wrap robe with loose kimono sleeves, dewy bare shoulders and collarbones, glowing healthy glass-skin skincare aesthetic. Subject is focused on physical visual action; relaxed closed mouth, subtle natural smile, no speaking mouth movements on camera; audio plays as off-camera narration.",
+      "estimated_duration": 4.5,
+      "reference_expression": null,
+      "character_role": "model",
+      "camera_choreography": "macro_push_in",
+      "lighting_contract": "beauty_high_key",
+      "spatial_staging": "Phòng Tắm Penthouse Đá Cẩm Thạch Ngập Tràn Ánh Sáng @ 5600K, key light locked to 40 degrees camera-left",
+      "color_temp_kelvin": 5600,
+      "shot_intent": "benefit: Shows the application ritual and communicates the stated brightening and dark-spot support benefits.",
+      "kinetic_action": null,
+      "is_hero_moment": false,
+      "transition": {
+        "type": "cut",
+        "duration": 0.0
+      },
+      "generation_mode": null,
+      "reference_assets": null
+    },
+    {
+      "shot_id": "shot_05",
+      "scene_id": "shot_05_experience",
+      "shot_type": "EXTREME_MACRO • Experience",
+      "angle": "eye_level",
+      "camera_motion": "orbit",
+      "lighting": "beauty_high_key",
+      "character_tag": "[KOL_MAIN]",
+      "identity_lock_directive": "Same character [KOL_MAIN], Vietnamese young woman, early 20s, refined oval face shape, natural chin-length black bob hairstyle, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin, calm intelligent and approachable expression, studio portrait lighting, 8k",
+      "style_constraints": "Sensory Glow & Texture Transformation commercial aesthetic | Avoid: watermark, text, logo overlay, deformed limbs, bad hands, blurry, lowres, oversaturated, 3d render, cartoon",
+      "scene_description": "A model gently spreads serum across the back of her hand, slow orbit around the hand, light catching the translucent serum layer, minimal beauty setup.",
+      "prompt_6part": "extreme macro close-up, 100mm macro lens, eye-level angle, razor-thin macro depth of field, focus on Mai Ly. Commercial fashion and lifestyle video featuring [KOL_MAIN] Mai Ly. Subject: Vietnamese young woman, early 20s, refined oval face shape, natural chin-length black bob hairstyle, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin, calm intelligent and approachable expression, studio portrait lighting. Visual acting action: A model gently spreads serum across the back of her hand, slow orbit around the hand, light catching the translucent serum layer, minimal beauty setup. No exaggerated speaking head. Camera movement: smooth slow orbit around the subject. SET: Ultra-luxury minimalist penthouse bathroom, white Calacatta gold marble countertops, soft glowing circular vanity mirror, floor-to-ceiling window bay casting bright 5600K diffused morning natural daylight, pure pristine spa ambiance. WEAR: Wearing relaxed luxury pearl-white silk wrap robe with loose kimono sleeves, dewy bare shoulders and collarbones, glowing healthy glass-skin skincare aesthetic. Subject is focused on physical visual action; relaxed closed mouth, subtle natural smile, no speaking mouth movements on camera; audio plays as off-camera narration.",
+      "estimated_duration": 4.5,
+      "reference_expression": null,
+      "character_role": "model",
+      "camera_choreography": "orbit",
+      "lighting_contract": "beauty_high_key",
+      "spatial_staging": "Phòng Tắm Penthouse Đá Cẩm Thạch Ngập Tràn Ánh Sáng @ 5600K, key light locked to 40 degrees camera-left",
+      "color_temp_kelvin": 5600,
+      "shot_intent": "experience: Makes the moisturizing and skin-recovery positioning tangible through a slow tactile application.",
+      "kinetic_action": null,
+      "is_hero_moment": false,
+      "transition": {
+        "type": "cut",
+        "duration": 0.0
+      },
+      "generation_mode": null,
+      "reference_assets": null
+    },
+    {
+      "shot_id": "shot_06",
+      "scene_id": "shot_06_proof",
+      "shot_type": "MEDIUM_CLOSE_UP • Proof",
+      "angle": "eye_level",
+      "camera_motion": "zoom_in",
+      "lighting": "golden_hour",
+      "character_tag": "[KOL_MAIN]",
+      "identity_lock_directive": "Same character [KOL_MAIN], Vietnamese young woman, early 20s, refined oval face shape, natural chin-length black bob hairstyle, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin, calm intelligent and approachable expression, studio portrait lighting, 8k",
+      "style_constraints": "Sensory Glow & Texture Transformation commercial aesthetic | Avoid: watermark, text, logo overlay, deformed limbs, bad hands, blurry, lowres, oversaturated, 3d render, cartoon",
+      "scene_description": "A model slowly turns her head under natural daylight, gentle zoom toward her cheekbones, natural light moving softly across her skin, quiet refined setting.",
+      "prompt_6part": "medium close-up, chest up, 85mm portrait lens, eye-level angle, very shallow depth of field with creamy bokeh, focus on Mai Ly. Commercial fashion and lifestyle video featuring [KOL_MAIN] Mai Ly. Subject: Vietnamese young woman, early 20s, refined oval face shape, natural chin-length black bob hairstyle, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin, calm intelligent and approachable expression, studio portrait lighting. Visual acting action: A model slowly turns her head under natural daylight, gentle zoom toward her cheekbones, natural light moving softly across her skin, quiet refined setting. No exaggerated speaking head. Camera movement: slow push-in toward the subject. SET: Ultra-luxury minimalist penthouse bathroom, white Calacatta gold marble countertops, soft glowing circular vanity mirror, floor-to-ceiling window bay casting bright 5600K diffused morning natural daylight, pure pristine spa ambiance. WEAR: Wearing relaxed luxury pearl-white silk wrap robe with loose kimono sleeves, dewy bare shoulders and collarbones, glowing healthy glass-skin skincare aesthetic. Subject is focused on physical visual action; relaxed closed mouth, subtle natural smile, no speaking mouth movements on camera; audio plays as off-camera narration.",
+      "estimated_duration": 4.0,
+      "reference_expression": null,
+      "character_role": "model",
+      "camera_choreography": "zoom_in",
+      "lighting_contract": "golden_hour",
+      "spatial_staging": "Phòng Tắm Penthouse Đá Cẩm Thạch Ngập Tràn Ánh Sáng @ 5600K, key light locked to 40 degrees camera-left",
+      "color_temp_kelvin": 5600,
+      "shot_intent": "proof: Delivers the stated more even-looking skin impression in a polished lifestyle moment.",
+      "kinetic_action": null,
+      "is_hero_moment": false,
+      "transition": {
+        "type": "cut",
+        "duration": 0.0
+      },
+      "generation_mode": null,
+      "reference_assets": null
+    },
+    {
+      "shot_id": "shot_07",
+      "scene_id": "shot_07_cta",
+      "shot_type": "CLOSE_UP • Cta",
+      "angle": "eye_level",
+      "camera_motion": "orbit",
+      "lighting": "beauty_high_key",
+      "character_tag": null,
+      "identity_lock_directive": null,
+      "style_constraints": "Sensory Glow & Texture Transformation commercial aesthetic | Avoid: watermark, text, logo overlay, deformed limbs, bad hands, blurry, lowres, oversaturated, 3d render, cartoon",
+      "scene_description": "The serum bottle is neatly placed beside a clean tabletop corner, slow orbit around the product, soft light, gentle fade at the end.",
+      "prompt_6part": "close-up, 50mm lens, eye-level angle, shallow depth of field, focus on Serum dưỡng sáng mờ thâm phục hồi da Niacinamide 10% HA 30ml. Commercial macro product cinematography of Serum dưỡng sáng mờ thâm phục hồi da Niacinamide 10% HA 30ml. Action and interaction: The serum bottle is neatly placed beside a clean tabletop corner, slow orbit around the product, soft light, gentle fade at the end. Camera movement: smooth slow orbit around the subject with shallow depth of field, sharp focal plane on product geometry and surface materials. Cinematic commercial quality, photorealistic, zero character face, hyper-detailed textures. SET: Ultra-luxury minimalist penthouse bathroom, white Calacatta gold marble countertops, soft glowing circular vanity mirror, floor-to-ceiling window bay casting bright 5600K diffused morning natural daylight, pure pristine spa ambiance.",
+      "estimated_duration": 4.0,
+      "reference_expression": null,
+      "character_role": "product_only",
+      "camera_choreography": "orbit",
+      "lighting_contract": "beauty_high_key",
+      "spatial_staging": "Phòng Tắm Penthouse Đá Cẩm Thạch Ngập Tràn Ánh Sáng @ 5600K, key light locked to 40 degrees camera-left",
+      "color_temp_kelvin": 5600,
+      "shot_intent": "cta: Invites viewers to learn more without introducing any unprovided offer or price.",
+      "kinetic_action": null,
+      "is_hero_moment": false,
+      "transition": {
+        "type": "fade",
+        "duration": 0.5
+      },
+      "generation_mode": null,
+      "reference_assets": null
+    }
+  ],
+  "slideshow_risk": {
+    "average_score": 0.15,
+    "verdict": "strong",
+    "passed": true,
+    "dimensions": {
+      "repetition": {
+        "score": 0.0,
+        "reason": "Healthy variety in shot types, camera choreography, and duration rhythm.",
+        "flagged_shots": []
+      },
+      "decorative_visuals": {
+        "score": 0.0,
+        "reason": "All shots possess clear communicative commercial roles",
+        "flagged_shots": []
+      },
+      "weak_motion": {
+        "score": 0.9,
+        "reason": "3/7 shots lack active kinetic subject action verbs",
+        "flagged_shots": []
+      },
+      "weak_shot_intent": {
+        "score": 0.0,
+        "reason": "Comprehensive commercial intent defined across every shot",
+        "flagged_shots": []
+      },
+      "typography_overreliance": {
+        "score": 0.0,
+        "reason": "Visual-first video storytelling with zero static text card dependency",
+        "flagged_shots": []
+      },
+      "unsupported_cinematic_claims": {
+        "score": 0.0,
+        "reason": "Cinematic claims are fully backed by camera choreography and lighting contracts",
+        "flagged_shots": []
+      }
+    },
+    "hard_reject_reasons": [],
+    "recommendations": []
+  },
+  "spatial_staging_contract": {
+    "environment_name": "Phòng Tắm Penthouse Đá Cẩm Thạch Ngập Tràn Ánh Sáng",
+    "nominal_kelvin": 5600,
+    "max_kelvin_drift": 200,
+    "locked_key_light_azimuth": 40,
+    "continuity_ok": true,
+    "issues": []
+  },
+  "storyboard_contact_sheet": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/artifacts/storyboard_contact_sheet.jpg"
+}

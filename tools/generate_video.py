@@ -72,6 +72,8 @@ def is_retryable_error(exc: BaseException) -> bool:
     if isinstance(exc, VideoAPIError):
         return exc.retryable
     if isinstance(exc, urllib.error.HTTPError):
+        if "model_unavailable" in str(exc.reason):  # the deployment does not serve this model at all
+            return False
         return exc.code in (408, 425, 429) or exc.code >= 500
     if isinstance(exc, (FileNotFoundError, PermissionError, ValueError)):
         return False
@@ -209,6 +211,11 @@ def submit_video_job(
             res = json.loads(resp.read().decode("utf-8"))
             _raise_for_base_resp(res)
             task_id = res["task_id"]
+    except urllib.error.HTTPError as exc:
+        # Keep the HTTPError type (retry classification) but surface the gateway's reason.
+        body = exc.read()[:500].decode("utf-8", "replace") if exc.fp else ""
+        error = f"HTTP Error {exc.code}: {exc.reason}: {body}"
+        raise urllib.error.HTTPError(exc.url, exc.code, f"{exc.reason}: {body}", exc.headers, None) from exc
     except Exception as exc:
         error = str(exc)
         raise

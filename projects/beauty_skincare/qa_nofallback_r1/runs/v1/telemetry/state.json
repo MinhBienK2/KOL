@@ -1,0 +1,3309 @@
+{
+  "schema_version": 1,
+  "project_id": "qa_nofallback_r1",
+  "topic": "beauty_skincare",
+  "status": "failed",
+  "run_index": 5,
+  "run_meta": {
+    "campaign_id": "qa_nofallback_r1",
+    "product_name": "Ly Giữ Nhiệt Thông Minh Lumina Pro",
+    "product_url_or_query": null,
+    "archetype": "beauty_skincare",
+    "archetype_source": "explicit",
+    "video_mode": "api",
+    "resume_from_stage": 5,
+    "failed_stage": 8,
+    "project_id": "qa_nofallback_r1",
+    "topic": "beauty_skincare",
+    "version": "v1",
+    "workspace_root": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1",
+    "artifacts_dir": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/artifacts",
+    "master_video_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/final_master_qa_nofallback_r1.mp4",
+    "thumbnail_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/thumbnail_qa_nofallback_r1.jpg",
+    "prompt_ledger_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/prompt_ledger.json",
+    "paid_estimate": {
+      "available": true,
+      "video_mode": "api",
+      "shots_total": 7,
+      "video_jobs": 5,
+      "video_jobs_cached": 2,
+      "video_seconds": 30.0,
+      "tts_calls": 7,
+      "tts_seconds": 28.0,
+      "image_calls": 0,
+      "paid_calls": 12,
+      "total_generated_seconds": 58.0,
+      "jobs": [
+        {
+          "shot_id": "shot_02",
+          "cache": "miss",
+          "submit": true,
+          "model": "MiniMax-Hailuo-2.3",
+          "mode": "I2V",
+          "duration": 6,
+          "resolution": null
+        },
+        {
+          "shot_id": "shot_04",
+          "cache": "miss",
+          "submit": true,
+          "model": "MiniMax-Hailuo-2.3",
+          "mode": "I2V",
+          "duration": 6,
+          "resolution": null
+        },
+        {
+          "shot_id": "shot_05",
+          "cache": "miss",
+          "submit": true,
+          "model": "MiniMax-Hailuo-2.3",
+          "mode": "I2V",
+          "duration": 6,
+          "resolution": null
+        },
+        {
+          "shot_id": "shot_06",
+          "cache": "miss",
+          "submit": true,
+          "model": "MiniMax-Hailuo-2.3",
+          "mode": "I2V",
+          "duration": 6,
+          "resolution": null
+        },
+        {
+          "shot_id": "shot_07",
+          "cache": "miss",
+          "submit": true,
+          "model": "MiniMax-Hailuo-2.3",
+          "mode": "I2V",
+          "duration": 6,
+          "resolution": null
+        }
+      ],
+      "by_model": {
+        "MiniMax-Hailuo-2.3": {
+          "kind": "video",
+          "calls": 5,
+          "seconds": 30.0,
+          "cost": null
+        },
+        "tts-1": {
+          "kind": "tts",
+          "calls": 7,
+          "seconds": 28.0,
+          "cost": null
+        }
+      },
+      "currency": null,
+      "estimated_cost": null,
+      "unpriced_models": [
+        "MiniMax-Hailuo-2.3",
+        "tts-1"
+      ]
+    },
+    "elapsed_seconds": 526.54
+  },
+  "workspace_root": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1",
+  "artifacts_dir": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/artifacts",
+  "master_video_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/final_master_qa_nofallback_r1.mp4",
+  "thumbnail_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/thumbnail_qa_nofallback_r1.jpg",
+  "first_started_at": "2026-10-22T03:24:43.775044Z",
+  "last_started_at": "2026-10-22T05:12:07.630425Z",
+  "finished_at": "2026-10-22T05:20:54.159616Z",
+  "elapsed_seconds": 526.529,
+  "current_stage": 8,
+  "stages": [
+    {
+      "stage": 1,
+      "key": "research_briefing",
+      "title": "Competitor Research & Strategic Creative Briefing",
+      "status": "skipped",
+      "started_at": "2026-10-22T03:24:43.788216Z",
+      "finished_at": "2026-10-22T03:28:37.066833Z",
+      "duration_seconds": 233.279,
+      "progress": null,
+      "message": "Skipped: resuming from stage 5",
+      "error": null,
+      "items": [
+        {
+          "id": "ingest_product_input",
+          "status": "running",
+          "product_url": null,
+          "input_chars": 60,
+          "has_accompanying_text": true
+        },
+        {
+          "id": "product_intelligence",
+          "status": "extracted",
+          "title": "Serum dưỡng sáng mờ thâm phục hồi da Niacinamide 10% HA 30ml",
+          "features": 6,
+          "objections": 4
+        },
+        {
+          "id": "competitor_hooks",
+          "status": "synthesized",
+          "hooks": 5,
+          "whitespace_opportunities": 5
+        },
+        {
+          "id": "creative_concepts",
+          "status": "selected",
+          "options": 3,
+          "winning_angle": "angle_b_aesthetic_sensory",
+          "generator": "deterministic_fallback"
+        }
+      ],
+      "artifacts": [
+        "artifacts/competitor_research.json",
+        "artifacts/creative_concept.json",
+        "artifacts/brief.json"
+      ]
+    },
+    {
+      "stage": 2,
+      "key": "scriptwriting",
+      "title": "Multi-Archetype High-Conversion Scriptwriting",
+      "status": "skipped",
+      "started_at": "2026-10-22T03:28:37.077917Z",
+      "finished_at": "2026-10-22T03:29:24.725036Z",
+      "duration_seconds": 47.647,
+      "progress": null,
+      "message": "Skipped: resuming from stage 5",
+      "error": null,
+      "items": [
+        {
+          "id": "shot_01_hook",
+          "status": "written",
+          "beat_type": "hook",
+          "duration_seconds": 3.5,
+          "has_speech": true
+        },
+        {
+          "id": "shot_02_problem",
+          "status": "written",
+          "beat_type": "problem",
+          "duration_seconds": 3.5,
+          "has_speech": true
+        },
+        {
+          "id": "shot_03_feature",
+          "status": "written",
+          "beat_type": "feature",
+          "duration_seconds": 4.0,
+          "has_speech": true
+        },
+        {
+          "id": "shot_04_benefit",
+          "status": "written",
+          "beat_type": "benefit",
+          "duration_seconds": 4.5,
+          "has_speech": true
+        },
+        {
+          "id": "shot_05_experience",
+          "status": "written",
+          "beat_type": "experience",
+          "duration_seconds": 4.5,
+          "has_speech": true
+        },
+        {
+          "id": "shot_06_proof",
+          "status": "written",
+          "beat_type": "proof",
+          "duration_seconds": 4.0,
+          "has_speech": true
+        },
+        {
+          "id": "shot_07_cta",
+          "status": "written",
+          "beat_type": "cta",
+          "duration_seconds": 4.0,
+          "has_speech": true
+        }
+      ],
+      "artifacts": [
+        "artifacts/script.json"
+      ]
+    },
+    {
+      "stage": 3,
+      "key": "storyboard_staging",
+      "title": "DramaClaw Spatial Storyboard & OpenMontage Slideshow Risk Gate",
+      "status": "skipped",
+      "started_at": "2026-10-22T03:29:24.729943Z",
+      "finished_at": "2026-10-22T03:29:24.896198Z",
+      "duration_seconds": 0.166,
+      "progress": null,
+      "message": "Skipped: resuming from stage 5",
+      "error": null,
+      "items": [
+        {
+          "id": "shot_01",
+          "label": "EXTREME_MACRO • Hook",
+          "status": "planned",
+          "beat_type": "hook"
+        },
+        {
+          "id": "shot_02",
+          "label": "MEDIUM_CLOSE_UP • Problem",
+          "status": "planned",
+          "beat_type": "problem"
+        },
+        {
+          "id": "shot_03",
+          "label": "CLOSE_UP • Feature",
+          "status": "planned",
+          "beat_type": "feature"
+        },
+        {
+          "id": "shot_04",
+          "label": "CLOSE_UP • Benefit",
+          "status": "planned",
+          "beat_type": "benefit"
+        },
+        {
+          "id": "shot_05",
+          "label": "EXTREME_MACRO • Experience",
+          "status": "planned",
+          "beat_type": "experience"
+        },
+        {
+          "id": "shot_06",
+          "label": "MEDIUM_CLOSE_UP • Proof",
+          "status": "planned",
+          "beat_type": "proof"
+        },
+        {
+          "id": "shot_07",
+          "label": "CLOSE_UP • Cta",
+          "status": "planned",
+          "beat_type": "cta"
+        }
+      ],
+      "artifacts": [
+        "artifacts/storyboard_contact_sheet.jpg",
+        "artifacts/scene_plan.json"
+      ]
+    },
+    {
+      "stage": 4,
+      "key": "identity_keyframes",
+      "title": "KOL Identity Locking & Clean Keyframe Staging",
+      "status": "skipped",
+      "started_at": "2026-10-22T03:34:30.513961Z",
+      "finished_at": "2026-10-22T03:39:47.893752Z",
+      "duration_seconds": 317.38,
+      "progress": null,
+      "message": "Skipped: resuming from stage 5",
+      "error": null,
+      "items": [
+        {
+          "id": "shot_01",
+          "status": "keyframe_ready",
+          "source_image": "projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_01_synth.png",
+          "cleaned_image": "keyframes/shot_01_clean.jpg",
+          "watermark_removed": true,
+          "telea_inpaint": true,
+          "watermark_pixels": 0,
+          "width": 1080,
+          "height": 1920,
+          "fallback_reference": false,
+          "reference_origin": "canonical",
+          "generation_mode": "product_hero",
+          "reference_assets": [
+            "projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_01_synth.png"
+          ],
+          "keyframe_source": "synthesized",
+          "identity_vs_anchor": null
+        },
+        {
+          "id": "shot_02",
+          "status": "keyframe_ready",
+          "source_image": "projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_02_synth.png",
+          "cleaned_image": "keyframes/shot_02_clean.jpg",
+          "watermark_removed": true,
+          "telea_inpaint": true,
+          "watermark_pixels": 0,
+          "width": 1080,
+          "height": 1920,
+          "fallback_reference": false,
+          "reference_origin": "canonical",
+          "generation_mode": "r2v",
+          "reference_assets": [
+            "assets/characters/kol_main/outfits/minimalist_spa_silk/character_sheet.png",
+            "assets/characters/kol_main/face_anchor.png"
+          ],
+          "keyframe_source": "synthesized",
+          "identity_vs_anchor": 0.1636
+        },
+        {
+          "id": "shot_03",
+          "status": "keyframe_ready",
+          "source_image": "projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_03_synth.png",
+          "cleaned_image": "keyframes/shot_03_clean.jpg",
+          "watermark_removed": true,
+          "telea_inpaint": true,
+          "watermark_pixels": 16366,
+          "width": 1080,
+          "height": 1920,
+          "fallback_reference": false,
+          "reference_origin": "canonical",
+          "generation_mode": "product_hero",
+          "reference_assets": [
+            "projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_03_synth.png"
+          ],
+          "keyframe_source": "synthesized",
+          "identity_vs_anchor": null
+        },
+        {
+          "id": "shot_04",
+          "status": "keyframe_ready",
+          "source_image": "projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_04_synth.png",
+          "cleaned_image": "keyframes/shot_04_clean.jpg",
+          "watermark_removed": true,
+          "telea_inpaint": true,
+          "watermark_pixels": 0,
+          "width": 1080,
+          "height": 1920,
+          "fallback_reference": false,
+          "reference_origin": "canonical",
+          "generation_mode": "r2v",
+          "reference_assets": [
+            "assets/characters/kol_main/outfits/minimalist_spa_silk/character_sheet.png",
+            "assets/characters/kol_main/face_anchor.png"
+          ],
+          "keyframe_source": "synthesized",
+          "identity_vs_anchor": 0.2085
+        },
+        {
+          "id": "shot_05",
+          "status": "keyframe_ready",
+          "source_image": "projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_05_synth.png",
+          "cleaned_image": "keyframes/shot_05_clean.jpg",
+          "watermark_removed": true,
+          "telea_inpaint": true,
+          "watermark_pixels": 0,
+          "width": 1080,
+          "height": 1920,
+          "fallback_reference": false,
+          "reference_origin": "canonical",
+          "generation_mode": "r2v",
+          "reference_assets": [
+            "assets/characters/kol_main/outfits/minimalist_spa_silk/character_sheet.png",
+            "assets/characters/kol_main/face_anchor.png"
+          ],
+          "keyframe_source": "synthesized",
+          "identity_vs_anchor": 0.1089
+        },
+        {
+          "id": "shot_06",
+          "status": "keyframe_ready",
+          "source_image": "projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_06_synth.png",
+          "cleaned_image": "keyframes/shot_06_clean.jpg",
+          "watermark_removed": true,
+          "telea_inpaint": true,
+          "watermark_pixels": 3491,
+          "width": 1080,
+          "height": 1920,
+          "fallback_reference": false,
+          "reference_origin": "canonical",
+          "generation_mode": "r2v",
+          "reference_assets": [
+            "assets/characters/kol_main/outfits/minimalist_spa_silk/character_sheet.png",
+            "assets/characters/kol_main/face_anchor.png"
+          ],
+          "keyframe_source": "synthesized",
+          "identity_vs_anchor": 0.0136
+        },
+        {
+          "id": "shot_07",
+          "status": "keyframe_ready",
+          "source_image": "projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_07_synth.png",
+          "cleaned_image": "keyframes/shot_07_clean.jpg",
+          "watermark_removed": true,
+          "telea_inpaint": true,
+          "watermark_pixels": 0,
+          "width": 1080,
+          "height": 1920,
+          "fallback_reference": false,
+          "reference_origin": "canonical",
+          "generation_mode": "product_hero",
+          "reference_assets": [
+            "projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_07_synth.png"
+          ],
+          "keyframe_source": "synthesized",
+          "identity_vs_anchor": null
+        }
+      ],
+      "artifacts": [
+        "keyframes/shot_01_clean.jpg",
+        "keyframes/shot_02_clean.jpg",
+        "keyframes/shot_03_clean.jpg",
+        "keyframes/shot_04_clean.jpg",
+        "keyframes/shot_05_clean.jpg",
+        "keyframes/shot_06_clean.jpg",
+        "keyframes/shot_07_clean.jpg",
+        "artifacts/asset_manifest.json"
+      ]
+    },
+    {
+      "stage": 5,
+      "key": "video_diffusion",
+      "title": "Genuine Video Diffusion Generation (Hailuo-2.3)",
+      "status": "completed",
+      "started_at": "2026-10-22T05:12:07.829356Z",
+      "finished_at": "2026-10-22T05:18:44.070669Z",
+      "duration_seconds": 396.241,
+      "progress": {
+        "current": 7,
+        "total": 7,
+        "percent": 100.0,
+        "unit": "clips",
+        "label": "shot_06 completed"
+      },
+      "message": "Rendered 7 clips via MiniMax-Hailuo-2.3",
+      "error": null,
+      "items": [
+        {
+          "id": "shot_03",
+          "status": "cached",
+          "mode": "I2V",
+          "output_rel_path": "media/raw_clips/shot_03.mp4",
+          "size_bytes": 755412
+        },
+        {
+          "id": "shot_01",
+          "status": "cached",
+          "mode": "I2V",
+          "output_rel_path": "media/raw_clips/shot_01.mp4",
+          "size_bytes": 688928
+        },
+        {
+          "id": "shot_02",
+          "status": "completed",
+          "mode": "I2V",
+          "output_rel_path": "media/raw_clips/shot_02.mp4",
+          "size_bytes": 865522
+        },
+        {
+          "id": "shot_04",
+          "status": "completed",
+          "mode": "I2V",
+          "output_rel_path": "media/raw_clips/shot_04.mp4",
+          "size_bytes": 1097055
+        },
+        {
+          "id": "shot_05",
+          "status": "completed",
+          "mode": "I2V",
+          "output_rel_path": "media/raw_clips/shot_05.mp4",
+          "size_bytes": 951156
+        },
+        {
+          "id": "shot_07",
+          "status": "completed",
+          "mode": "I2V",
+          "output_rel_path": "media/raw_clips/shot_07.mp4",
+          "size_bytes": 466222
+        },
+        {
+          "id": "shot_06",
+          "status": "completed",
+          "mode": "I2V",
+          "output_rel_path": "media/raw_clips/shot_06.mp4",
+          "size_bytes": 796507
+        }
+      ],
+      "artifacts": [
+        "media/raw_clips/shot_01.mp4",
+        "media/raw_clips/shot_02.mp4",
+        "media/raw_clips/shot_03.mp4",
+        "media/raw_clips/shot_04.mp4",
+        "media/raw_clips/shot_05.mp4",
+        "media/raw_clips/shot_06.mp4",
+        "media/raw_clips/shot_07.mp4"
+      ]
+    },
+    {
+      "stage": 6,
+      "key": "audio_lip_sync",
+      "title": "Neural TTS Audio & Lip-Sync Alignment",
+      "status": "completed",
+      "started_at": "2026-10-22T05:18:44.098456Z",
+      "finished_at": "2026-10-22T05:20:17.585596Z",
+      "duration_seconds": 93.487,
+      "progress": {
+        "current": 7,
+        "total": 7,
+        "percent": 100.0,
+        "unit": "beats",
+        "label": "shot_07 lip-sync"
+      },
+      "message": "7 voice stems, 7 lip-synced clips",
+      "error": null,
+      "items": [
+        {
+          "id": "shot_01",
+          "status": "lip_sync_aligned",
+          "synced": "media/synced_clips/shot_01.mp4",
+          "mix_mode": "off_camera_narration",
+          "needs_mouth_articulation": false,
+          "placeholder_video": false,
+          "placeholder_audio": false,
+          "tts_fallback": false,
+          "tts_engine": "api",
+          "duration_seconds": 3.6,
+          "speech_status": "verified",
+          "speech_ok": true,
+          "speech_cer": 0.0
+        },
+        {
+          "id": "shot_02",
+          "status": "lip_sync_aligned",
+          "synced": "media/synced_clips/shot_02.mp4",
+          "mix_mode": "off_camera_narration",
+          "needs_mouth_articulation": false,
+          "placeholder_video": false,
+          "placeholder_audio": false,
+          "tts_fallback": false,
+          "tts_engine": "api",
+          "duration_seconds": 3.35,
+          "speech_status": "verified",
+          "speech_ok": true,
+          "speech_cer": 0.0
+        },
+        {
+          "id": "shot_03",
+          "status": "lip_sync_aligned",
+          "synced": "media/synced_clips/shot_03.mp4",
+          "mix_mode": "off_camera_narration",
+          "needs_mouth_articulation": false,
+          "placeholder_video": false,
+          "placeholder_audio": false,
+          "tts_fallback": false,
+          "tts_engine": "api",
+          "duration_seconds": 4.61,
+          "speech_status": "verified",
+          "speech_ok": true,
+          "speech_cer": 0.1282
+        },
+        {
+          "id": "shot_04",
+          "status": "lip_sync_aligned",
+          "synced": "media/synced_clips/shot_04.mp4",
+          "mix_mode": "off_camera_narration",
+          "needs_mouth_articulation": false,
+          "placeholder_video": false,
+          "placeholder_audio": false,
+          "tts_fallback": false,
+          "tts_engine": "api",
+          "duration_seconds": 3.93,
+          "speech_status": "verified",
+          "speech_ok": true,
+          "speech_cer": 0.0
+        },
+        {
+          "id": "shot_05",
+          "status": "lip_sync_aligned",
+          "synced": "media/synced_clips/shot_05.mp4",
+          "mix_mode": "off_camera_narration",
+          "needs_mouth_articulation": false,
+          "placeholder_video": false,
+          "placeholder_audio": false,
+          "tts_fallback": false,
+          "tts_engine": "api",
+          "duration_seconds": 3.35,
+          "speech_status": "verified",
+          "speech_ok": true,
+          "speech_cer": 0.0
+        },
+        {
+          "id": "shot_06",
+          "status": "lip_sync_aligned",
+          "synced": "media/synced_clips/shot_06.mp4",
+          "mix_mode": "off_camera_narration",
+          "needs_mouth_articulation": false,
+          "placeholder_video": false,
+          "placeholder_audio": false,
+          "tts_fallback": false,
+          "tts_engine": "api",
+          "duration_seconds": 2.92,
+          "speech_status": "verified",
+          "speech_ok": true,
+          "speech_cer": 0.0909
+        },
+        {
+          "id": "shot_07",
+          "status": "lip_sync_aligned",
+          "synced": "media/synced_clips/shot_07.mp4",
+          "mix_mode": "off_camera_narration",
+          "needs_mouth_articulation": false,
+          "placeholder_video": false,
+          "placeholder_audio": false,
+          "tts_fallback": false,
+          "tts_engine": "api",
+          "duration_seconds": 4.57,
+          "speech_status": "verified",
+          "speech_ok": true,
+          "speech_cer": 0.05
+        }
+      ],
+      "artifacts": [
+        "media/audio/voice_shot_01.wav",
+        "media/synced_clips/shot_01.mp4",
+        "media/audio/voice_shot_02.wav",
+        "media/synced_clips/shot_02.mp4",
+        "media/audio/voice_shot_03.wav",
+        "media/synced_clips/shot_03.mp4",
+        "media/audio/voice_shot_04.wav",
+        "media/synced_clips/shot_04.mp4",
+        "media/audio/voice_shot_05.wav",
+        "media/synced_clips/shot_05.mp4",
+        "media/audio/voice_shot_06.wav",
+        "media/synced_clips/shot_06.mp4",
+        "media/audio/voice_shot_07.wav",
+        "media/synced_clips/shot_07.mp4",
+        "artifacts/speech_report.json"
+      ]
+    },
+    {
+      "stage": 7,
+      "key": "composition",
+      "title": "Final FFmpeg Multi-Track Composition & Audio Ducking",
+      "status": "completed",
+      "started_at": "2026-10-22T05:20:17.604557Z",
+      "finished_at": "2026-10-22T05:20:46.950757Z",
+      "duration_seconds": 29.346,
+      "progress": null,
+      "message": "Master assembled: final_master_qa_nofallback_r1.mp4 (7 timeline clips)",
+      "error": null,
+      "items": [],
+      "artifacts": [
+        "artifacts/audio_mix_report.json",
+        "final_master_qa_nofallback_r1.mp4",
+        "artifacts/edit_decisions.json"
+      ]
+    },
+    {
+      "stage": 8,
+      "key": "verification_publish",
+      "title": "Independent Quality Verification Gates & Packaging",
+      "status": "failed",
+      "started_at": "2026-10-22T05:20:46.957311Z",
+      "finished_at": "2026-10-22T05:20:54.151869Z",
+      "duration_seconds": 7.195,
+      "progress": {
+        "current": 10,
+        "total": 10,
+        "percent": 100.0,
+        "unit": "gates",
+        "label": "face_identity_gate"
+      },
+      "message": "FAILED: Overall: FAILED (prompt_ledger_audit_gate: Master contains placeholder/degraded content: shot_02 (degraded_from=R2V); shot_04 (degraded_from=R2V); shot_05 (degraded_from=R2V); shot_06 (degraded_from=R2V); face_identity_gate: shot_02 keyframe: similarity 0.133 below threshold 0.363; shot_02 clip: similarity 0.075 below threshold 0.363; shot_04 keyframe: similarity 0.122 below threshold 0.363; shot_04 clip: similarity 0.136 below threshold 0.363; shot_05 keyframe: similarity 0.177 below threshold 0.363; shot_05 clip: similarity 0.193 below threshold 0.363; shot_06 keyframe: similarity 0.220 below threshold 0.363; shot_06 clip: similarity 0.074 below threshold 0.363)",
+      "error": "Overall: FAILED (prompt_ledger_audit_gate: Master contains placeholder/degraded content: shot_02 (degraded_from=R2V); shot_04 (degraded_from=R2V); shot_05 (degraded_from=R2V); shot_06 (degraded_from=R2V); face_identity_gate: shot_02 keyframe: similarity 0.133 below threshold 0.363; shot_02 clip: similarity 0.075 below threshold 0.363; shot_04 keyframe: similarity 0.122 below threshold 0.363; shot_04 clip: similarity 0.136 below threshold 0.363; shot_05 keyframe: similarity 0.177 below threshold 0.363; shot_05 clip: similarity 0.193 below threshold 0.363; shot_06 keyframe: similarity 0.220 below threshold 0.363; shot_06 clip: similarity 0.074 below threshold 0.363)",
+      "items": [
+        {
+          "id": "technical_integrity_gate",
+          "status": "passed",
+          "error": null,
+          "details": {
+            "width": 1080,
+            "height": 1920,
+            "video_codec": "h264",
+            "audio_codec": "aac",
+            "sample_rate": 48000,
+            "duration_seconds": 28.9,
+            "size_bytes": 21241446
+          }
+        },
+        {
+          "id": "media_quality_gate",
+          "status": "passed",
+          "error": null,
+          "details": {
+            "black_seconds": 0,
+            "frozen_seconds": 0,
+            "longest_frozen_seconds": 0.0,
+            "frozen_share": 0.0,
+            "frozen_intervals": 0,
+            "integrated_lufs": -14.0,
+            "true_peak_dbtp": -1.4,
+            "target_lufs": -14.0,
+            "loudness_source": "audio_mix_report",
+            "mix_report_output_lufs": -14.1,
+            "mix_report_compliant": true
+          }
+        },
+        {
+          "id": "character_sheet_integrity_gate",
+          "status": "passed",
+          "error": null,
+          "details": {
+            "character_name": "Mai Ly",
+            "character_tag": "[KOL_MAIN]",
+            "has_face_anchor": true,
+            "identities_verified": 3,
+            "total_identities": 3,
+            "face_anchor_resolution": "629x624"
+          }
+        },
+        {
+          "id": "character_consistency_gate",
+          "status": "passed",
+          "error": null,
+          "details": {
+            "character_name": "Mai Ly",
+            "character_tag": "[KOL_MAIN]",
+            "total_keyframes": 7,
+            "all_files_exist": true,
+            "watermark_cleaned": true,
+            "generation_modes": {
+              "product_hero": 3,
+              "r2v": 4
+            },
+            "character_sheet_integrity": {
+              "character_name": "Mai Ly",
+              "character_tag": "[KOL_MAIN]",
+              "has_face_anchor": true,
+              "identities_verified": 3,
+              "total_identities": 3,
+              "face_anchor_resolution": "629x624"
+            }
+          }
+        },
+        {
+          "id": "continuity_gate",
+          "status": "passed",
+          "error": null,
+          "details": {
+            "expected_beats": 7,
+            "actual_synced_clips": 7
+          }
+        },
+        {
+          "id": "slideshow_risk_gate",
+          "status": "passed",
+          "error": null,
+          "details": {
+            "average_score": 0.15,
+            "verdict": "strong",
+            "dimensions": {
+              "repetition": {
+                "score": 0.0,
+                "reason": "Healthy variety in shot types, camera choreography, and duration rhythm."
+              },
+              "decorative_visuals": {
+                "score": 0.0,
+                "reason": "All shots possess clear communicative commercial roles"
+              },
+              "weak_motion": {
+                "score": 0.9,
+                "reason": "3/7 shots lack active kinetic subject action verbs"
+              },
+              "weak_shot_intent": {
+                "score": 0.0,
+                "reason": "Comprehensive commercial intent defined across every shot"
+              },
+              "typography_overreliance": {
+                "score": 0.0,
+                "reason": "Visual-first video storytelling with zero static text card dependency"
+              },
+              "unsupported_cinematic_claims": {
+                "score": 0.0,
+                "reason": "Cinematic claims are fully backed by camera choreography and lighting contracts"
+              }
+            },
+            "hard_reject_reasons": [],
+            "recommendations": []
+          }
+        },
+        {
+          "id": "identity_preflight_gate",
+          "status": "passed",
+          "error": null,
+          "details": {
+            "found": true,
+            "ok": true,
+            "assets": [
+              "character_sheet",
+              "face_anchor",
+              "product_hero"
+            ],
+            "warnings": [
+              "face_anchor: long edge 629px below minimum resolution 1536px"
+            ],
+            "errors": []
+          }
+        },
+        {
+          "id": "prompt_ledger_audit_gate",
+          "status": "failed",
+          "error": "Master contains placeholder/degraded content: shot_02 (degraded_from=R2V); shot_04 (degraded_from=R2V); shot_05 (degraded_from=R2V); shot_06 (degraded_from=R2V)",
+          "details": {
+            "shots_audited": 9,
+            "flagged_shots": {
+              "shot_02": [
+                "degraded_from=R2V"
+              ],
+              "shot_04": [
+                "degraded_from=R2V"
+              ],
+              "shot_05": [
+                "degraded_from=R2V"
+              ],
+              "shot_06": [
+                "degraded_from=R2V"
+              ]
+            },
+            "placeholder_count": 4
+          }
+        },
+        {
+          "id": "speech_intelligibility_gate",
+          "status": "passed",
+          "error": null,
+          "details": {
+            "found": true,
+            "threshold": 0.35,
+            "verified_shots": [
+              "shot_01",
+              "shot_02",
+              "shot_03",
+              "shot_04",
+              "shot_05",
+              "shot_06",
+              "shot_07"
+            ],
+            "unverified_shots": [],
+            "failed_shots": [],
+            "warnings": []
+          }
+        },
+        {
+          "id": "face_identity_gate",
+          "status": "failed",
+          "error": "shot_02 keyframe: similarity 0.133 below threshold 0.363; shot_02 clip: similarity 0.075 below threshold 0.363; shot_04 keyframe: similarity 0.122 below threshold 0.363; shot_04 clip: similarity 0.136 below threshold 0.363; shot_05 keyframe: similarity 0.177 below threshold 0.363; shot_05 clip: similarity 0.193 below threshold 0.363; shot_06 keyframe: similarity 0.220 below threshold 0.363; shot_06 clip: similarity 0.074 below threshold 0.363",
+          "details": {
+            "status": "failed",
+            "threshold": 0.363,
+            "face_anchor": "assets/characters/kol_main/face_anchor.png",
+            "shots_checked": 4,
+            "shots_failed": 4,
+            "shots": [
+              {
+                "shot_id": "shot_01",
+                "character_role": "product_only",
+                "status": "skipped"
+              },
+              {
+                "shot_id": "shot_02",
+                "character_role": "model",
+                "checks": {
+                  "keyframe": {
+                    "similarity": 0.133,
+                    "min_similarity": 0.133,
+                    "passing_ratio": 0.0,
+                    "face_found": true,
+                    "passed": false,
+                    "frames_checked": 1,
+                    "frames_with_face": 1,
+                    "threshold": 0.363
+                  },
+                  "clip": {
+                    "similarity": 0.075,
+                    "min_similarity": 0.0553,
+                    "passing_ratio": 0.0,
+                    "face_found": true,
+                    "passed": false,
+                    "frames_checked": 10,
+                    "frames_with_face": 10,
+                    "threshold": 0.363
+                  }
+                },
+                "status": "failed"
+              },
+              {
+                "shot_id": "shot_03",
+                "character_role": "product_only",
+                "status": "skipped"
+              },
+              {
+                "shot_id": "shot_04",
+                "character_role": "model",
+                "checks": {
+                  "keyframe": {
+                    "similarity": 0.1219,
+                    "min_similarity": 0.1219,
+                    "passing_ratio": 0.0,
+                    "face_found": true,
+                    "passed": false,
+                    "frames_checked": 1,
+                    "frames_with_face": 1,
+                    "threshold": 0.363
+                  },
+                  "clip": {
+                    "similarity": 0.1357,
+                    "min_similarity": 0.1094,
+                    "passing_ratio": 0.0,
+                    "face_found": true,
+                    "passed": false,
+                    "frames_checked": 10,
+                    "frames_with_face": 10,
+                    "threshold": 0.363
+                  }
+                },
+                "status": "failed"
+              },
+              {
+                "shot_id": "shot_05",
+                "character_role": "model",
+                "checks": {
+                  "keyframe": {
+                    "similarity": 0.1768,
+                    "min_similarity": 0.1768,
+                    "passing_ratio": 0.0,
+                    "face_found": true,
+                    "passed": false,
+                    "frames_checked": 1,
+                    "frames_with_face": 1,
+                    "threshold": 0.363
+                  },
+                  "clip": {
+                    "similarity": 0.1928,
+                    "min_similarity": 0.0463,
+                    "passing_ratio": 0.0,
+                    "face_found": true,
+                    "passed": false,
+                    "frames_checked": 10,
+                    "frames_with_face": 10,
+                    "threshold": 0.363
+                  }
+                },
+                "status": "failed"
+              },
+              {
+                "shot_id": "shot_06",
+                "character_role": "model",
+                "checks": {
+                  "keyframe": {
+                    "similarity": 0.2202,
+                    "min_similarity": 0.2202,
+                    "passing_ratio": 0.0,
+                    "face_found": true,
+                    "passed": false,
+                    "frames_checked": 1,
+                    "frames_with_face": 1,
+                    "threshold": 0.363
+                  },
+                  "clip": {
+                    "similarity": 0.0741,
+                    "min_similarity": 0.0236,
+                    "passing_ratio": 0.0,
+                    "face_found": true,
+                    "passed": false,
+                    "frames_checked": 10,
+                    "frames_with_face": 10,
+                    "threshold": 0.363
+                  }
+                },
+                "status": "failed"
+              },
+              {
+                "shot_id": "shot_07",
+                "character_role": "product_only",
+                "status": "skipped"
+              }
+            ]
+          }
+        }
+      ],
+      "artifacts": [
+        "artifacts/render_report.json"
+      ]
+    }
+  ],
+  "artifact_index": {
+    "artifacts/competitor_research.json": {
+      "name": "competitor_research.json",
+      "rel_path": "artifacts/competitor_research.json",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/artifacts/competitor_research.json",
+      "kind": "json",
+      "size_bytes": 8839,
+      "exists": true,
+      "stage": 1,
+      "label": "competitor_research.json",
+      "written_at": "2026-10-22T03:28:37.054942Z"
+    },
+    "artifacts/creative_concept.json": {
+      "name": "creative_concept.json",
+      "rel_path": "artifacts/creative_concept.json",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/artifacts/creative_concept.json",
+      "kind": "json",
+      "size_bytes": 6714,
+      "exists": true,
+      "stage": 1,
+      "label": "creative_concept.json",
+      "written_at": "2026-10-22T03:28:37.059149Z"
+    },
+    "artifacts/brief.json": {
+      "name": "brief.json",
+      "rel_path": "artifacts/brief.json",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/artifacts/brief.json",
+      "kind": "json",
+      "size_bytes": 1767,
+      "exists": true,
+      "stage": 1,
+      "label": "brief.json",
+      "written_at": "2026-10-22T03:28:37.063671Z"
+    },
+    "artifacts/script.json": {
+      "name": "script.json",
+      "rel_path": "artifacts/script.json",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/artifacts/script.json",
+      "kind": "json",
+      "size_bytes": 7875,
+      "exists": true,
+      "stage": 2,
+      "label": "script.json",
+      "written_at": "2026-10-22T03:29:24.721864Z"
+    },
+    "artifacts/storyboard_contact_sheet.jpg": {
+      "name": "storyboard_contact_sheet.jpg",
+      "rel_path": "artifacts/storyboard_contact_sheet.jpg",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/artifacts/storyboard_contact_sheet.jpg",
+      "kind": "image",
+      "size_bytes": 309184,
+      "exists": true,
+      "stage": 3,
+      "label": "Storyboard contact sheet",
+      "written_at": "2026-10-22T03:29:24.866642Z"
+    },
+    "artifacts/scene_plan.json": {
+      "name": "scene_plan.json",
+      "rel_path": "artifacts/scene_plan.json",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/artifacts/scene_plan.json",
+      "kind": "json",
+      "size_bytes": 20825,
+      "exists": true,
+      "stage": 3,
+      "label": "scene_plan.json",
+      "written_at": "2026-10-22T03:29:24.886901Z"
+    },
+    "keyframes/shot_01_clean.jpg": {
+      "name": "shot_01_clean.jpg",
+      "rel_path": "keyframes/shot_01_clean.jpg",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_01_clean.jpg",
+      "kind": "image",
+      "size_bytes": 194712,
+      "exists": true,
+      "stage": 4,
+      "label": "shot_01 clean 9:16 keyframe",
+      "written_at": "2026-10-22T03:35:14.898988Z"
+    },
+    "keyframes/shot_02_clean.jpg": {
+      "name": "shot_02_clean.jpg",
+      "rel_path": "keyframes/shot_02_clean.jpg",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_02_clean.jpg",
+      "kind": "image",
+      "size_bytes": 236103,
+      "exists": true,
+      "stage": 4,
+      "label": "shot_02 clean 9:16 keyframe",
+      "written_at": "2026-10-22T03:36:11.077603Z"
+    },
+    "keyframes/shot_03_clean.jpg": {
+      "name": "shot_03_clean.jpg",
+      "rel_path": "keyframes/shot_03_clean.jpg",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_03_clean.jpg",
+      "kind": "image",
+      "size_bytes": 233702,
+      "exists": true,
+      "stage": 4,
+      "label": "shot_03 clean 9:16 keyframe",
+      "written_at": "2026-10-22T03:36:53.247675Z"
+    },
+    "keyframes/shot_04_clean.jpg": {
+      "name": "shot_04_clean.jpg",
+      "rel_path": "keyframes/shot_04_clean.jpg",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_04_clean.jpg",
+      "kind": "image",
+      "size_bytes": 270701,
+      "exists": true,
+      "stage": 4,
+      "label": "shot_04 clean 9:16 keyframe",
+      "written_at": "2026-10-22T03:37:36.596508Z"
+    },
+    "keyframes/shot_05_clean.jpg": {
+      "name": "shot_05_clean.jpg",
+      "rel_path": "keyframes/shot_05_clean.jpg",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_05_clean.jpg",
+      "kind": "image",
+      "size_bytes": 260560,
+      "exists": true,
+      "stage": 4,
+      "label": "shot_05 clean 9:16 keyframe",
+      "written_at": "2026-10-22T03:38:24.194015Z"
+    },
+    "keyframes/shot_06_clean.jpg": {
+      "name": "shot_06_clean.jpg",
+      "rel_path": "keyframes/shot_06_clean.jpg",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_06_clean.jpg",
+      "kind": "image",
+      "size_bytes": 248322,
+      "exists": true,
+      "stage": 4,
+      "label": "shot_06 clean 9:16 keyframe",
+      "written_at": "2026-10-22T03:39:06.486961Z"
+    },
+    "keyframes/shot_07_clean.jpg": {
+      "name": "shot_07_clean.jpg",
+      "rel_path": "keyframes/shot_07_clean.jpg",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_07_clean.jpg",
+      "kind": "image",
+      "size_bytes": 223212,
+      "exists": true,
+      "stage": 4,
+      "label": "shot_07 clean 9:16 keyframe",
+      "written_at": "2026-10-22T03:39:47.850437Z"
+    },
+    "artifacts/asset_manifest.json": {
+      "name": "asset_manifest.json",
+      "rel_path": "artifacts/asset_manifest.json",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/artifacts/asset_manifest.json",
+      "kind": "json",
+      "size_bytes": 6049,
+      "exists": true,
+      "stage": 4,
+      "label": "asset_manifest.json",
+      "written_at": "2026-10-22T03:39:47.890804Z"
+    },
+    "media/raw_clips/shot_01.mp4": {
+      "name": "shot_01.mp4",
+      "rel_path": "media/raw_clips/shot_01.mp4",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_01.mp4",
+      "kind": "video",
+      "size_bytes": 688928,
+      "exists": true,
+      "stage": 5,
+      "label": "shot_01.mp4",
+      "written_at": "2026-10-22T05:18:44.076819Z"
+    },
+    "media/raw_clips/shot_02.mp4": {
+      "name": "shot_02.mp4",
+      "rel_path": "media/raw_clips/shot_02.mp4",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_02.mp4",
+      "kind": "video",
+      "size_bytes": 865522,
+      "exists": true,
+      "stage": 5,
+      "label": "shot_02.mp4",
+      "written_at": "2026-10-22T05:18:44.079956Z"
+    },
+    "media/raw_clips/shot_03.mp4": {
+      "name": "shot_03.mp4",
+      "rel_path": "media/raw_clips/shot_03.mp4",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_03.mp4",
+      "kind": "video",
+      "size_bytes": 755412,
+      "exists": true,
+      "stage": 5,
+      "label": "shot_03.mp4",
+      "written_at": "2026-10-22T05:18:44.083085Z"
+    },
+    "media/raw_clips/shot_04.mp4": {
+      "name": "shot_04.mp4",
+      "rel_path": "media/raw_clips/shot_04.mp4",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_04.mp4",
+      "kind": "video",
+      "size_bytes": 1097055,
+      "exists": true,
+      "stage": 5,
+      "label": "shot_04.mp4",
+      "written_at": "2026-10-22T05:18:44.086130Z"
+    },
+    "media/raw_clips/shot_05.mp4": {
+      "name": "shot_05.mp4",
+      "rel_path": "media/raw_clips/shot_05.mp4",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_05.mp4",
+      "kind": "video",
+      "size_bytes": 951156,
+      "exists": true,
+      "stage": 5,
+      "label": "shot_05.mp4",
+      "written_at": "2026-10-22T05:18:44.089113Z"
+    },
+    "media/raw_clips/shot_06.mp4": {
+      "name": "shot_06.mp4",
+      "rel_path": "media/raw_clips/shot_06.mp4",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_06.mp4",
+      "kind": "video",
+      "size_bytes": 796507,
+      "exists": true,
+      "stage": 5,
+      "label": "shot_06.mp4",
+      "written_at": "2026-10-22T05:18:44.092072Z"
+    },
+    "media/raw_clips/shot_07.mp4": {
+      "name": "shot_07.mp4",
+      "rel_path": "media/raw_clips/shot_07.mp4",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_07.mp4",
+      "kind": "video",
+      "size_bytes": 466222,
+      "exists": true,
+      "stage": 5,
+      "label": "shot_07.mp4",
+      "written_at": "2026-10-22T05:18:44.095205Z"
+    },
+    "media/audio/voice_shot_01.wav": {
+      "name": "voice_shot_01.wav",
+      "rel_path": "media/audio/voice_shot_01.wav",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/audio/voice_shot_01.wav",
+      "kind": "audio",
+      "size_bytes": 691562,
+      "exists": true,
+      "stage": 6,
+      "label": "shot_01 voice stem",
+      "written_at": "2026-10-22T05:18:55.519931Z"
+    },
+    "media/synced_clips/shot_01.mp4": {
+      "name": "shot_01.mp4",
+      "rel_path": "media/synced_clips/shot_01.mp4",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/synced_clips/shot_01.mp4",
+      "kind": "video",
+      "size_bytes": 894761,
+      "exists": true,
+      "stage": 6,
+      "label": "shot_01 lip-synced clip",
+      "written_at": "2026-10-22T05:18:57.267846Z"
+    },
+    "media/audio/voice_shot_02.wav": {
+      "name": "voice_shot_02.wav",
+      "rel_path": "media/audio/voice_shot_02.wav",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/audio/voice_shot_02.wav",
+      "kind": "audio",
+      "size_bytes": 643178,
+      "exists": true,
+      "stage": 6,
+      "label": "shot_02 voice stem",
+      "written_at": "2026-10-22T05:19:05.131831Z"
+    },
+    "media/synced_clips/shot_02.mp4": {
+      "name": "shot_02.mp4",
+      "rel_path": "media/synced_clips/shot_02.mp4",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/synced_clips/shot_02.mp4",
+      "kind": "video",
+      "size_bytes": 986560,
+      "exists": true,
+      "stage": 6,
+      "label": "shot_02 lip-synced clip",
+      "written_at": "2026-10-22T05:19:06.950765Z"
+    },
+    "media/audio/voice_shot_03.wav": {
+      "name": "voice_shot_03.wav",
+      "rel_path": "media/audio/voice_shot_03.wav",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/audio/voice_shot_03.wav",
+      "kind": "audio",
+      "size_bytes": 885098,
+      "exists": true,
+      "stage": 6,
+      "label": "shot_03 voice stem",
+      "written_at": "2026-10-22T05:19:23.399852Z"
+    },
+    "media/synced_clips/shot_03.mp4": {
+      "name": "shot_03.mp4",
+      "rel_path": "media/synced_clips/shot_03.mp4",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/synced_clips/shot_03.mp4",
+      "kind": "video",
+      "size_bytes": 1123545,
+      "exists": true,
+      "stage": 6,
+      "label": "shot_03 lip-synced clip",
+      "written_at": "2026-10-22T05:19:25.733789Z"
+    },
+    "media/audio/voice_shot_04.wav": {
+      "name": "voice_shot_04.wav",
+      "rel_path": "media/audio/voice_shot_04.wav",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/audio/voice_shot_04.wav",
+      "kind": "audio",
+      "size_bytes": 753770,
+      "exists": true,
+      "stage": 6,
+      "label": "shot_04 voice stem",
+      "written_at": "2026-10-22T05:19:36.646556Z"
+    },
+    "media/synced_clips/shot_04.mp4": {
+      "name": "shot_04.mp4",
+      "rel_path": "media/synced_clips/shot_04.mp4",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/synced_clips/shot_04.mp4",
+      "kind": "video",
+      "size_bytes": 1294699,
+      "exists": true,
+      "stage": 6,
+      "label": "shot_04 lip-synced clip",
+      "written_at": "2026-10-22T05:19:39.100036Z"
+    },
+    "media/audio/voice_shot_05.wav": {
+      "name": "voice_shot_05.wav",
+      "rel_path": "media/audio/voice_shot_05.wav",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/audio/voice_shot_05.wav",
+      "kind": "audio",
+      "size_bytes": 643178,
+      "exists": true,
+      "stage": 6,
+      "label": "shot_05 voice stem",
+      "written_at": "2026-10-22T05:19:52.411379Z"
+    },
+    "media/synced_clips/shot_05.mp4": {
+      "name": "shot_05.mp4",
+      "rel_path": "media/synced_clips/shot_05.mp4",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/synced_clips/shot_05.mp4",
+      "kind": "video",
+      "size_bytes": 1050334,
+      "exists": true,
+      "stage": 6,
+      "label": "shot_05 lip-synced clip",
+      "written_at": "2026-10-22T05:19:54.312786Z"
+    },
+    "media/audio/voice_shot_06.wav": {
+      "name": "voice_shot_06.wav",
+      "rel_path": "media/audio/voice_shot_06.wav",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/audio/voice_shot_06.wav",
+      "kind": "audio",
+      "size_bytes": 560234,
+      "exists": true,
+      "stage": 6,
+      "label": "shot_06 voice stem",
+      "written_at": "2026-10-22T05:20:04.828900Z"
+    },
+    "media/synced_clips/shot_06.mp4": {
+      "name": "shot_06.mp4",
+      "rel_path": "media/synced_clips/shot_06.mp4",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/synced_clips/shot_06.mp4",
+      "kind": "video",
+      "size_bytes": 782235,
+      "exists": true,
+      "stage": 6,
+      "label": "shot_06 lip-synced clip",
+      "written_at": "2026-10-22T05:20:06.440475Z"
+    },
+    "media/audio/voice_shot_07.wav": {
+      "name": "voice_shot_07.wav",
+      "rel_path": "media/audio/voice_shot_07.wav",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/audio/voice_shot_07.wav",
+      "kind": "audio",
+      "size_bytes": 878186,
+      "exists": true,
+      "stage": 6,
+      "label": "shot_07 voice stem",
+      "written_at": "2026-10-22T05:20:15.372195Z"
+    },
+    "media/synced_clips/shot_07.mp4": {
+      "name": "shot_07.mp4",
+      "rel_path": "media/synced_clips/shot_07.mp4",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/synced_clips/shot_07.mp4",
+      "kind": "video",
+      "size_bytes": 889045,
+      "exists": true,
+      "stage": 6,
+      "label": "shot_07 lip-synced clip",
+      "written_at": "2026-10-22T05:20:17.502577Z"
+    },
+    "artifacts/speech_report.json": {
+      "name": "speech_report.json",
+      "rel_path": "artifacts/speech_report.json",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/artifacts/speech_report.json",
+      "kind": "json",
+      "size_bytes": 2497,
+      "exists": true,
+      "stage": 6,
+      "label": "speech intelligibility report",
+      "written_at": "2026-10-22T05:20:17.577802Z"
+    },
+    "artifacts/audio_mix_report.json": {
+      "name": "audio_mix_report.json",
+      "rel_path": "artifacts/audio_mix_report.json",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/artifacts/audio_mix_report.json",
+      "kind": "json",
+      "size_bytes": 374,
+      "exists": true,
+      "stage": 7,
+      "label": "Audio mix report",
+      "written_at": "2026-10-22T05:20:46.935891Z"
+    },
+    "final_master_qa_nofallback_r1.mp4": {
+      "name": "final_master_qa_nofallback_r1.mp4",
+      "rel_path": "final_master_qa_nofallback_r1.mp4",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/final_master_qa_nofallback_r1.mp4",
+      "kind": "video",
+      "size_bytes": 21241446,
+      "exists": true,
+      "stage": 7,
+      "label": "Final commercial master",
+      "written_at": "2026-10-22T05:20:46.943409Z"
+    },
+    "artifacts/edit_decisions.json": {
+      "name": "edit_decisions.json",
+      "rel_path": "artifacts/edit_decisions.json",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/artifacts/edit_decisions.json",
+      "kind": "json",
+      "size_bytes": 7491,
+      "exists": true,
+      "stage": 7,
+      "label": "Edit decisions",
+      "written_at": "2026-10-22T05:20:46.947377Z"
+    },
+    "artifacts/render_report.json": {
+      "name": "render_report.json",
+      "rel_path": "artifacts/render_report.json",
+      "abs_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/artifacts/render_report.json",
+      "kind": "json",
+      "size_bytes": 9883,
+      "exists": true,
+      "stage": 8,
+      "label": "Render report",
+      "written_at": "2026-10-22T05:20:54.147982Z"
+    }
+  },
+  "prompts": {
+    "script_draft_attempt_1": {
+      "shot_id": "script_draft_attempt_1",
+      "stage": 2,
+      "prompt": "You are a senior Vietnamese short-form video ad scriptwriter (TikTok / Reels / Shorts) and\na cinematographer who writes shot descriptions for AI video models. You write the complete beat-by-beat script\nfor ONE commercial and answer with STRICT JSON only (no markdown, no commentary).\n\nHARD CONSTRAINTS\n- First beat is the hook (beat_type \"hook\", duration <= 4s). Last beat is the call to action (beat_type \"cta\").\n- 4-8 beats; every beat lasts 1.5-6s (one shot, one idea); total <= 35s.\n- spoken_text: natural, conversational Vietnamese a real KOL would say. Short enough to be spoken inside the beat:\n  about 4 words per second (e.g. 3s = at most ~10 words, 6s = ~22 words). Use the SHORT display name of the product,\n  never a pasted description. No stiff marketing boilerplate.\n  EVERY beat needs a non-empty spoken_text, including product-only/ASMR beats (there it is a soft off-camera voiceover\n  line over the visuals). Only audio_strategy \"music_and_sfx_only\" may have an empty spoken_text.\n- on_screen_text: Vietnamese caption, UPPERCASE, at most 38 characters INCLUDING spaces (aim for 2-4 words), punchy.\n- visual_cue_en: ENGLISH only, written for a video model: subject, ONE action, camera movement/framing, lighting, setting.\n  One action per shot. No Vietnamese words, no character names or tags, no brand-name spelling tricks.\n- visual_cue: the same shot described in Vietnamese (for the Vietnamese crew).\n- NO FABRICATION: never invent prices, discounts, percentages, numbers, statistics, awards, certifications, warranties,\n  ratings, \"best seller\" or expert/doctor endorsements. Use a number or offer ONLY if it appears in the brief or research\n  facts you are given. Without a supplied offer the CTA is neutral (\"xem chi tiết ở link bên dưới\").\n- Build on the winning concept: its angle, hook strategy, character role and audio strategy.\n\nENUMS (use these exact strings)\n- character_role: presenter, model, product_only\n- audio_strategy: on_camera_speech, off_camera_vo, music_and_sfx_only, asmr_hybrid\n- camera_choreography: orbit, truck, pedestal, pan, tilt, zoom_in, drone_flythrough, dutch_angle, macro_push_in, top_down_flat_lay, locked_off\n- lighting_contract: studio_3point, editorial_fashion, golden_hour, cyberpunk_neon, nordic_minimalist, beauty_high_key\n- shot_scale: extreme_long_shot, wide_shot, cowboy_shot, medium_shot, medium_close_up, close_up, extreme_macro, over_the_shoulder, point_of_view\n- lens: 24mm_wide, 35mm_street, 50mm_prime, 85mm_portrait, 100mm_macro\n- angle: eye_level, low_angle_15deg, high_angle_35deg, top_down_90deg, dutch_canted_20deg\n- transition.type: cut, fade, dissolve, fadeblack, fadewhite, wipeleft, wiperight, wipeup, slideleft, slideright, slideup, smoothleft, smoothright, circleopen, zoomin, pixelize, radial (hard \"cut\" between most beats; a short \"fade\" or similar into the CTA;\n  transition.duration 0 for cut, otherwise 0.2-0.6)\n- character_role \"presenter\" speaks to camera (on_camera_speech); \"model\" and \"product_only\" use off_camera_vo or\n  music_and_sfx_only (nobody lip-syncs).\n\nOUTPUT SCHEMA\n{\"beats\": [{\n  \"beat_type\": \"hook|...|cta\", \"duration_seconds\": 3.0,\n  \"spoken_text\": \"...\", \"on_screen_text\": \"...\",\n  \"visual_cue\": \"...\", \"visual_cue_en\": \"...\",\n  \"character_role\": \"...\", \"audio_strategy\": \"...\", \"camera_choreography\": \"...\", \"lighting_contract\": \"...\",\n  \"shot_scale\": \"...\", \"lens\": \"...\", \"angle\": \"...\",\n  \"transition\": {\"type\": \"cut\", \"duration\": 0.0},\n  \"narrative_purpose\": \"one short English sentence\"\n}]}\n\n---\n\nWrite the commercial script for this product. The only facts, numbers and offers you may state are in the JSON below.\n\n{\n  \"product\": {\n    \"full_name\": \"Serum dưỡng sáng mờ thâm phục hồi da Niacinamide 10% HA 30ml\",\n    \"short_display_name_for_speech\": \"Serum dưỡng 10% HA 30ml\",\n    \"category\": \"Serum dưỡng da\",\n    \"usps\": [\n      \"Hỗ trợ làn da sáng hơn và đều màu hơn nhờ thành phần dưỡng sáng Niacinamide 10%.\",\n      \"Giúp làm mờ các vết thâm để da trông đồng đều hơn.\",\n      \"Kết hợp HA trong công thức dưỡng và phục hồi da, giúp chăm sóc làn da thiếu nước.\"\n    ],\n    \"pain_points\": [\n      \"Sản phẩm có thực sự chứa nồng độ Niacinamide được nêu trong mô tả không?\",\n      \"Một serum có phù hợp với nhu cầu dưỡng sáng và mờ thâm không?\",\n      \"Sản phẩm có đủ lượng để sử dụng hàng ngày không?\",\n      \"Sản phẩm có dưỡng và phục hồi da như công bố không?\"\n    ],\n    \"target_persona\": \"Tín đồ phong cách sống tinh tế, thích thẩm mỹ tối giản và chi tiết hoàn thiện\",\n    \"visual_tone\": \"Chuẩn Mực Tinh Tế: Trải Nghiệm Cùng Serum dưỡng sáng mờ thâm | beauty_high_key @ 5600K, ánh sáng khuếch tán mềm làm nổi chất liệu và bề mặt | Nhịp cắt chậm, chuyển động macro mượt bám theo nhịp nhạc, giữ nhịp thở thị giác (chuyển động chính: macro_push_in, orbit) | Bề mặt serum trong suốt hoặc hơi nhớt, đặt lên tay và tạo cảm giác dưỡng khi thoa đều.\",\n    \"supplied_offers\": []\n  },\n  \"presenter\": {\n    \"name\": \"Mai Ly\",\n    \"role\": \"Lead Model\"\n  },\n  \"brief_defaults\": {\n    \"character_role\": \"model\",\n    \"audio_strategy\": \"asmr_hybrid\"\n  },\n  \"research_facts\": {\n    \"title\": \"Serum dưỡng sáng mờ thâm phục hồi da Niacinamide 10% HA 30ml\",\n    \"category\": \"Serum dưỡng da\",\n    \"features\": [\n      \"Niacinamide 10%\",\n      \"HA\",\n      \"Dưỡng sáng\",\n      \"Mờ thâm\",\n      \"Phục hồi da\",\n      \"Dung tích 30ml\"\n    ],\n    \"dramatic_benefits\": [\n      \"Hỗ trợ làn da sáng hơn và đều màu hơn nhờ thành phần dưỡng sáng Niacinamide 10%.\",\n      \"Giúp làm mờ các vết thâm để da trông đồng đều hơn.\",\n      \"Kết hợp HA trong công thức dưỡng và phục hồi da, giúp chăm sóc làn da thiếu nước.\"\n    ],\n    \"sensory_anchors\": [\n      \"Bề mặt serum trong suốt hoặc hơi nhớt, đặt lên tay và tạo cảm giác dưỡng khi thoa đều.\",\n      \"Cận cảnh lớp serum được thoa trên da, với độ ẩm và độ bóng tự nhiên nhưng không tạo hiệu ứng không có trong mô tả.\",\n      \"Chai dung tích 30ml đặt cạnh góc bàn sạch sẽ, tạo hình ảnh đóng gói gọn gàng.\",\n      \"Ánh sáng chiếu qua lớp serum trên mu bàn tay để người xem nhìn rõ kết cấu và khả năng tán.\"\n    ],\n    \"pricing\": {\n      \"current_price\": 0.0,\n      \"original_price\": 0.0,\n      \"currency\": \"VND\",\n      \"discount_percent\": 0,\n      \"price_tier\": \"mid-range\"\n    },\n    \"objections\": [\n      \"Sản phẩm có thực sự chứa nồng độ Niacinamide được nêu trong mô tả không?\",\n      \"Một serum có phù hợp với nhu cầu dưỡng sáng và mờ thâm không?\",\n      \"Sản phẩm có đủ lượng để sử dụng hàng ngày không?\",\n      \"Sản phẩm có dưỡng và phục hồi da như công bố không?\"\n    ]\n  },\n  \"winning_concept\": {\n    \"title\": \"Chuẩn Mực Tinh Tế: Trải Nghiệm Cùng Serum dưỡng sáng mờ thâm\",\n    \"angle_archetype\": \"aesthetic_sensory_asmr\",\n    \"character_role\": \"model\",\n    \"audio_strategy\": \"asmr_hybrid\",\n    \"hook_strategy\": {\n      \"spoken_hook\": \"Từng chi tiết nhỏ... nâng tầm toàn bộ trải nghiệm mỗi ngày của bạn.\",\n      \"visual_hook\": \"Cú lướt camera macro siêu nét bắt sáng bề mặt chất liệu; âm thanh: Bề mặt serum trong suốt hoặc hơi nhớt, đặt lên tay và tạo cảm giác dưỡng khi thoa đều.\",\n      \"on_screen_text\": \"ĐẲNG CẤP TỪNG ĐƯỜNG NÉT\",\n      \"retention_trigger\": \"Kích thích dopamine thị giác và thính giác ASMR sang trọng\"\n    },\n    \"narrative_arc\": [\n      \"0-3s: Cận cảnh macro bóng bẩy với âm thanh thao tác thỏa mãn\",\n      \"3-7s: Người mẫu hòa mình trong không gian sống tối giản, hiện đại\",\n      \"7-15s: Từng chi tiết vận hành mượt mà, tĩnh lặng và đẳng cấp\",\n      \"15-20s: Cảm giác tự hào và thăng hoa khi sở hữu món đồ tinh xảo\",\n      \"20-25s: CTA thanh lịch, nâng cấp trải nghiệm ngay hôm nay\"\n    ],\n    \"conversion_thesis\": \"Tạo khao khát sở hữu phong cách sống (lifestyle aspiration), giảm nhạy cảm về giá.\",\n    \"directorial_directives\": {\n      \"camera_pacing\": \"Nhịp cắt chậm, chuyển động macro mượt bám theo nhịp nhạc, giữ nhịp thở thị giác (chuyển động chính: macro_push_in, orbit)\",\n      \"lighting_mood\": \"beauty_high_key @ 5600K, ánh sáng khuếch tán mềm làm nổi chất liệu và bề mặt\",\n      \"key_visual_anchor\": \"Bề mặt serum trong suốt hoặc hơi nhớt, đặt lên tay và tạo cảm giác dưỡng khi thoa đều.\",\n      \"audio_mix_priority\": \"foley_and_music_first\"\n    }\n  },\n  \"archetype_rules\": {\n    \"archetype\": \"beauty_skincare\",\n    \"style\": \"Sensory Glow & Texture Transformation\",\n    \"description\": \"Texture macro (viscous drops, velvety cream swatches), gentle skin application glow, side-by-side skin transformation, and intimate ASMR audio with radiant beauty lighting.\",\n    \"character_guidance\": \"Bare radiant skin, soft dewy reflection, collarbones visible in silk loungewear robe, gentle self-care touch, smiling serenely into natural light. No exaggerated speaking head.\",\n    \"audio_guidance\": \"Pipette suction, viscous serum drop landing with soft splash, cream smoothing across cheek, delicate glass bottle clink, warm ambient dream-pop chord.\",\n    \"default_lighting\": \"beauty_high_key\",\n    \"allowed_character_roles\": [\n      \"model\",\n      \"product_only\",\n      \"presenter\"\n    ],\n    \"allowed_audio_strategies\": [\n      \"asmr_hybrid\",\n      \"off_camera_vo\",\n      \"on_camera_speech\"\n    ],\n    \"primary_camera_motions\": [\n      \"macro_push_in\",\n      \"orbit\",\n      \"tilt\",\n      \"zoom_in\"\n    ],\n    \"suggested_beat_flow\": [\n      \"hook (3s, product_only): Hypnotic ultra-slow motion serum drop releasing from glass pipette.\",\n      \"skin_agitation (3.5s, model): Relatable focus on tired, dehydrated skin barrier under harsh air conditioning.\",\n      \"texture_macro (4.5s, product_only): Show cream/gel texture gliding effortlessly across fingertip or glass tile.\",\n      \"application_method (5s, model): Model gently pressing serum into cheekbones, instantly revealing luminous dewy bounce.\",\n      \"transformation_proof (4.5s, model): Radiant daylight check: model turning head gracefully, light catching healthy cheekbone.\",\n      \"cta (4s, model): Bottle placed beside fresh botanical ingredients, limited gift-with-purchase callout.\"\n    ]\n  }\n}",
+      "updated_at": "2026-10-22T03:29:07.762396Z",
+      "attempts": 0,
+      "model": "2tocom/MiniMax-M3",
+      "kind": "script_llm",
+      "first_seen_at": "2026-10-22T03:29:07.762396Z"
+    },
+    "script_draft_attempt_2": {
+      "shot_id": "script_draft_attempt_2",
+      "stage": 2,
+      "prompt": "You are a senior Vietnamese short-form video ad scriptwriter (TikTok / Reels / Shorts) and\na cinematographer who writes shot descriptions for AI video models. You write the complete beat-by-beat script\nfor ONE commercial and answer with STRICT JSON only (no markdown, no commentary).\n\nHARD CONSTRAINTS\n- First beat is the hook (beat_type \"hook\", duration <= 4s). Last beat is the call to action (beat_type \"cta\").\n- 4-8 beats; every beat lasts 1.5-6s (one shot, one idea); total <= 35s.\n- spoken_text: natural, conversational Vietnamese a real KOL would say. Short enough to be spoken inside the beat:\n  about 4 words per second (e.g. 3s = at most ~10 words, 6s = ~22 words). Use the SHORT display name of the product,\n  never a pasted description. No stiff marketing boilerplate.\n  EVERY beat needs a non-empty spoken_text, including product-only/ASMR beats (there it is a soft off-camera voiceover\n  line over the visuals). Only audio_strategy \"music_and_sfx_only\" may have an empty spoken_text.\n- on_screen_text: Vietnamese caption, UPPERCASE, at most 38 characters INCLUDING spaces (aim for 2-4 words), punchy.\n- visual_cue_en: ENGLISH only, written for a video model: subject, ONE action, camera movement/framing, lighting, setting.\n  One action per shot. No Vietnamese words, no character names or tags, no brand-name spelling tricks.\n- visual_cue: the same shot described in Vietnamese (for the Vietnamese crew).\n- NO FABRICATION: never invent prices, discounts, percentages, numbers, statistics, awards, certifications, warranties,\n  ratings, \"best seller\" or expert/doctor endorsements. Use a number or offer ONLY if it appears in the brief or research\n  facts you are given. Without a supplied offer the CTA is neutral (\"xem chi tiết ở link bên dưới\").\n- Build on the winning concept: its angle, hook strategy, character role and audio strategy.\n\nENUMS (use these exact strings)\n- character_role: presenter, model, product_only\n- audio_strategy: on_camera_speech, off_camera_vo, music_and_sfx_only, asmr_hybrid\n- camera_choreography: orbit, truck, pedestal, pan, tilt, zoom_in, drone_flythrough, dutch_angle, macro_push_in, top_down_flat_lay, locked_off\n- lighting_contract: studio_3point, editorial_fashion, golden_hour, cyberpunk_neon, nordic_minimalist, beauty_high_key\n- shot_scale: extreme_long_shot, wide_shot, cowboy_shot, medium_shot, medium_close_up, close_up, extreme_macro, over_the_shoulder, point_of_view\n- lens: 24mm_wide, 35mm_street, 50mm_prime, 85mm_portrait, 100mm_macro\n- angle: eye_level, low_angle_15deg, high_angle_35deg, top_down_90deg, dutch_canted_20deg\n- transition.type: cut, fade, dissolve, fadeblack, fadewhite, wipeleft, wiperight, wipeup, slideleft, slideright, slideup, smoothleft, smoothright, circleopen, zoomin, pixelize, radial (hard \"cut\" between most beats; a short \"fade\" or similar into the CTA;\n  transition.duration 0 for cut, otherwise 0.2-0.6)\n- character_role \"presenter\" speaks to camera (on_camera_speech); \"model\" and \"product_only\" use off_camera_vo or\n  music_and_sfx_only (nobody lip-syncs).\n\nOUTPUT SCHEMA\n{\"beats\": [{\n  \"beat_type\": \"hook|...|cta\", \"duration_seconds\": 3.0,\n  \"spoken_text\": \"...\", \"on_screen_text\": \"...\",\n  \"visual_cue\": \"...\", \"visual_cue_en\": \"...\",\n  \"character_role\": \"...\", \"audio_strategy\": \"...\", \"camera_choreography\": \"...\", \"lighting_contract\": \"...\",\n  \"shot_scale\": \"...\", \"lens\": \"...\", \"angle\": \"...\",\n  \"transition\": {\"type\": \"cut\", \"duration\": 0.0},\n  \"narrative_purpose\": \"one short English sentence\"\n}]}\n\n---\n\nWrite the commercial script for this product. The only facts, numbers and offers you may state are in the JSON below.\n\n{\n  \"product\": {\n    \"full_name\": \"Serum dưỡng sáng mờ thâm phục hồi da Niacinamide 10% HA 30ml\",\n    \"short_display_name_for_speech\": \"Serum dưỡng 10% HA 30ml\",\n    \"category\": \"Serum dưỡng da\",\n    \"usps\": [\n      \"Hỗ trợ làn da sáng hơn và đều màu hơn nhờ thành phần dưỡng sáng Niacinamide 10%.\",\n      \"Giúp làm mờ các vết thâm để da trông đồng đều hơn.\",\n      \"Kết hợp HA trong công thức dưỡng và phục hồi da, giúp chăm sóc làn da thiếu nước.\"\n    ],\n    \"pain_points\": [\n      \"Sản phẩm có thực sự chứa nồng độ Niacinamide được nêu trong mô tả không?\",\n      \"Một serum có phù hợp với nhu cầu dưỡng sáng và mờ thâm không?\",\n      \"Sản phẩm có đủ lượng để sử dụng hàng ngày không?\",\n      \"Sản phẩm có dưỡng và phục hồi da như công bố không?\"\n    ],\n    \"target_persona\": \"Tín đồ phong cách sống tinh tế, thích thẩm mỹ tối giản và chi tiết hoàn thiện\",\n    \"visual_tone\": \"Chuẩn Mực Tinh Tế: Trải Nghiệm Cùng Serum dưỡng sáng mờ thâm | beauty_high_key @ 5600K, ánh sáng khuếch tán mềm làm nổi chất liệu và bề mặt | Nhịp cắt chậm, chuyển động macro mượt bám theo nhịp nhạc, giữ nhịp thở thị giác (chuyển động chính: macro_push_in, orbit) | Bề mặt serum trong suốt hoặc hơi nhớt, đặt lên tay và tạo cảm giác dưỡng khi thoa đều.\",\n    \"supplied_offers\": []\n  },\n  \"presenter\": {\n    \"name\": \"Mai Ly\",\n    \"role\": \"Lead Model\"\n  },\n  \"brief_defaults\": {\n    \"character_role\": \"model\",\n    \"audio_strategy\": \"asmr_hybrid\"\n  },\n  \"research_facts\": {\n    \"title\": \"Serum dưỡng sáng mờ thâm phục hồi da Niacinamide 10% HA 30ml\",\n    \"category\": \"Serum dưỡng da\",\n    \"features\": [\n      \"Niacinamide 10%\",\n      \"HA\",\n      \"Dưỡng sáng\",\n      \"Mờ thâm\",\n      \"Phục hồi da\",\n      \"Dung tích 30ml\"\n    ],\n    \"dramatic_benefits\": [\n      \"Hỗ trợ làn da sáng hơn và đều màu hơn nhờ thành phần dưỡng sáng Niacinamide 10%.\",\n      \"Giúp làm mờ các vết thâm để da trông đồng đều hơn.\",\n      \"Kết hợp HA trong công thức dưỡng và phục hồi da, giúp chăm sóc làn da thiếu nước.\"\n    ],\n    \"sensory_anchors\": [\n      \"Bề mặt serum trong suốt hoặc hơi nhớt, đặt lên tay và tạo cảm giác dưỡng khi thoa đều.\",\n      \"Cận cảnh lớp serum được thoa trên da, với độ ẩm và độ bóng tự nhiên nhưng không tạo hiệu ứng không có trong mô tả.\",\n      \"Chai dung tích 30ml đặt cạnh góc bàn sạch sẽ, tạo hình ảnh đóng gói gọn gàng.\",\n      \"Ánh sáng chiếu qua lớp serum trên mu bàn tay để người xem nhìn rõ kết cấu và khả năng tán.\"\n    ],\n    \"pricing\": {\n      \"current_price\": 0.0,\n      \"original_price\": 0.0,\n      \"currency\": \"VND\",\n      \"discount_percent\": 0,\n      \"price_tier\": \"mid-range\"\n    },\n    \"objections\": [\n      \"Sản phẩm có thực sự chứa nồng độ Niacinamide được nêu trong mô tả không?\",\n      \"Một serum có phù hợp với nhu cầu dưỡng sáng và mờ thâm không?\",\n      \"Sản phẩm có đủ lượng để sử dụng hàng ngày không?\",\n      \"Sản phẩm có dưỡng và phục hồi da như công bố không?\"\n    ]\n  },\n  \"winning_concept\": {\n    \"title\": \"Chuẩn Mực Tinh Tế: Trải Nghiệm Cùng Serum dưỡng sáng mờ thâm\",\n    \"angle_archetype\": \"aesthetic_sensory_asmr\",\n    \"character_role\": \"model\",\n    \"audio_strategy\": \"asmr_hybrid\",\n    \"hook_strategy\": {\n      \"spoken_hook\": \"Từng chi tiết nhỏ... nâng tầm toàn bộ trải nghiệm mỗi ngày của bạn.\",\n      \"visual_hook\": \"Cú lướt camera macro siêu nét bắt sáng bề mặt chất liệu; âm thanh: Bề mặt serum trong suốt hoặc hơi nhớt, đặt lên tay và tạo cảm giác dưỡng khi thoa đều.\",\n      \"on_screen_text\": \"ĐẲNG CẤP TỪNG ĐƯỜNG NÉT\",\n      \"retention_trigger\": \"Kích thích dopamine thị giác và thính giác ASMR sang trọng\"\n    },\n    \"narrative_arc\": [\n      \"0-3s: Cận cảnh macro bóng bẩy với âm thanh thao tác thỏa mãn\",\n      \"3-7s: Người mẫu hòa mình trong không gian sống tối giản, hiện đại\",\n      \"7-15s: Từng chi tiết vận hành mượt mà, tĩnh lặng và đẳng cấp\",\n      \"15-20s: Cảm giác tự hào và thăng hoa khi sở hữu món đồ tinh xảo\",\n      \"20-25s: CTA thanh lịch, nâng cấp trải nghiệm ngay hôm nay\"\n    ],\n    \"conversion_thesis\": \"Tạo khao khát sở hữu phong cách sống (lifestyle aspiration), giảm nhạy cảm về giá.\",\n    \"directorial_directives\": {\n      \"camera_pacing\": \"Nhịp cắt chậm, chuyển động macro mượt bám theo nhịp nhạc, giữ nhịp thở thị giác (chuyển động chính: macro_push_in, orbit)\",\n      \"lighting_mood\": \"beauty_high_key @ 5600K, ánh sáng khuếch tán mềm làm nổi chất liệu và bề mặt\",\n      \"key_visual_anchor\": \"Bề mặt serum trong suốt hoặc hơi nhớt, đặt lên tay và tạo cảm giác dưỡng khi thoa đều.\",\n      \"audio_mix_priority\": \"foley_and_music_first\"\n    }\n  },\n  \"archetype_rules\": {\n    \"archetype\": \"beauty_skincare\",\n    \"style\": \"Sensory Glow & Texture Transformation\",\n    \"description\": \"Texture macro (viscous drops, velvety cream swatches), gentle skin application glow, side-by-side skin transformation, and intimate ASMR audio with radiant beauty lighting.\",\n    \"character_guidance\": \"Bare radiant skin, soft dewy reflection, collarbones visible in silk loungewear robe, gentle self-care touch, smiling serenely into natural light. No exaggerated speaking head.\",\n    \"audio_guidance\": \"Pipette suction, viscous serum drop landing with soft splash, cream smoothing across cheek, delicate glass bottle clink, warm ambient dream-pop chord.\",\n    \"default_lighting\": \"beauty_high_key\",\n    \"allowed_character_roles\": [\n      \"model\",\n      \"product_only\",\n      \"presenter\"\n    ],\n    \"allowed_audio_strategies\": [\n      \"asmr_hybrid\",\n      \"off_camera_vo\",\n      \"on_camera_speech\"\n    ],\n    \"primary_camera_motions\": [\n      \"macro_push_in\",\n      \"orbit\",\n      \"tilt\",\n      \"zoom_in\"\n    ],\n    \"suggested_beat_flow\": [\n      \"hook (3s, product_only): Hypnotic ultra-slow motion serum drop releasing from glass pipette.\",\n      \"skin_agitation (3.5s, model): Relatable focus on tired, dehydrated skin barrier under harsh air conditioning.\",\n      \"texture_macro (4.5s, product_only): Show cream/gel texture gliding effortlessly across fingertip or glass tile.\",\n      \"application_method (5s, model): Model gently pressing serum into cheekbones, instantly revealing luminous dewy bounce.\",\n      \"transformation_proof (4.5s, model): Radiant daylight check: model turning head gracefully, light catching healthy cheekbone.\",\n      \"cta (4s, model): Bottle placed beside fresh botanical ingredients, limited gift-with-purchase callout.\"\n    ]\n  }\n}\n\nYOUR PREVIOUS ANSWER WAS REJECTED.\nPrevious answer:\n{\"beats\":[{\"beat_type\":\"hook\",\"duration_seconds\":3.0,\"spoken_text\":\"Từng chi tiết nhỏ... nâng tầm trải nghiệm mỗi ngày.\",\"on_screen_text\":\"ĐẲNG CẤP TỪNG ĐƯỜNG NÉT\",\"visual_cue\":\"Macro chậm, giọt serum trong suốt hoặc hơi nhớt rơi từ pipette lên mặt kính sáng; camera macro tiến rất chậm, ánh sáng khuếch tán mềm, nền tối giản tinh tế.\",\"visual_cue_en\":\"A translucent slightly viscous serum drop falls from a glass pipette onto a bright glass tile, macro push-in in slow motion, soft diffused lighting, minimal studio setting.\",\"character_role\":\"product_only\",\"audio_strategy\":\"asmr_hybrid\",\"camera_choreography\":\"macro_push_in\",\"lighting_contract\":\"beauty_high_key\",\"shot_scale\":\"extreme_macro\",\"lens\":\"100mm_macro\",\"angle\":\"top_down_90deg\",\"transition\":{\"type\":\"cut\",\"duration\":0.0},\"narrative_purpose\":\"Creates a premium sensory hook through a slow, satisfying serum release.\"},{\"beat_type\":\"problem\",\"duration_seconds\":3.5,\"spoken_text\":\"Khi làn da thiếu nước, bạn cần một điều đơn giản hơn.\",\"on_screen_text\":\"LÀN DA CẦN CHĂM SÓC\",\"visual_cue\":\"Người mẫu ngồi cạnh cửa sổ với làn da tự nhiên hơi mệt; ánh sáng tự nhiên mềm, camera từ từ nghiêng qua vai.\",\"visual_cue_en\":\"A model sits beside a window with naturally tired-looking skin, slow gentle orbit across her shoulder, soft natural window light, calm minimal interior.\",\"character_role\":\"model\",\"audio_strategy\":\"off_camera_vo\",\"camera_choreography\":\"orbit\",\"lighting_contract\":\"beauty_high_key\",\"shot_scale\":\"medium_close_up\",\"lens\":\"85mm_portrait\",\"angle\":\"eye_level\",\"transition\":{\"type\":\"cut\",\"duration\":0.0},\"narrative_purpose\":\"Introduces the need for simple daily care for dehydrated-looking skin.\"},{\"beat_type\":\"feature\",\"duration_seconds\":4.0,\"spoken_text\":\"Serum dưỡng 10% HA 30ml kết hợp Niacinamide và HA.\",\"on_screen_text\":\"NIACINAMIDE 10% + HA\",\"visual_cue\":\"Chai serum 30ml đặt cạnh một giọt thành phần trong suốt trên mặt kính; camera macro trượt nhẹ qua nhãn và kết cấu.\",\"visual_cue_en\":\"A 30ml serum bottle sits beside a translucent ingredient droplet on glass, macro camera glides gently across the label and texture, high-key beauty lighting, clean studio surface.\",\"character_role\":\"product_only\",\"audio_strategy\":\"asmr_hybrid\",\"camera_choreography\":\"macro_push_in\",\"lighting_contract\":\"beauty_high_key\",\"shot_scale\":\"close_up\",\"lens\":\"100mm_macro\",\"angle\":\"eye_level\",\"transition\":{\"type\":\"dissolve\",\"duration\":0.4},\"narrative_purpose\":\"Visually identifies the formula and its stated Niacinamide 10% and HA combination.\"},{\"beat_type\":\"benefit\",\"duration_seconds\":4.5,\"spoken_text\":\"Hỗ trợ làn da sáng hơn, đều màu hơn và mờ vết thâm.\",\"on_screen_text\":\"SÁNG ĐỀU MÀU, MỜ THÂM\",\"visual_cue\":\"Người mẫu nhẹ nhàng thoa serum lên gò má; camera tiến cận chậm, ánh sáng khuếch tán làm nổi độ ẩm tự nhiên của da.\",\"visual_cue_en\":\"A model gently applies serum to her cheekbones, slow macro push-in, soft diffused light revealing natural hydrated sheen, refined neutral background.\",\"character_role\":\"model\",\"audio_strategy\":\"asmr_hybrid\",\"camera_choreography\":\"macro_push_in\",\"lighting_contract\":\"beauty_high_key\",\"shot_scale\":\"close_up\",\"lens\":\"85mm_portrait\",\"angle\":\"eye_level\",\"transition\":{\"type\":\"cut\",\"duration\":0.0},\"narrative_purpose\":\"Shows the application ritual and communicates the stated brightening and dark-spot support benefits.\"},{\"beat_type\":\"experience\",\"duration_seconds\":4.5,\"spoken_text\":\"Công thức dưỡng và phục hồi giúp chăm sóc làn da thiếu nước.\",\"on_screen_text\":\"DƯỠNG VÀ PHỤC HỒI\",\"visual_cue\":\"Người mẫu vuốt nhẹ serum trên mu bàn tay; camera orbit chậm quanh bàn tay, bắt ánh sáng trên lớp serum trong suốt.\",\"visual_cue_en\":\"A model gently spreads serum across the back of her hand, slow orbit around the hand, light catching the translucent serum layer, minimal beauty setup.\",\"character_role\":\"model\",\"audio_strategy\":\"asmr_hybrid\",\"camera_choreography\":\"orbit\",\"lighting_contract\":\"beauty_high_key\",\"shot_scale\":\"extreme_close_up\",\"lens\":\"100mm_macro\",\"angle\":\"eye_level\",\"transition\":{\"type\":\"cut\",\"duration\":0.0},\"narrative_purpose\":\"Makes the moisturizing and skin-recovery positioning tangible through a slow tactile application.\"},{\"beat_type\":\"proof\",\"duration_seconds\":4.0,\"spoken_text\":\"Từng đường nét trông đồng đều hơn trong mỗi lần chăm da.\",\"on_screen_text\":\"HOÀN THIỆN TỪNG CHI TIẾT\",\"visual_cue\":\"Người mẫu quay đầu chậm dưới ánh sáng tự nhiên; camera zoom nhẹ vào gò má, bề mặt da bắt sáng tự nhiên.\",\"visual_cue_en\":\"A model slowly turns her head under natural daylight, gentle zoom toward her cheekbones, natural light moving softly across her skin, quiet refined setting.\",\"character_role\":\"model\",\"audio_strategy\":\"off_camera_vo\",\"camera_choreography\":\"zoom_in\",\"lighting_contract\":\"golden_hour\",\"shot_scale\":\"medium_close_up\",\"lens\":\"85mm_portrait\",\"angle\":\"eye_level\",\"transition\":{\"type\":\"cut\",\"duration\":0.0},\"narrative_purpose\":\"Delivers the stated more even-looking skin impression in a polished lifestyle moment.\"},{\"beat_type\":\"cta\",\"duration_seconds\":4.0,\"spoken_text\":\"Thêm Serum dưỡng 10% HA 30ml vào góc chăm da của bạn.\",\"on_screen_text\":\"XEM CHI TIẾT Ở LINK\",\"visual_cue\":\"Chai serum được đặt gọn gàng cạnh góc bàn sạch sẽ; camera orbit chậm quanh sản phẩm, fade nhẹ vào cuối.\",\"visual_cue_en\":\"The serum bottle is neatly placed beside a clean tabletop corner, slow orbit around the product, soft light, gentle fade at the end.\",\"character_role\":\"product_only\",\"audio_strategy\":\"asmr_hybrid\",\"camera_choreography\":\"orbit\",\"lighting_contract\":\"beauty_high_key\",\"shot_scale\":\"close_up\",\"lens\":\"50mm_prime\",\"angle\":\"eye_level\",\"transition\":{\"type\":\"fade\",\"duration\":0.5},\"narrative_purpose\":\"Invites viewers to learn more without introducing any unprovided offer or price.\"}]}\n\nErrors to fix:\n- beat 5.shot_scale: 'extreme_close_up' is not one of: extreme_long_shot, wide_shot, cowboy_shot, medium_shot, medium_close_up, close_up, extreme_macro, over_the_shoulder, point_of_view\n\nReturn the complete corrected script as strict JSON in the same schema. Shorten spoken lines or durations as required, and remove every number or claim that is not in the facts above.",
+      "updated_at": "2026-10-22T03:29:24.681167Z",
+      "attempts": 0,
+      "model": "2tocom/MiniMax-M3",
+      "kind": "script_llm",
+      "first_seen_at": "2026-10-22T03:29:24.681167Z"
+    },
+    "shot_01": {
+      "shot_id": "shot_01",
+      "stage": 5,
+      "prompt": "extreme macro close-up, 100mm macro lens, overhead top-down angle, razor-thin macro depth of field, focus on Serum dưỡng sáng mờ thâm phục hồi da Niacinamide 10% HA 30ml. Commercial macro product cinematography of Serum dưỡng sáng mờ thâm phục hồi da Niacinamide 10% HA 30ml. Action and interaction: A translucent slightly viscous serum drop falls from a glass pipette onto a bright glass tile, macro push-in in slow motion, soft diffused lighting, minimal studio setting. Camera movement: slow macro push-in with shallow depth of field, sharp focal plane on product geometry and surface materials. Cinematic commercial quality, photorealistic, zero character face, hyper-detailed textures. SET: Ultra-luxury minimalist penthouse bathroom, white Calacatta gold marble countertops, soft glowing circular vanity mirror, floor-to-ceiling window bay casting bright 5600K diffused morning natural daylight, pure pristine spa ambiance.",
+      "updated_at": "2026-10-22T04:23:15.529153Z",
+      "attempts": 1,
+      "source": "scene_plan",
+      "mode": "I2V",
+      "shot_type": "EXTREME_MACRO • Hook",
+      "angle": "top_down_90deg",
+      "camera_motion": "macro_push_in",
+      "lighting": "beauty_high_key",
+      "estimated_duration": 3.5,
+      "segments": [
+        {
+          "label": "Framing & optics",
+          "text": "extreme macro close-up, 100mm macro lens, overhead top-down angle, razor-thin macro depth of field, focus on Serum dưỡng sáng mờ thâm phục hồi da Niacinamide 10% HA 30ml."
+        },
+        {
+          "label": "Subject & action",
+          "text": "Commercial macro product cinematography of Serum dưỡng sáng mờ thâm phục hồi da Niacinamide 10% HA 30ml. Action and interaction: A translucent slightly viscous serum drop falls from a glass pipette onto a bright glass tile, macro push-in in slow motion, soft diffused lighting, minimal studio setting.. Camera movement: slow macro push-in with shallow depth of field, sharp focal plane on product geometry and surface materials. Environment and staging: Sun-drenched luxury marble bathroom vanity, soft pastel linen accents, fresh eucalyptus branch in fluted glass vase.. Lighting key: radiant high-key softbox light at 5600K, realistic reflections and highlights. Cinematic 8k commercial quality, photorealistic, zero character face, hyper-detailed textures"
+        },
+        {
+          "label": "Set & environment",
+          "text": "SET: Ultra-luxury minimalist penthouse bathroom, white Calacatta gold marble countertops, soft glowing circular vanity mirror, floor-to-ceiling window bay casting bright 5600K diffused morning natural daylight, pure pristine spa ambiance."
+        }
+      ],
+      "first_seen_at": "2026-10-22T03:29:24.737779Z",
+      "model": "MiniMax-Hailuo-2.3",
+      "aspect_ratio": "9:16",
+      "duration_requested": 6,
+      "first_frame": "keyframes/shot_01_clean.jpg",
+      "first_frame_rel": "keyframes/shot_01_clean.jpg",
+      "fingerprint": "70ecbc4df0469c1dc026a03dc624354605991ef58e1993e50c74f2b83557e3a7",
+      "output_rel_path": "media/raw_clips/shot_01.mp4",
+      "attempt": 1,
+      "first_frame_url": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F4bd8614b-447e-47f7-a827-8baf54a0591a.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T042309Z&x-oss-expires=3600&x-oss-signature=cdddcb914ac402634b3eb4ed15bca2886107dd7d211344d337953b6d52459d9e&x-oss-signature-version=OSS4-HMAC-SHA256",
+      "task_id": "455022506086953"
+    },
+    "shot_02": {
+      "shot_id": "shot_02",
+      "stage": 5,
+      "prompt": "medium close-up, chest up, 85mm portrait lens, eye-level angle, very shallow depth of field with creamy bokeh, focus on Mai Ly. Commercial fashion and lifestyle video featuring [KOL_MAIN] Mai Ly. Subject: Vietnamese young woman, early 20s, refined oval face shape, natural chin-length black bob hairstyle, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin, calm intelligent and approachable expression, studio portrait lighting. Visual acting action: A model sits beside a window with naturally tired-looking skin, slow gentle orbit across her shoulder, soft natural window light, calm minimal interior. No exaggerated speaking head. Camera movement: smooth slow orbit around the subject. SET: Ultra-luxury minimalist penthouse bathroom, white Calacatta gold marble countertops, soft glowing circular vanity mirror, floor-to-ceiling window bay casting bright 5600K diffused morning natural daylight, pure pristine spa ambiance. WEAR: Wearing relaxed luxury pearl-white silk wrap robe with loose kimono sleeves, dewy bare shoulders and collarbones, glowing healthy glass-skin skincare aesthetic. Subject is focused on physical visual action; relaxed closed mouth, subtle natural smile, no speaking mouth movements on camera; audio plays as off-camera narration.",
+      "updated_at": "2026-10-22T05:12:16.502955Z",
+      "attempts": 3,
+      "source": "scene_plan",
+      "mode": "I2V",
+      "shot_type": "MEDIUM_CLOSE_UP • Problem",
+      "angle": "eye_level",
+      "camera_motion": "orbit",
+      "lighting": "beauty_high_key",
+      "estimated_duration": 3.5,
+      "segments": [
+        {
+          "label": "Framing & optics",
+          "text": "medium close-up, chest up, 85mm portrait lens, eye-level angle, very shallow depth of field with creamy bokeh, focus on Mai Ly."
+        },
+        {
+          "label": "Subject & action",
+          "text": "Commercial fashion and lifestyle video featuring [KOL_MAIN] Mai Ly. Subject: Vietnamese young woman, early 20s, refined oval face shape, natural chin-length black bob hairstyle, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin, calm intelligent and approachable expression, studio portrait lighting, 8k. Wardrobe and styling: Soft ivory silk loungewear robe gently draped over bare collarbones, hair neatly secured with minimalist silk headband, clean bare skin with zero heavy makeup, pure organic elegance.. Visual acting action: A model sits beside a window with naturally tired-looking skin, slow gentle orbit across her shoulder, soft natural window light, calm minimal interior.. Poise: Bare radiant skin, soft dewy reflection, collarbones visible in silk loungewear robe, gentle self-care touch, smiling serenely into natural light. No exaggerated speaking head.. Camera movement: smooth slow orbit around the subject. Environment: Sun-drenched luxury marble bathroom vanity, soft pastel linen accents, fresh eucalyptus branch in fluted glass vase.. Lighting: radiant high-key softbox light with elegant skin tones, 8k cinematic master shot"
+        },
+        {
+          "label": "Set & environment",
+          "text": "SET: Ultra-luxury minimalist penthouse bathroom, white Calacatta gold marble countertops, soft glowing circular vanity mirror, floor-to-ceiling window bay casting bright 5600K diffused morning natural daylight, pure pristine spa ambiance."
+        },
+        {
+          "label": "Wardrobe",
+          "text": "WEAR: Wearing relaxed luxury pearl-white silk wrap robe with loose kimono sleeves, dewy bare shoulders and collarbones, glowing healthy glass-skin skincare aesthetic."
+        },
+        {
+          "label": "Articulation",
+          "text": "Subject is focused on physical visual action; relaxed closed mouth, subtle natural smile, no speaking mouth movements on camera; audio plays as off-camera narration."
+        }
+      ],
+      "first_seen_at": "2026-10-22T03:29:24.743185Z",
+      "model": "MiniMax-Hailuo-2.3",
+      "aspect_ratio": "9:16",
+      "duration_requested": 6,
+      "subject_reference": [
+        "assets/characters/kol_main/face_anchor.png"
+      ],
+      "fingerprint": "46f60f7acfdb982c03f12027552cac9e0d1850d5341865f19a86f187b1995407",
+      "output_rel_path": "media/raw_clips/shot_02.mp4",
+      "attempt": 1,
+      "first_frame": "keyframes/shot_02_clean.jpg",
+      "first_frame_rel": "keyframes/shot_02_clean.jpg",
+      "degraded_from": "R2V",
+      "first_frame_url": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F8d3db9fc-dacc-4aae-98c4-19805c5698c0.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T051210Z&x-oss-expires=3600&x-oss-signature=efc65c007e607edd93cfb934348679a58f30a6281f6370a18bbd1ed24acacc61&x-oss-signature-version=OSS4-HMAC-SHA256",
+      "task_id": "455037107159555"
+    },
+    "shot_03": {
+      "shot_id": "shot_03",
+      "stage": 5,
+      "prompt": "close-up, 100mm macro lens, eye-level angle, razor-thin macro depth of field, focus on Serum dưỡng sáng mờ thâm phục hồi da Niacinamide 10% HA 30ml. Commercial macro product cinematography of Serum dưỡng sáng mờ thâm phục hồi da Niacinamide 10% HA 30ml. Action and interaction: A 30ml serum bottle sits beside a translucent ingredient droplet on glass, macro camera glides gently across the label and texture, high-key beauty lighting, clean studio surface. Camera movement: slow macro push-in with shallow depth of field, sharp focal plane on product geometry and surface materials. Cinematic commercial quality, photorealistic, zero character face, hyper-detailed textures. SET: Ultra-luxury minimalist penthouse bathroom, white Calacatta gold marble countertops, soft glowing circular vanity mirror, floor-to-ceiling window bay casting bright 5600K diffused morning natural daylight, pure pristine spa ambiance.",
+      "updated_at": "2026-10-22T04:23:16.533454Z",
+      "attempts": 1,
+      "source": "scene_plan",
+      "mode": "I2V",
+      "shot_type": "CLOSE_UP • Feature",
+      "angle": "eye_level",
+      "camera_motion": "macro_push_in",
+      "lighting": "beauty_high_key",
+      "estimated_duration": 4.0,
+      "segments": [
+        {
+          "label": "Framing & optics",
+          "text": "close-up, 100mm macro lens, eye-level angle, razor-thin macro depth of field, focus on Serum dưỡng sáng mờ thâm phục hồi da Niacinamide 10% HA 30ml."
+        },
+        {
+          "label": "Subject & action",
+          "text": "Commercial macro product cinematography of Serum dưỡng sáng mờ thâm phục hồi da Niacinamide 10% HA 30ml. Action and interaction: A 30ml serum bottle sits beside a translucent ingredient droplet on glass, macro camera glides gently across the label and texture, high-key beauty lighting, clean studio surface.. Camera movement: slow macro push-in with shallow depth of field, sharp focal plane on product geometry and surface materials. Environment and staging: Sun-drenched luxury marble bathroom vanity, soft pastel linen accents, fresh eucalyptus branch in fluted glass vase.. Lighting key: radiant high-key softbox light at 5600K, realistic reflections and highlights. Cinematic 8k commercial quality, photorealistic, zero character face, hyper-detailed textures"
+        },
+        {
+          "label": "Set & environment",
+          "text": "SET: Ultra-luxury minimalist penthouse bathroom, white Calacatta gold marble countertops, soft glowing circular vanity mirror, floor-to-ceiling window bay casting bright 5600K diffused morning natural daylight, pure pristine spa ambiance."
+        }
+      ],
+      "first_seen_at": "2026-10-22T03:29:24.748262Z",
+      "model": "MiniMax-Hailuo-2.3",
+      "aspect_ratio": "9:16",
+      "duration_requested": 6,
+      "first_frame": "keyframes/shot_03_clean.jpg",
+      "first_frame_rel": "keyframes/shot_03_clean.jpg",
+      "fingerprint": "4930dec0dd91cadd656758e14e536a308560e3de141dd15d3904ae21a4cfab73",
+      "output_rel_path": "media/raw_clips/shot_03.mp4",
+      "attempt": 1,
+      "first_frame_url": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F7416c90b-a3cc-4c45-b1b8-543337b1a0bc.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T042309Z&x-oss-expires=3600&x-oss-signature=7e0dea6b593895e7810e9f532c96cc1888da76ff663ec710b14a9d07ee3362a0&x-oss-signature-version=OSS4-HMAC-SHA256",
+      "task_id": "455023889281555"
+    },
+    "shot_04": {
+      "shot_id": "shot_04",
+      "stage": 5,
+      "prompt": "close-up, 85mm portrait lens, eye-level angle, very shallow depth of field with creamy bokeh, focus on Mai Ly. Commercial fashion and lifestyle video featuring [KOL_MAIN] Mai Ly. Subject: Vietnamese young woman, early 20s, refined oval face shape, natural chin-length black bob hairstyle, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin, calm intelligent and approachable expression, studio portrait lighting. Visual acting action: A model gently applies serum to her cheekbones, slow macro push-in, soft diffused light revealing natural hydrated sheen, refined neutral background. No exaggerated speaking head. Camera movement: slow macro push-in. SET: Ultra-luxury minimalist penthouse bathroom, white Calacatta gold marble countertops, soft glowing circular vanity mirror, floor-to-ceiling window bay casting bright 5600K diffused morning natural daylight, pure pristine spa ambiance. WEAR: Wearing relaxed luxury pearl-white silk wrap robe with loose kimono sleeves, dewy bare shoulders and collarbones, glowing healthy glass-skin skincare aesthetic. Subject is focused on physical visual action; relaxed closed mouth, subtle natural smile, no speaking mouth movements on camera; audio plays as off-camera narration.",
+      "updated_at": "2026-10-22T05:12:17.256038Z",
+      "attempts": 2,
+      "source": "scene_plan",
+      "mode": "I2V",
+      "shot_type": "CLOSE_UP • Benefit",
+      "angle": "eye_level",
+      "camera_motion": "macro_push_in",
+      "lighting": "beauty_high_key",
+      "estimated_duration": 4.5,
+      "segments": [
+        {
+          "label": "Framing & optics",
+          "text": "close-up, 85mm portrait lens, eye-level angle, very shallow depth of field with creamy bokeh, focus on Mai Ly."
+        },
+        {
+          "label": "Subject & action",
+          "text": "Commercial fashion and lifestyle video featuring [KOL_MAIN] Mai Ly. Subject: Vietnamese young woman, early 20s, refined oval face shape, natural chin-length black bob hairstyle, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin, calm intelligent and approachable expression, studio portrait lighting, 8k. Wardrobe and styling: Soft ivory silk loungewear robe gently draped over bare collarbones, hair neatly secured with minimalist silk headband, clean bare skin with zero heavy makeup, pure organic elegance.. Visual acting action: A model gently applies serum to her cheekbones, slow macro push-in, soft diffused light revealing natural hydrated sheen, refined neutral background.. Poise: Bare radiant skin, soft dewy reflection, collarbones visible in silk loungewear robe, gentle self-care touch, smiling serenely into natural light. No exaggerated speaking head.. Camera movement: slow macro push-in. Environment: Sun-drenched luxury marble bathroom vanity, soft pastel linen accents, fresh eucalyptus branch in fluted glass vase.. Lighting: radiant high-key softbox light with elegant skin tones, 8k cinematic master shot"
+        },
+        {
+          "label": "Set & environment",
+          "text": "SET: Ultra-luxury minimalist penthouse bathroom, white Calacatta gold marble countertops, soft glowing circular vanity mirror, floor-to-ceiling window bay casting bright 5600K diffused morning natural daylight, pure pristine spa ambiance."
+        },
+        {
+          "label": "Wardrobe",
+          "text": "WEAR: Wearing relaxed luxury pearl-white silk wrap robe with loose kimono sleeves, dewy bare shoulders and collarbones, glowing healthy glass-skin skincare aesthetic."
+        },
+        {
+          "label": "Articulation",
+          "text": "Subject is focused on physical visual action; relaxed closed mouth, subtle natural smile, no speaking mouth movements on camera; audio plays as off-camera narration."
+        }
+      ],
+      "first_seen_at": "2026-10-22T03:29:24.754414Z",
+      "model": "MiniMax-Hailuo-2.3",
+      "aspect_ratio": "9:16",
+      "duration_requested": 6,
+      "subject_reference": [
+        "assets/characters/kol_main/face_anchor.png"
+      ],
+      "fingerprint": "ea57be28900be87aaa2a5e51aea6b663165ace68335ef09384381b551a1307de",
+      "output_rel_path": "media/raw_clips/shot_04.mp4",
+      "attempt": 1,
+      "first_frame": "keyframes/shot_04_clean.jpg",
+      "first_frame_rel": "keyframes/shot_04_clean.jpg",
+      "degraded_from": "R2V",
+      "first_frame_url": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F6fce43f6-c830-47e5-8020-2ec9a73588a0.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T051210Z&x-oss-expires=3600&x-oss-signature=9718d68cb60c119e6c3337b986f87d3fa0586a48149b9ef09ae93616b211f38e&x-oss-signature-version=OSS4-HMAC-SHA256",
+      "task_id": "455035381424666"
+    },
+    "shot_05": {
+      "shot_id": "shot_05",
+      "stage": 5,
+      "prompt": "extreme macro close-up, 100mm macro lens, eye-level angle, razor-thin macro depth of field, focus on Mai Ly. Commercial fashion and lifestyle video featuring [KOL_MAIN] Mai Ly. Subject: Vietnamese young woman, early 20s, refined oval face shape, natural chin-length black bob hairstyle, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin, calm intelligent and approachable expression, studio portrait lighting. Visual acting action: A model gently spreads serum across the back of her hand, slow orbit around the hand, light catching the translucent serum layer, minimal beauty setup. No exaggerated speaking head. Camera movement: smooth slow orbit around the subject. SET: Ultra-luxury minimalist penthouse bathroom, white Calacatta gold marble countertops, soft glowing circular vanity mirror, floor-to-ceiling window bay casting bright 5600K diffused morning natural daylight, pure pristine spa ambiance. WEAR: Wearing relaxed luxury pearl-white silk wrap robe with loose kimono sleeves, dewy bare shoulders and collarbones, glowing healthy glass-skin skincare aesthetic. Subject is focused on physical visual action; relaxed closed mouth, subtle natural smile, no speaking mouth movements on camera; audio plays as off-camera narration.",
+      "updated_at": "2026-10-22T05:13:20.642546Z",
+      "attempts": 2,
+      "source": "scene_plan",
+      "mode": "I2V",
+      "shot_type": "EXTREME_MACRO • Experience",
+      "angle": "eye_level",
+      "camera_motion": "orbit",
+      "lighting": "beauty_high_key",
+      "estimated_duration": 4.5,
+      "segments": [
+        {
+          "label": "Framing & optics",
+          "text": "extreme macro close-up, 100mm macro lens, eye-level angle, razor-thin macro depth of field, focus on Mai Ly."
+        },
+        {
+          "label": "Subject & action",
+          "text": "Commercial fashion and lifestyle video featuring [KOL_MAIN] Mai Ly. Subject: Vietnamese young woman, early 20s, refined oval face shape, natural chin-length black bob hairstyle, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin, calm intelligent and approachable expression, studio portrait lighting, 8k. Wardrobe and styling: Soft ivory silk loungewear robe gently draped over bare collarbones, hair neatly secured with minimalist silk headband, clean bare skin with zero heavy makeup, pure organic elegance.. Visual acting action: A model gently spreads serum across the back of her hand, slow orbit around the hand, light catching the translucent serum layer, minimal beauty setup.. Poise: Bare radiant skin, soft dewy reflection, collarbones visible in silk loungewear robe, gentle self-care touch, smiling serenely into natural light. No exaggerated speaking head.. Camera movement: smooth slow orbit around the subject. Environment: Sun-drenched luxury marble bathroom vanity, soft pastel linen accents, fresh eucalyptus branch in fluted glass vase.. Lighting: radiant high-key softbox light with elegant skin tones, 8k cinematic master shot"
+        },
+        {
+          "label": "Set & environment",
+          "text": "SET: Ultra-luxury minimalist penthouse bathroom, white Calacatta gold marble countertops, soft glowing circular vanity mirror, floor-to-ceiling window bay casting bright 5600K diffused morning natural daylight, pure pristine spa ambiance."
+        },
+        {
+          "label": "Wardrobe",
+          "text": "WEAR: Wearing relaxed luxury pearl-white silk wrap robe with loose kimono sleeves, dewy bare shoulders and collarbones, glowing healthy glass-skin skincare aesthetic."
+        },
+        {
+          "label": "Articulation",
+          "text": "Subject is focused on physical visual action; relaxed closed mouth, subtle natural smile, no speaking mouth movements on camera; audio plays as off-camera narration."
+        }
+      ],
+      "first_seen_at": "2026-10-22T03:29:24.763642Z",
+      "model": "MiniMax-Hailuo-2.3",
+      "aspect_ratio": "9:16",
+      "duration_requested": 6,
+      "subject_reference": [
+        "assets/characters/kol_main/face_anchor.png"
+      ],
+      "fingerprint": "5cfc05c7ce0b82e0827b7dce0140733e4cedfd18c1f35e447b2fbc9b21dd2286",
+      "output_rel_path": "media/raw_clips/shot_05.mp4",
+      "attempt": 1,
+      "first_frame": "keyframes/shot_05_clean.jpg",
+      "first_frame_rel": "keyframes/shot_05_clean.jpg",
+      "degraded_from": "R2V",
+      "first_frame_url": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2Fd70731c1-3db9-46b6-9ce4-56737921ba75.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T051311Z&x-oss-expires=3600&x-oss-signature=db10840ad5209a3ec9765401351b35a239066627196fa19147efd072f1f87b75&x-oss-signature-version=OSS4-HMAC-SHA256",
+      "task_id": "455037526847939"
+    },
+    "shot_06": {
+      "shot_id": "shot_06",
+      "stage": 5,
+      "prompt": "medium close-up, chest up, 85mm portrait lens, eye-level angle, very shallow depth of field with creamy bokeh, focus on Mai Ly. Commercial fashion and lifestyle video featuring [KOL_MAIN] Mai Ly. Subject: Vietnamese young woman, early 20s, refined oval face shape, natural chin-length black bob hairstyle, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin, calm intelligent and approachable expression, studio portrait lighting. Visual acting action: A model slowly turns her head under natural daylight, gentle zoom toward her cheekbones, natural light moving softly across her skin, quiet refined setting. No exaggerated speaking head. Camera movement: slow push-in toward the subject. SET: Ultra-luxury minimalist penthouse bathroom, white Calacatta gold marble countertops, soft glowing circular vanity mirror, floor-to-ceiling window bay casting bright 5600K diffused morning natural daylight, pure pristine spa ambiance. WEAR: Wearing relaxed luxury pearl-white silk wrap robe with loose kimono sleeves, dewy bare shoulders and collarbones, glowing healthy glass-skin skincare aesthetic. Subject is focused on physical visual action; relaxed closed mouth, subtle natural smile, no speaking mouth movements on camera; audio plays as off-camera narration.",
+      "updated_at": "2026-10-22T05:16:56.378457Z",
+      "attempts": 3,
+      "source": "scene_plan",
+      "mode": "I2V",
+      "shot_type": "MEDIUM_CLOSE_UP • Proof",
+      "angle": "eye_level",
+      "camera_motion": "zoom_in",
+      "lighting": "golden_hour",
+      "estimated_duration": 4.0,
+      "segments": [
+        {
+          "label": "Framing & optics",
+          "text": "medium close-up, chest up, 85mm portrait lens, eye-level angle, very shallow depth of field with creamy bokeh, focus on Mai Ly."
+        },
+        {
+          "label": "Subject & action",
+          "text": "Commercial fashion and lifestyle video featuring [KOL_MAIN] Mai Ly. Subject: Vietnamese young woman, early 20s, refined oval face shape, natural chin-length black bob hairstyle, soft double eyelids, gentle dark brown almond eyes, straight elegant nose bridge, natural soft lips, smooth warm fair skin, calm intelligent and approachable expression, studio portrait lighting, 8k. Wardrobe and styling: Soft ivory silk loungewear robe gently draped over bare collarbones, hair neatly secured with minimalist silk headband, clean bare skin with zero heavy makeup, pure organic elegance.. Visual acting action: A model slowly turns her head under natural daylight, gentle zoom toward her cheekbones, natural light moving softly across her skin, quiet refined setting.. Poise: Bare radiant skin, soft dewy reflection, collarbones visible in silk loungewear robe, gentle self-care touch, smiling serenely into natural light. No exaggerated speaking head.. Camera movement: slow push-in toward the subject. Environment: Sun-drenched luxury marble bathroom vanity, soft pastel linen accents, fresh eucalyptus branch in fluted glass vase.. Lighting: warm golden-hour sunlight with elegant skin tones, 8k cinematic master shot"
+        },
+        {
+          "label": "Set & environment",
+          "text": "SET: Ultra-luxury minimalist penthouse bathroom, white Calacatta gold marble countertops, soft glowing circular vanity mirror, floor-to-ceiling window bay casting bright 5600K diffused morning natural daylight, pure pristine spa ambiance."
+        },
+        {
+          "label": "Wardrobe",
+          "text": "WEAR: Wearing relaxed luxury pearl-white silk wrap robe with loose kimono sleeves, dewy bare shoulders and collarbones, glowing healthy glass-skin skincare aesthetic."
+        },
+        {
+          "label": "Articulation",
+          "text": "Subject is focused on physical visual action; relaxed closed mouth, subtle natural smile, no speaking mouth movements on camera; audio plays as off-camera narration."
+        }
+      ],
+      "first_seen_at": "2026-10-22T03:29:24.773597Z",
+      "model": "MiniMax-Hailuo-2.3",
+      "aspect_ratio": "9:16",
+      "duration_requested": 6,
+      "first_frame": "keyframes/shot_06_clean.jpg",
+      "first_frame_rel": "keyframes/shot_06_clean.jpg",
+      "degraded_from": "R2V",
+      "fingerprint": "7a78ee5c6aeca110212ca780607b39de1bedc45d449cf873e404031a67cf3512",
+      "output_rel_path": "media/raw_clips/shot_06.mp4",
+      "attempt": 3,
+      "first_frame_url": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F55907818-29ab-4b72-a56f-0e8c52a14595.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T051647Z&x-oss-expires=3600&x-oss-signature=cd6969815a08bde7a6dd97e8842c473a23abe8032d5b647de8145902b3b3ac57&x-oss-signature-version=OSS4-HMAC-SHA256",
+      "task_id": "455037630271823"
+    },
+    "shot_07": {
+      "shot_id": "shot_07",
+      "stage": 5,
+      "prompt": "close-up, 50mm lens, eye-level angle, shallow depth of field, focus on Serum dưỡng sáng mờ thâm phục hồi da Niacinamide 10% HA 30ml. Commercial macro product cinematography of Serum dưỡng sáng mờ thâm phục hồi da Niacinamide 10% HA 30ml. Action and interaction: The serum bottle is neatly placed beside a clean tabletop corner, slow orbit around the product, soft light, gentle fade at the end. Camera movement: smooth slow orbit around the subject with shallow depth of field, sharp focal plane on product geometry and surface materials. Cinematic commercial quality, photorealistic, zero character face, hyper-detailed textures. SET: Ultra-luxury minimalist penthouse bathroom, white Calacatta gold marble countertops, soft glowing circular vanity mirror, floor-to-ceiling window bay casting bright 5600K diffused morning natural daylight, pure pristine spa ambiance.",
+      "updated_at": "2026-10-22T05:15:01.804268Z",
+      "attempts": 1,
+      "source": "scene_plan",
+      "mode": "I2V",
+      "shot_type": "CLOSE_UP • Cta",
+      "angle": "eye_level",
+      "camera_motion": "orbit",
+      "lighting": "beauty_high_key",
+      "estimated_duration": 4.0,
+      "segments": [
+        {
+          "label": "Framing & optics",
+          "text": "close-up, 50mm lens, eye-level angle, shallow depth of field, focus on Serum dưỡng sáng mờ thâm phục hồi da Niacinamide 10% HA 30ml."
+        },
+        {
+          "label": "Subject & action",
+          "text": "Commercial macro product cinematography of Serum dưỡng sáng mờ thâm phục hồi da Niacinamide 10% HA 30ml. Action and interaction: The serum bottle is neatly placed beside a clean tabletop corner, slow orbit around the product, soft light, gentle fade at the end.. Camera movement: smooth slow orbit around the subject with shallow depth of field, sharp focal plane on product geometry and surface materials. Environment and staging: Sun-drenched luxury marble bathroom vanity, soft pastel linen accents, fresh eucalyptus branch in fluted glass vase.. Lighting key: radiant high-key softbox light at 5600K, realistic reflections and highlights. Cinematic 8k commercial quality, photorealistic, zero character face, hyper-detailed textures"
+        },
+        {
+          "label": "Set & environment",
+          "text": "SET: Ultra-luxury minimalist penthouse bathroom, white Calacatta gold marble countertops, soft glowing circular vanity mirror, floor-to-ceiling window bay casting bright 5600K diffused morning natural daylight, pure pristine spa ambiance."
+        }
+      ],
+      "first_seen_at": "2026-10-22T03:29:24.781513Z",
+      "model": "MiniMax-Hailuo-2.3",
+      "aspect_ratio": "9:16",
+      "duration_requested": 6,
+      "first_frame": "keyframes/shot_07_clean.jpg",
+      "first_frame_rel": "keyframes/shot_07_clean.jpg",
+      "fingerprint": "33607e71029d58c98e0e5f812ffd2c35d47dc47fdf0316b9ce8788e0a01f8137",
+      "output_rel_path": "media/raw_clips/shot_07.mp4",
+      "attempt": 1,
+      "first_frame_url": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F056e338f-a64c-4984-86ae-2aa49fff514c.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T051451Z&x-oss-expires=3600&x-oss-signature=eab47917074614002c004e700ce7fd7ba891db76eab63b00d761ea204c455abb&x-oss-signature-version=OSS4-HMAC-SHA256",
+      "task_id": "455033813770605"
+    }
+  },
+  "api_calls": [
+    {
+      "name": "llm.chat_completion",
+      "endpoint": null,
+      "method": "POST",
+      "status": 200,
+      "ok": true,
+      "duration_seconds": 30.414,
+      "shot_id": null,
+      "request": {
+        "model": "2tocom/MiniMax-M3",
+        "system_prompt_chars": 749,
+        "user_prompt_chars": 921,
+        "timeout_seconds": 90,
+        "model_used": "2tocom/MiniMax-M3"
+      },
+      "response": {
+        "content_chars": 2865,
+        "usage": {
+          "prompt_tokens": "***REDACTED***",
+          "completion_tokens": "***REDACTED***",
+          "total_tokens": "***REDACTED***"
+        }
+      },
+      "ts": "2026-10-22T03:25:14.204586Z"
+    },
+    {
+      "name": "llm.chat_completion",
+      "endpoint": null,
+      "method": "POST",
+      "status": 200,
+      "ok": true,
+      "duration_seconds": 22.539,
+      "shot_id": null,
+      "request": {
+        "model": "2tocom/MiniMax-M3",
+        "system_prompt_chars": 847,
+        "user_prompt_chars": 1397,
+        "timeout_seconds": 90,
+        "model_used": "2tocom/MiniMax-M3"
+      },
+      "response": {
+        "content_chars": 4281,
+        "usage": {
+          "prompt_tokens": "***REDACTED***",
+          "completion_tokens": "***REDACTED***",
+          "total_tokens": "***REDACTED***"
+        }
+      },
+      "ts": "2026-10-22T03:25:36.749829Z"
+    },
+    {
+      "name": "llm.chat_completion",
+      "endpoint": null,
+      "method": "POST",
+      "status": "error",
+      "ok": false,
+      "duration_seconds": 180.267,
+      "shot_id": null,
+      "request": {
+        "model": "2tocom/MiniMax-M3",
+        "system_prompt_chars": 1191,
+        "user_prompt_chars": 4301,
+        "timeout_seconds": 90
+      },
+      "response": {
+        "error": "timed out; timed out; MiniMax-M3.1-Flash: HTTP 404 {\"error\":{\"message\":\"No active credentials for provider: openai\",\"type\":\"invalid_request_error\",\"code\":\"model_not_found\"}}"
+      },
+      "ts": "2026-10-22T03:28:37.027835Z"
+    },
+    {
+      "name": "llm.script_draft",
+      "endpoint": null,
+      "method": "POST",
+      "status": 200,
+      "ok": true,
+      "duration_seconds": 30.677,
+      "shot_id": null,
+      "request": {
+        "model": "2tocom/MiniMax-M3",
+        "attempt": 1,
+        "system_prompt_chars": 3502,
+        "user_prompt_chars": 6418,
+        "model_used": "2tocom/MiniMax-M3"
+      },
+      "response": {
+        "content_chars": 5719,
+        "usage": {
+          "prompt_tokens": "***REDACTED***",
+          "completion_tokens": "***REDACTED***",
+          "total_tokens": "***REDACTED***"
+        }
+      },
+      "ts": "2026-10-22T03:29:07.760023Z"
+    },
+    {
+      "name": "llm.script_draft",
+      "endpoint": null,
+      "method": "POST",
+      "status": 200,
+      "ok": true,
+      "duration_seconds": 16.879,
+      "shot_id": null,
+      "request": {
+        "model": "2tocom/MiniMax-M3",
+        "attempt": 2,
+        "system_prompt_chars": 3502,
+        "user_prompt_chars": 12578,
+        "model_used": "2tocom/MiniMax-M3"
+      },
+      "response": {
+        "content_chars": 5716,
+        "usage": {
+          "prompt_tokens": "***REDACTED***",
+          "completion_tokens": "***REDACTED***",
+          "total_tokens": "***REDACTED***"
+        }
+      },
+      "ts": "2026-10-22T03:29:24.647569Z"
+    },
+    {
+      "name": "minimax.upload_first_frame",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/storage/upload",
+      "method": "POST",
+      "status": 200,
+      "ok": true,
+      "duration_seconds": 5.025,
+      "shot_id": null,
+      "request": {
+        "file": "shot_01_clean.jpg",
+        "size_bytes": 194712
+      },
+      "response": {
+        "file_url": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F4bd8614b-447e-47f7-a827-8baf54a0591a.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T042309Z&x-oss-expires=3600&x-oss-signature=cdddcb914ac402634b3eb4ed15bca2886107dd7d211344d337953b6d52459d9e&x-oss-signature-version=OSS4-HMAC-SHA256"
+      },
+      "ts": "2026-10-22T04:23:12.054932Z"
+    },
+    {
+      "name": "minimax.upload_first_frame",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/storage/upload",
+      "method": "POST",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 5.067,
+      "shot_id": "shot_01",
+      "request": {
+        "input_image": "keyframes/shot_01_clean.jpg"
+      },
+      "response": {
+        "file_url": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F4bd8614b-447e-47f7-a827-8baf54a0591a.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T042309Z&x-oss-expires=3600&x-oss-signature=cdddcb914ac402634b3eb4ed15bca2886107dd7d211344d337953b6d52459d9e&x-oss-signature-version=OSS4-HMAC-SHA256"
+      },
+      "ts": "2026-10-22T04:23:12.093742Z"
+    },
+    {
+      "name": "minimax.upload_first_frame",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/storage/upload",
+      "method": "POST",
+      "status": 200,
+      "ok": true,
+      "duration_seconds": 5.765,
+      "shot_id": null,
+      "request": {
+        "file": "shot_03_clean.jpg",
+        "size_bytes": 233702
+      },
+      "response": {
+        "file_url": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F7416c90b-a3cc-4c45-b1b8-543337b1a0bc.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T042309Z&x-oss-expires=3600&x-oss-signature=7e0dea6b593895e7810e9f532c96cc1888da76ff663ec710b14a9d07ee3362a0&x-oss-signature-version=OSS4-HMAC-SHA256"
+      },
+      "ts": "2026-10-22T04:23:12.791595Z"
+    },
+    {
+      "name": "minimax.upload_first_frame",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/storage/upload",
+      "method": "POST",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 5.841,
+      "shot_id": "shot_03",
+      "request": {
+        "input_image": "keyframes/shot_03_clean.jpg"
+      },
+      "response": {
+        "file_url": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F7416c90b-a3cc-4c45-b1b8-543337b1a0bc.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T042309Z&x-oss-expires=3600&x-oss-signature=7e0dea6b593895e7810e9f532c96cc1888da76ff663ec710b14a9d07ee3362a0&x-oss-signature-version=OSS4-HMAC-SHA256"
+      },
+      "ts": "2026-10-22T04:23:12.867573Z"
+    },
+    {
+      "name": "minimax.upload_first_frame",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/storage/upload",
+      "method": "POST",
+      "status": 200,
+      "ok": true,
+      "duration_seconds": 6.824,
+      "shot_id": null,
+      "request": {
+        "file": "face_anchor.png",
+        "size_bytes": 475708
+      },
+      "response": {
+        "file_url": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2Fec627025-b116-46b8-9b21-aefe57e6becd.png?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T042309Z&x-oss-expires=3600&x-oss-signature=8385214b952b79f9149417af5f416acf5debf40d77f012e410e56b409fd5de84&x-oss-signature-version=OSS4-HMAC-SHA256"
+      },
+      "ts": "2026-10-22T04:23:13.855668Z"
+    },
+    {
+      "name": "minimax.upload_first_frame",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/storage/upload",
+      "method": "POST",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 6.84,
+      "shot_id": "shot_02",
+      "request": {
+        "input_image": "assets/characters/kol_main/face_anchor.png"
+      },
+      "response": {
+        "file_url": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2Fec627025-b116-46b8-9b21-aefe57e6becd.png?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T042309Z&x-oss-expires=3600&x-oss-signature=8385214b952b79f9149417af5f416acf5debf40d77f012e410e56b409fd5de84&x-oss-signature-version=OSS4-HMAC-SHA256"
+      },
+      "ts": "2026-10-22T04:23:13.871461Z"
+    },
+    {
+      "name": "minimax.submit_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video",
+      "method": "POST",
+      "status": 202,
+      "ok": true,
+      "duration_seconds": 3.385,
+      "shot_id": null,
+      "request": {
+        "model": "MiniMax-Hailuo-2.3",
+        "aspect_ratio": "9:16",
+        "duration": 6,
+        "input_image": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F4bd8614b-447e-47f7-a827-8baf54a0591a.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T042309Z&x-oss-expires=3600&x-oss-signature=cdddcb914ac402634b3eb4ed15bca2886107dd7d211344d337953b6d52459d9e&x-oss-signature-version=OSS4-HMAC-SHA256",
+        "resolution": null,
+        "subject_reference": null,
+        "prompt_chars": 929
+      },
+      "response": {
+        "task_id": "455022506086953"
+      },
+      "ts": "2026-10-22T04:23:15.485131Z"
+    },
+    {
+      "name": "minimax.submit_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video",
+      "method": "POST",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 3.425,
+      "shot_id": "shot_01",
+      "request": {
+        "model": "MiniMax-Hailuo-2.3",
+        "prompt_chars": 929,
+        "duration": 6,
+        "aspect_ratio": "9:16",
+        "resolution": null,
+        "input_image": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F4bd8614b-447e-47f7-a827-8baf54a0591a.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T042309Z&x-oss-expires=3600&x-oss-signature=cdddcb914ac402634b3eb4ed15bca2886107dd7d211344d337953b6d52459d9e&x-oss-signature-version=OSS4-HMAC-SHA256",
+        "subject_reference": null
+      },
+      "response": {
+        "task_id": "455022506086953"
+      },
+      "ts": "2026-10-22T04:23:15.524650Z"
+    },
+    {
+      "name": "minimax.submit_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video",
+      "method": "POST",
+      "status": "error",
+      "ok": false,
+      "duration_seconds": 1.95,
+      "shot_id": null,
+      "request": {
+        "model": "S2V-01",
+        "aspect_ratio": "9:16",
+        "duration": 6,
+        "input_image": null,
+        "resolution": null,
+        "subject_reference": [
+          {
+            "type": "character",
+            "image": [
+              "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2Fec627025-b116-46b8-9b21-aefe57e6becd.png?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T042309Z&x-oss-expires=3600&x-oss-signature=8385214b952b79f9149417af5f416acf5debf40d77f012e410e56b409fd5de84&x-oss-signature-version=OSS4-HMAC-SHA256"
+            ]
+          }
+        ],
+        "prompt_chars": 1333
+      },
+      "response": null,
+      "ts": "2026-10-22T04:23:15.826460Z"
+    },
+    {
+      "name": "minimax.submit_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video",
+      "method": "POST",
+      "status": "error",
+      "ok": false,
+      "duration_seconds": 1.985,
+      "shot_id": "shot_02",
+      "request": {
+        "model": "S2V-01",
+        "prompt_chars": 1333,
+        "duration": 6,
+        "aspect_ratio": "9:16",
+        "resolution": null,
+        "input_image": null,
+        "subject_reference": [
+          "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2Fec627025-b116-46b8-9b21-aefe57e6becd.png?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T042309Z&x-oss-expires=3600&x-oss-signature=8385214b952b79f9149417af5f416acf5debf40d77f012e410e56b409fd5de84&x-oss-signature-version=OSS4-HMAC-SHA256"
+        ]
+      },
+      "response": null,
+      "ts": "2026-10-22T04:23:15.860846Z"
+    },
+    {
+      "name": "minimax.submit_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video",
+      "method": "POST",
+      "status": 202,
+      "ok": true,
+      "duration_seconds": 3.59,
+      "shot_id": null,
+      "request": {
+        "model": "MiniMax-Hailuo-2.3",
+        "aspect_ratio": "9:16",
+        "duration": 6,
+        "input_image": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F7416c90b-a3cc-4c45-b1b8-543337b1a0bc.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T042309Z&x-oss-expires=3600&x-oss-signature=7e0dea6b593895e7810e9f532c96cc1888da76ff663ec710b14a9d07ee3362a0&x-oss-signature-version=OSS4-HMAC-SHA256",
+        "resolution": null,
+        "subject_reference": null,
+        "prompt_chars": 914
+      },
+      "response": {
+        "task_id": "455023889281555"
+      },
+      "ts": "2026-10-22T04:23:16.461137Z"
+    },
+    {
+      "name": "minimax.submit_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video",
+      "method": "POST",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 3.659,
+      "shot_id": "shot_03",
+      "request": {
+        "model": "MiniMax-Hailuo-2.3",
+        "prompt_chars": 914,
+        "duration": 6,
+        "aspect_ratio": "9:16",
+        "resolution": null,
+        "input_image": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F7416c90b-a3cc-4c45-b1b8-543337b1a0bc.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T042309Z&x-oss-expires=3600&x-oss-signature=7e0dea6b593895e7810e9f532c96cc1888da76ff663ec710b14a9d07ee3362a0&x-oss-signature-version=OSS4-HMAC-SHA256",
+        "subject_reference": null
+      },
+      "response": {
+        "task_id": "455023889281555"
+      },
+      "ts": "2026-10-22T04:23:16.529785Z"
+    },
+    {
+      "name": "minimax.poll_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video/455023889281555",
+      "method": "GET",
+      "status": "error",
+      "ok": false,
+      "duration_seconds": -1792571158.766,
+      "shot_id": null,
+      "request": {
+        "task_id": "455023889281555",
+        "timeout_seconds": 300
+      },
+      "response": {
+        "error": "HTTP Error 502: Bad Gateway",
+        "consecutive_errors": 1
+      },
+      "ts": "2026-10-22T04:24:27.826078Z"
+    },
+    {
+      "name": "minimax.poll_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video/455022506086953",
+      "method": "GET",
+      "status": "error",
+      "ok": false,
+      "duration_seconds": -1792571157.746,
+      "shot_id": null,
+      "request": {
+        "task_id": "455022506086953",
+        "timeout_seconds": 300
+      },
+      "response": {
+        "error": "HTTP Error 502: Bad Gateway",
+        "consecutive_errors": 1
+      },
+      "ts": "2026-10-22T04:24:27.843116Z"
+    },
+    {
+      "name": "minimax.poll_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video/455022506086953",
+      "method": "GET",
+      "status": "error",
+      "ok": false,
+      "duration_seconds": -1792571147.208,
+      "shot_id": null,
+      "request": {
+        "task_id": "455022506086953",
+        "timeout_seconds": 300
+      },
+      "response": {
+        "error": "HTTP Error 502: Bad Gateway",
+        "consecutive_errors": 2
+      },
+      "ts": "2026-10-22T04:24:38.380485Z"
+    },
+    {
+      "name": "minimax.poll_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video/455023889281555",
+      "method": "GET",
+      "status": "error",
+      "ok": false,
+      "duration_seconds": -1792571146.307,
+      "shot_id": null,
+      "request": {
+        "task_id": "455023889281555",
+        "timeout_seconds": 300
+      },
+      "response": {
+        "error": "HTTP Error 502: Bad Gateway",
+        "consecutive_errors": 2
+      },
+      "ts": "2026-10-22T04:24:40.284982Z"
+    },
+    {
+      "name": "minimax.download_video",
+      "endpoint": "https://public-cdn-video-data-algeng.oss-cn-wulanchabu.aliyuncs.com/inference_output%2Fvideo%2F2026-10-22%2F8e15cab0-c326-4572-a351-a4c27a6a4f4f%2Foutput_aigc.mp4?Expires=1792729491&OSSAccessKeyId=LTAI5tAmwsjSaaZVA6cEFAUu&Signature=C3mOMskBLuRLB5j6nUd7uNS%2BqJ8%3D",
+      "method": "GET",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 1.287,
+      "shot_id": null,
+      "request": {
+        "task_id": "455023889281555"
+      },
+      "response": {
+        "output_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_03.mp4",
+        "size_bytes": 755412
+      },
+      "ts": "2026-10-22T04:24:53.802842Z"
+    },
+    {
+      "name": "minimax.poll_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video/455023889281555",
+      "method": "GET",
+      "status": 200,
+      "ok": true,
+      "duration_seconds": -1792571132.78,
+      "shot_id": null,
+      "request": {
+        "task_id": "455023889281555",
+        "timeout_seconds": 300
+      },
+      "response": {
+        "status": "Success",
+        "polls": 7
+      },
+      "ts": "2026-10-22T04:24:53.812833Z"
+    },
+    {
+      "name": "minimax.poll_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video/455023889281555",
+      "method": "GET",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 97.278,
+      "shot_id": "shot_03",
+      "request": {
+        "task_id": "455023889281555",
+        "timeout_seconds": 300
+      },
+      "response": {
+        "output_rel_path": "media/raw_clips/shot_03.mp4",
+        "size_bytes": 755412
+      },
+      "ts": "2026-10-22T04:24:53.815209Z"
+    },
+    {
+      "name": "minimax.download_video",
+      "endpoint": "https://public-cdn-video-data-algeng.oss-cn-wulanchabu.aliyuncs.com/inference_output%2Fvideo%2F2026-10-22%2F225efb82-1b9f-4487-b5c2-fe4db46ec2a3%2Foutput_aigc.mp4?Expires=1792729490&OSSAccessKeyId=LTAI5tAmwsjSaaZVA6cEFAUu&Signature=mAWNYpLMdJHZP78DbnlGa7ayARA%3D",
+      "method": "GET",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 4.116,
+      "shot_id": null,
+      "request": {
+        "task_id": "455022506086953"
+      },
+      "response": {
+        "output_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_01.mp4",
+        "size_bytes": 688928
+      },
+      "ts": "2026-10-22T04:24:55.227274Z"
+    },
+    {
+      "name": "minimax.poll_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video/455022506086953",
+      "method": "GET",
+      "status": 200,
+      "ok": true,
+      "duration_seconds": -1792571130.294,
+      "shot_id": null,
+      "request": {
+        "task_id": "455022506086953",
+        "timeout_seconds": 300
+      },
+      "response": {
+        "status": "Success",
+        "polls": 7
+      },
+      "ts": "2026-10-22T04:24:55.295183Z"
+    },
+    {
+      "name": "minimax.poll_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video/455022506086953",
+      "method": "GET",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 99.765,
+      "shot_id": "shot_01",
+      "request": {
+        "task_id": "455022506086953",
+        "timeout_seconds": 300
+      },
+      "response": {
+        "output_rel_path": "media/raw_clips/shot_01.mp4",
+        "size_bytes": 688928
+      },
+      "ts": "2026-10-22T04:24:55.297903Z"
+    },
+    {
+      "name": "minimax.upload_first_frame",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/storage/upload",
+      "method": "POST",
+      "status": 200,
+      "ok": true,
+      "duration_seconds": 3.465,
+      "shot_id": null,
+      "request": {
+        "file": "face_anchor.png",
+        "size_bytes": 475708
+      },
+      "response": {
+        "file_url": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F0893e6c7-c58a-4fc5-860f-e611993c10fc.png?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T042611Z&x-oss-expires=3600&x-oss-signature=c78d7d01a27c988a65209303f415994c56b2d59ce8d663c8a828a87578249486&x-oss-signature-version=OSS4-HMAC-SHA256"
+      },
+      "ts": "2026-10-22T04:26:14.042607Z"
+    },
+    {
+      "name": "minimax.upload_first_frame",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/storage/upload",
+      "method": "POST",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 3.514,
+      "shot_id": "shot_02",
+      "request": {
+        "input_image": "assets/characters/kol_main/face_anchor.png"
+      },
+      "response": {
+        "file_url": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F0893e6c7-c58a-4fc5-860f-e611993c10fc.png?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T042611Z&x-oss-expires=3600&x-oss-signature=c78d7d01a27c988a65209303f415994c56b2d59ce8d663c8a828a87578249486&x-oss-signature-version=OSS4-HMAC-SHA256"
+      },
+      "ts": "2026-10-22T04:26:14.090361Z"
+    },
+    {
+      "name": "minimax.submit_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video",
+      "method": "POST",
+      "status": "error",
+      "ok": false,
+      "duration_seconds": 0.331,
+      "shot_id": null,
+      "request": {
+        "model": "S2V-01",
+        "aspect_ratio": "9:16",
+        "duration": 6,
+        "input_image": null,
+        "resolution": null,
+        "subject_reference": [
+          {
+            "type": "character",
+            "image": [
+              "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F0893e6c7-c58a-4fc5-860f-e611993c10fc.png?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T042611Z&x-oss-expires=3600&x-oss-signature=c78d7d01a27c988a65209303f415994c56b2d59ce8d663c8a828a87578249486&x-oss-signature-version=OSS4-HMAC-SHA256"
+            ]
+          }
+        ],
+        "prompt_chars": 1333
+      },
+      "response": null,
+      "ts": "2026-10-22T04:26:14.423408Z"
+    },
+    {
+      "name": "minimax.submit_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video",
+      "method": "POST",
+      "status": "error",
+      "ok": false,
+      "duration_seconds": 0.364,
+      "shot_id": "shot_02",
+      "request": {
+        "model": "S2V-01",
+        "prompt_chars": 1333,
+        "duration": 6,
+        "aspect_ratio": "9:16",
+        "resolution": null,
+        "input_image": null,
+        "subject_reference": [
+          "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F0893e6c7-c58a-4fc5-860f-e611993c10fc.png?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T042611Z&x-oss-expires=3600&x-oss-signature=c78d7d01a27c988a65209303f415994c56b2d59ce8d663c8a828a87578249486&x-oss-signature-version=OSS4-HMAC-SHA256"
+        ]
+      },
+      "response": null,
+      "ts": "2026-10-22T04:26:14.456717Z"
+    },
+    {
+      "name": "minimax.upload_first_frame",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/storage/upload",
+      "method": "POST",
+      "status": 200,
+      "ok": true,
+      "duration_seconds": 8.985,
+      "shot_id": null,
+      "request": {
+        "file": "face_anchor.png",
+        "size_bytes": 475708
+      },
+      "response": {
+        "file_url": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2Fdf81419f-7add-4efa-9bcf-256a1c1fd108.png?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T042617Z&x-oss-expires=3600&x-oss-signature=60c1d522c3997a4c84039fd8c612eebb204567000c508cc3dddba67857098bc2&x-oss-signature-version=OSS4-HMAC-SHA256"
+      },
+      "ts": "2026-10-22T04:26:19.621759Z"
+    },
+    {
+      "name": "minimax.upload_first_frame",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/storage/upload",
+      "method": "POST",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 9.025,
+      "shot_id": "shot_04",
+      "request": {
+        "input_image": "assets/characters/kol_main/face_anchor.png"
+      },
+      "response": {
+        "file_url": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2Fdf81419f-7add-4efa-9bcf-256a1c1fd108.png?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T042617Z&x-oss-expires=3600&x-oss-signature=60c1d522c3997a4c84039fd8c612eebb204567000c508cc3dddba67857098bc2&x-oss-signature-version=OSS4-HMAC-SHA256"
+      },
+      "ts": "2026-10-22T04:26:19.661340Z"
+    },
+    {
+      "name": "minimax.submit_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video",
+      "method": "POST",
+      "status": "error",
+      "ok": false,
+      "duration_seconds": 0.407,
+      "shot_id": null,
+      "request": {
+        "model": "S2V-01",
+        "aspect_ratio": "9:16",
+        "duration": 6,
+        "input_image": null,
+        "resolution": null,
+        "subject_reference": [
+          {
+            "type": "character",
+            "image": [
+              "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2Fdf81419f-7add-4efa-9bcf-256a1c1fd108.png?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T042617Z&x-oss-expires=3600&x-oss-signature=60c1d522c3997a4c84039fd8c612eebb204567000c508cc3dddba67857098bc2&x-oss-signature-version=OSS4-HMAC-SHA256"
+            ]
+          }
+        ],
+        "prompt_chars": 1295
+      },
+      "response": null,
+      "ts": "2026-10-22T04:26:20.076268Z"
+    },
+    {
+      "name": "minimax.submit_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video",
+      "method": "POST",
+      "status": "error",
+      "ok": false,
+      "duration_seconds": 0.448,
+      "shot_id": "shot_04",
+      "request": {
+        "model": "S2V-01",
+        "prompt_chars": 1295,
+        "duration": 6,
+        "aspect_ratio": "9:16",
+        "resolution": null,
+        "input_image": null,
+        "subject_reference": [
+          "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2Fdf81419f-7add-4efa-9bcf-256a1c1fd108.png?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T042617Z&x-oss-expires=3600&x-oss-signature=60c1d522c3997a4c84039fd8c612eebb204567000c508cc3dddba67857098bc2&x-oss-signature-version=OSS4-HMAC-SHA256"
+        ]
+      },
+      "response": null,
+      "ts": "2026-10-22T04:26:20.116556Z"
+    },
+    {
+      "name": "minimax.upload_first_frame",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/storage/upload",
+      "method": "POST",
+      "status": 200,
+      "ok": true,
+      "duration_seconds": 10.894,
+      "shot_id": null,
+      "request": {
+        "file": "face_anchor.png",
+        "size_bytes": 475708
+      },
+      "response": {
+        "file_url": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2Fd040c4ff-9a05-4efe-b710-29080699e62c.png?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T042619Z&x-oss-expires=3600&x-oss-signature=7de7f341f32da0320e00de1833e8d7f00f2c5d86ed4bc5d1badf25f51a0dfa76&x-oss-signature-version=OSS4-HMAC-SHA256"
+      },
+      "ts": "2026-10-22T04:26:21.535482Z"
+    },
+    {
+      "name": "minimax.upload_first_frame",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/storage/upload",
+      "method": "POST",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 10.898,
+      "shot_id": "shot_05",
+      "request": {
+        "input_image": "assets/characters/kol_main/face_anchor.png"
+      },
+      "response": {
+        "file_url": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2Fd040c4ff-9a05-4efe-b710-29080699e62c.png?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T042619Z&x-oss-expires=3600&x-oss-signature=7de7f341f32da0320e00de1833e8d7f00f2c5d86ed4bc5d1badf25f51a0dfa76&x-oss-signature-version=OSS4-HMAC-SHA256"
+      },
+      "ts": "2026-10-22T04:26:21.539209Z"
+    },
+    {
+      "name": "minimax.submit_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video",
+      "method": "POST",
+      "status": "error",
+      "ok": false,
+      "duration_seconds": 0.515,
+      "shot_id": null,
+      "request": {
+        "model": "S2V-01",
+        "aspect_ratio": "9:16",
+        "duration": 6,
+        "input_image": null,
+        "resolution": null,
+        "subject_reference": [
+          {
+            "type": "character",
+            "image": [
+              "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2Fd040c4ff-9a05-4efe-b710-29080699e62c.png?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T042619Z&x-oss-expires=3600&x-oss-signature=7de7f341f32da0320e00de1833e8d7f00f2c5d86ed4bc5d1badf25f51a0dfa76&x-oss-signature-version=OSS4-HMAC-SHA256"
+            ]
+          }
+        ],
+        "prompt_chars": 1313
+      },
+      "response": null,
+      "ts": "2026-10-22T04:26:22.057449Z"
+    },
+    {
+      "name": "minimax.submit_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video",
+      "method": "POST",
+      "status": "error",
+      "ok": false,
+      "duration_seconds": 0.55,
+      "shot_id": "shot_05",
+      "request": {
+        "model": "S2V-01",
+        "prompt_chars": 1313,
+        "duration": 6,
+        "aspect_ratio": "9:16",
+        "resolution": null,
+        "input_image": null,
+        "subject_reference": [
+          "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2Fd040c4ff-9a05-4efe-b710-29080699e62c.png?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T042619Z&x-oss-expires=3600&x-oss-signature=7de7f341f32da0320e00de1833e8d7f00f2c5d86ed4bc5d1badf25f51a0dfa76&x-oss-signature-version=OSS4-HMAC-SHA256"
+        ]
+      },
+      "response": null,
+      "ts": "2026-10-22T04:26:22.092319Z"
+    },
+    {
+      "name": "minimax.upload_first_frame",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/storage/upload",
+      "method": "POST",
+      "status": 200,
+      "ok": true,
+      "duration_seconds": 5.198,
+      "shot_id": null,
+      "request": {
+        "file": "shot_02_clean.jpg",
+        "size_bytes": 236103
+      },
+      "response": {
+        "file_url": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F8d3db9fc-dacc-4aae-98c4-19805c5698c0.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T051210Z&x-oss-expires=3600&x-oss-signature=efc65c007e607edd93cfb934348679a58f30a6281f6370a18bbd1ed24acacc61&x-oss-signature-version=OSS4-HMAC-SHA256"
+      },
+      "ts": "2026-10-22T05:12:13.074388Z"
+    },
+    {
+      "name": "minimax.upload_first_frame",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/storage/upload",
+      "method": "POST",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 5.205,
+      "shot_id": "shot_02",
+      "request": {
+        "input_image": "keyframes/shot_02_clean.jpg"
+      },
+      "response": {
+        "file_url": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F8d3db9fc-dacc-4aae-98c4-19805c5698c0.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T051210Z&x-oss-expires=3600&x-oss-signature=efc65c007e607edd93cfb934348679a58f30a6281f6370a18bbd1ed24acacc61&x-oss-signature-version=OSS4-HMAC-SHA256"
+      },
+      "ts": "2026-10-22T05:12:13.078848Z"
+    },
+    {
+      "name": "minimax.upload_first_frame",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/storage/upload",
+      "method": "POST",
+      "status": 200,
+      "ok": true,
+      "duration_seconds": 5.869,
+      "shot_id": null,
+      "request": {
+        "file": "shot_04_clean.jpg",
+        "size_bytes": 270701
+      },
+      "response": {
+        "file_url": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F6fce43f6-c830-47e5-8020-2ec9a73588a0.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T051210Z&x-oss-expires=3600&x-oss-signature=9718d68cb60c119e6c3337b986f87d3fa0586a48149b9ef09ae93616b211f38e&x-oss-signature-version=OSS4-HMAC-SHA256"
+      },
+      "ts": "2026-10-22T05:12:13.829276Z"
+    },
+    {
+      "name": "minimax.upload_first_frame",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/storage/upload",
+      "method": "POST",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 5.881,
+      "shot_id": "shot_04",
+      "request": {
+        "input_image": "keyframes/shot_04_clean.jpg"
+      },
+      "response": {
+        "file_url": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F6fce43f6-c830-47e5-8020-2ec9a73588a0.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T051210Z&x-oss-expires=3600&x-oss-signature=9718d68cb60c119e6c3337b986f87d3fa0586a48149b9ef09ae93616b211f38e&x-oss-signature-version=OSS4-HMAC-SHA256"
+      },
+      "ts": "2026-10-22T05:12:13.840875Z"
+    },
+    {
+      "name": "minimax.submit_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video",
+      "method": "POST",
+      "status": 202,
+      "ok": true,
+      "duration_seconds": 3.397,
+      "shot_id": null,
+      "request": {
+        "model": "MiniMax-Hailuo-2.3",
+        "aspect_ratio": "9:16",
+        "duration": 6,
+        "input_image": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F8d3db9fc-dacc-4aae-98c4-19805c5698c0.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T051210Z&x-oss-expires=3600&x-oss-signature=efc65c007e607edd93cfb934348679a58f30a6281f6370a18bbd1ed24acacc61&x-oss-signature-version=OSS4-HMAC-SHA256",
+        "resolution": null,
+        "subject_reference": null,
+        "prompt_chars": 1333
+      },
+      "response": {
+        "task_id": "455037107159555"
+      },
+      "ts": "2026-10-22T05:12:16.488354Z"
+    },
+    {
+      "name": "minimax.submit_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video",
+      "method": "POST",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 3.408,
+      "shot_id": "shot_02",
+      "request": {
+        "model": "MiniMax-Hailuo-2.3",
+        "prompt_chars": 1333,
+        "duration": 6,
+        "aspect_ratio": "9:16",
+        "resolution": null,
+        "input_image": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F8d3db9fc-dacc-4aae-98c4-19805c5698c0.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T051210Z&x-oss-expires=3600&x-oss-signature=efc65c007e607edd93cfb934348679a58f30a6281f6370a18bbd1ed24acacc61&x-oss-signature-version=OSS4-HMAC-SHA256",
+        "subject_reference": null
+      },
+      "response": {
+        "task_id": "455037107159555"
+      },
+      "ts": "2026-10-22T05:12:16.499978Z"
+    },
+    {
+      "name": "minimax.submit_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video",
+      "method": "POST",
+      "status": 202,
+      "ok": true,
+      "duration_seconds": 3.367,
+      "shot_id": null,
+      "request": {
+        "model": "MiniMax-Hailuo-2.3",
+        "aspect_ratio": "9:16",
+        "duration": 6,
+        "input_image": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F6fce43f6-c830-47e5-8020-2ec9a73588a0.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T051210Z&x-oss-expires=3600&x-oss-signature=9718d68cb60c119e6c3337b986f87d3fa0586a48149b9ef09ae93616b211f38e&x-oss-signature-version=OSS4-HMAC-SHA256",
+        "resolution": null,
+        "subject_reference": null,
+        "prompt_chars": 1295
+      },
+      "response": {
+        "task_id": "455035381424666"
+      },
+      "ts": "2026-10-22T05:12:17.210536Z"
+    },
+    {
+      "name": "minimax.submit_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video",
+      "method": "POST",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 3.406,
+      "shot_id": "shot_04",
+      "request": {
+        "model": "MiniMax-Hailuo-2.3",
+        "prompt_chars": 1295,
+        "duration": 6,
+        "aspect_ratio": "9:16",
+        "resolution": null,
+        "input_image": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F6fce43f6-c830-47e5-8020-2ec9a73588a0.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T051210Z&x-oss-expires=3600&x-oss-signature=9718d68cb60c119e6c3337b986f87d3fa0586a48149b9ef09ae93616b211f38e&x-oss-signature-version=OSS4-HMAC-SHA256",
+        "subject_reference": null
+      },
+      "response": {
+        "task_id": "455035381424666"
+      },
+      "ts": "2026-10-22T05:12:17.249098Z"
+    },
+    {
+      "name": "minimax.upload_first_frame",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/storage/upload",
+      "method": "POST",
+      "status": 200,
+      "ok": true,
+      "duration_seconds": 68.965,
+      "shot_id": null,
+      "request": {
+        "file": "shot_05_clean.jpg",
+        "size_bytes": 260560
+      },
+      "response": {
+        "file_url": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2Fd70731c1-3db9-46b6-9ce4-56737921ba75.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T051311Z&x-oss-expires=3600&x-oss-signature=db10840ad5209a3ec9765401351b35a239066627196fa19147efd072f1f87b75&x-oss-signature-version=OSS4-HMAC-SHA256"
+      },
+      "ts": "2026-10-22T05:13:16.931247Z"
+    },
+    {
+      "name": "minimax.upload_first_frame",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/storage/upload",
+      "method": "POST",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 68.971,
+      "shot_id": "shot_05",
+      "request": {
+        "input_image": "keyframes/shot_05_clean.jpg"
+      },
+      "response": {
+        "file_url": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2Fd70731c1-3db9-46b6-9ce4-56737921ba75.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T051311Z&x-oss-expires=3600&x-oss-signature=db10840ad5209a3ec9765401351b35a239066627196fa19147efd072f1f87b75&x-oss-signature-version=OSS4-HMAC-SHA256"
+      },
+      "ts": "2026-10-22T05:13:16.937021Z"
+    },
+    {
+      "name": "minimax.submit_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video",
+      "method": "POST",
+      "status": 202,
+      "ok": true,
+      "duration_seconds": 3.662,
+      "shot_id": null,
+      "request": {
+        "model": "MiniMax-Hailuo-2.3",
+        "aspect_ratio": "9:16",
+        "duration": 6,
+        "input_image": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2Fd70731c1-3db9-46b6-9ce4-56737921ba75.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T051311Z&x-oss-expires=3600&x-oss-signature=db10840ad5209a3ec9765401351b35a239066627196fa19147efd072f1f87b75&x-oss-signature-version=OSS4-HMAC-SHA256",
+        "resolution": null,
+        "subject_reference": null,
+        "prompt_chars": 1313
+      },
+      "response": {
+        "task_id": "455037526847939"
+      },
+      "ts": "2026-10-22T05:13:20.604143Z"
+    },
+    {
+      "name": "minimax.submit_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video",
+      "method": "POST",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 3.696,
+      "shot_id": "shot_05",
+      "request": {
+        "model": "MiniMax-Hailuo-2.3",
+        "prompt_chars": 1313,
+        "duration": 6,
+        "aspect_ratio": "9:16",
+        "resolution": null,
+        "input_image": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2Fd70731c1-3db9-46b6-9ce4-56737921ba75.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T051311Z&x-oss-expires=3600&x-oss-signature=db10840ad5209a3ec9765401351b35a239066627196fa19147efd072f1f87b75&x-oss-signature-version=OSS4-HMAC-SHA256",
+        "subject_reference": null
+      },
+      "response": {
+        "task_id": "455037526847939"
+      },
+      "ts": "2026-10-22T05:13:20.638071Z"
+    },
+    {
+      "name": "minimax.download_video",
+      "endpoint": "https://public-cdn-video-data-algeng.oss-cn-wulanchabu.aliyuncs.com/inference_output%2Fvideo%2F2026-10-22%2F470cfc6d-ccf2-484d-a94c-a013e5d6d76f%2Foutput_aigc.mp4?Expires=1792732432&OSSAccessKeyId=LTAI5tAmwsjSaaZVA6cEFAUu&Signature=%2BYhveZNd6J03nSAe4XLyUbI%2Fhtg%3D",
+      "method": "GET",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 14.203,
+      "shot_id": null,
+      "request": {
+        "task_id": "455037107159555"
+      },
+      "response": {
+        "output_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_02.mp4",
+        "size_bytes": 865522
+      },
+      "ts": "2026-10-22T05:14:07.535978Z"
+    },
+    {
+      "name": "minimax.poll_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video/455037107159555",
+      "method": "GET",
+      "status": 200,
+      "ok": true,
+      "duration_seconds": -1792571118.997,
+      "shot_id": null,
+      "request": {
+        "task_id": "455037107159555",
+        "timeout_seconds": 300
+      },
+      "response": {
+        "status": "Success",
+        "polls": 8
+      },
+      "ts": "2026-10-22T05:14:07.564945Z"
+    },
+    {
+      "name": "minimax.poll_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video/455037107159555",
+      "method": "GET",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 111.066,
+      "shot_id": "shot_02",
+      "request": {
+        "task_id": "455037107159555",
+        "timeout_seconds": 300
+      },
+      "response": {
+        "output_rel_path": "media/raw_clips/shot_02.mp4",
+        "size_bytes": 865522
+      },
+      "ts": "2026-10-22T05:14:07.572531Z"
+    },
+    {
+      "name": "minimax.download_video",
+      "endpoint": "https://public-cdn-video-data-algeng.oss-cn-wulanchabu.aliyuncs.com/inference_output%2Fvideo%2F2026-10-22%2F3dcac730-5617-4523-946e-ee08e6e58d5a%2Foutput_aigc.mp4?Expires=1792732484&OSSAccessKeyId=LTAI5tAmwsjSaaZVA6cEFAUu&Signature=Oh8ZTOB0jgiY3sGb59IMRM5XKxs%3D",
+      "method": "GET",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 4.532,
+      "shot_id": null,
+      "request": {
+        "task_id": "455035381424666"
+      },
+      "response": {
+        "output_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_04.mp4",
+        "size_bytes": 1097055
+      },
+      "ts": "2026-10-22T05:14:50.310009Z"
+    },
+    {
+      "name": "minimax.poll_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video/455035381424666",
+      "method": "GET",
+      "status": 200,
+      "ok": true,
+      "duration_seconds": -1792571076.997,
+      "shot_id": null,
+      "request": {
+        "task_id": "455035381424666",
+        "timeout_seconds": 300
+      },
+      "response": {
+        "status": "Success",
+        "polls": 13
+      },
+      "ts": "2026-10-22T05:14:50.320469Z"
+    },
+    {
+      "name": "minimax.poll_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video/455035381424666",
+      "method": "GET",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 153.063,
+      "shot_id": "shot_04",
+      "request": {
+        "task_id": "455035381424666",
+        "timeout_seconds": 300
+      },
+      "response": {
+        "output_rel_path": "media/raw_clips/shot_04.mp4",
+        "size_bytes": 1097055
+      },
+      "ts": "2026-10-22T05:14:50.324090Z"
+    },
+    {
+      "name": "minimax.upload_first_frame",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/storage/upload",
+      "method": "POST",
+      "status": 200,
+      "ok": true,
+      "duration_seconds": 3.111,
+      "shot_id": null,
+      "request": {
+        "file": "shot_07_clean.jpg",
+        "size_bytes": 223212
+      },
+      "response": {
+        "file_url": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F056e338f-a64c-4984-86ae-2aa49fff514c.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T051451Z&x-oss-expires=3600&x-oss-signature=eab47917074614002c004e700ce7fd7ba891db76eab63b00d761ea204c455abb&x-oss-signature-version=OSS4-HMAC-SHA256"
+      },
+      "ts": "2026-10-22T05:14:53.495160Z"
+    },
+    {
+      "name": "minimax.upload_first_frame",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/storage/upload",
+      "method": "POST",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 3.186,
+      "shot_id": "shot_07",
+      "request": {
+        "input_image": "keyframes/shot_07_clean.jpg"
+      },
+      "response": {
+        "file_url": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F056e338f-a64c-4984-86ae-2aa49fff514c.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T051451Z&x-oss-expires=3600&x-oss-signature=eab47917074614002c004e700ce7fd7ba891db76eab63b00d761ea204c455abb&x-oss-signature-version=OSS4-HMAC-SHA256"
+      },
+      "ts": "2026-10-22T05:14:53.570251Z"
+    },
+    {
+      "name": "minimax.download_video",
+      "endpoint": "https://public-cdn-video-data-algeng.oss-cn-wulanchabu.aliyuncs.com/inference_output%2Fvideo%2F2026-10-22%2F782f64d2-98bc-41fb-8bd7-aeeb3a7e5bde%2Foutput_aigc.mp4?Expires=1792732491&OSSAccessKeyId=LTAI5tAmwsjSaaZVA6cEFAUu&Signature=jRaXVUjG74s9atsHsRfZZcQmZCA%3D",
+      "method": "GET",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 1.625,
+      "shot_id": null,
+      "request": {
+        "task_id": "455037526847939"
+      },
+      "response": {
+        "output_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_05.mp4",
+        "size_bytes": 951156
+      },
+      "ts": "2026-10-22T05:14:53.652728Z"
+    },
+    {
+      "name": "minimax.poll_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video/455037526847939",
+      "method": "GET",
+      "status": 200,
+      "ok": true,
+      "duration_seconds": -1792571137.046,
+      "shot_id": null,
+      "request": {
+        "task_id": "455037526847939",
+        "timeout_seconds": 300
+      },
+      "response": {
+        "status": "Success",
+        "polls": 8
+      },
+      "ts": "2026-10-22T05:14:53.655918Z"
+    },
+    {
+      "name": "minimax.poll_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video/455037526847939",
+      "method": "GET",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 93.012,
+      "shot_id": "shot_05",
+      "request": {
+        "task_id": "455037526847939",
+        "timeout_seconds": 300
+      },
+      "response": {
+        "output_rel_path": "media/raw_clips/shot_05.mp4",
+        "size_bytes": 951156
+      },
+      "ts": "2026-10-22T05:14:53.658739Z"
+    },
+    {
+      "name": "minimax.submit_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video",
+      "method": "POST",
+      "status": 202,
+      "ok": true,
+      "duration_seconds": 8.177,
+      "shot_id": null,
+      "request": {
+        "model": "MiniMax-Hailuo-2.3",
+        "aspect_ratio": "9:16",
+        "duration": 6,
+        "input_image": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F056e338f-a64c-4984-86ae-2aa49fff514c.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T051451Z&x-oss-expires=3600&x-oss-signature=eab47917074614002c004e700ce7fd7ba891db76eab63b00d761ea204c455abb&x-oss-signature-version=OSS4-HMAC-SHA256",
+        "resolution": null,
+        "subject_reference": null,
+        "prompt_chars": 869
+      },
+      "response": {
+        "task_id": "455033813770605"
+      },
+      "ts": "2026-10-22T05:15:01.750186Z"
+    },
+    {
+      "name": "minimax.submit_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video",
+      "method": "POST",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 8.219,
+      "shot_id": "shot_07",
+      "request": {
+        "model": "MiniMax-Hailuo-2.3",
+        "prompt_chars": 869,
+        "duration": 6,
+        "aspect_ratio": "9:16",
+        "resolution": null,
+        "input_image": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F056e338f-a64c-4984-86ae-2aa49fff514c.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T051451Z&x-oss-expires=3600&x-oss-signature=eab47917074614002c004e700ce7fd7ba891db76eab63b00d761ea204c455abb&x-oss-signature-version=OSS4-HMAC-SHA256",
+        "subject_reference": null
+      },
+      "response": {
+        "task_id": "455033813770605"
+      },
+      "ts": "2026-10-22T05:15:01.792480Z"
+    },
+    {
+      "name": "minimax.upload_first_frame",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/storage/upload",
+      "method": "POST",
+      "status": "error",
+      "ok": false,
+      "duration_seconds": 84.086,
+      "shot_id": null,
+      "request": {
+        "file": "shot_06_clean.jpg",
+        "size_bytes": 248322
+      },
+      "response": null,
+      "ts": "2026-10-22T05:15:31.736114Z"
+    },
+    {
+      "name": "minimax.upload_first_frame",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/storage/upload",
+      "method": "POST",
+      "status": "error",
+      "ok": false,
+      "duration_seconds": 84.103,
+      "shot_id": "shot_06",
+      "request": {
+        "input_image": "keyframes/shot_06_clean.jpg"
+      },
+      "response": null,
+      "ts": "2026-10-22T05:15:31.753442Z"
+    },
+    {
+      "name": "minimax.upload_first_frame",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/storage/upload",
+      "method": "POST",
+      "status": "error",
+      "ok": false,
+      "duration_seconds": 56.45,
+      "shot_id": null,
+      "request": {
+        "file": "shot_06_clean.jpg",
+        "size_bytes": 248322
+      },
+      "response": null,
+      "ts": "2026-10-22T05:16:35.072582Z"
+    },
+    {
+      "name": "minimax.upload_first_frame",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/storage/upload",
+      "method": "POST",
+      "status": "error",
+      "ok": false,
+      "duration_seconds": 56.496,
+      "shot_id": "shot_06",
+      "request": {
+        "input_image": "keyframes/shot_06_clean.jpg"
+      },
+      "response": null,
+      "ts": "2026-10-22T05:16:35.116737Z"
+    },
+    {
+      "name": "minimax.download_video",
+      "endpoint": "https://public-cdn-video-data-algeng.oss-cn-wulanchabu.aliyuncs.com/inference_output%2Fvideo%2F2026-10-22%2F8bdd1ad9-20f0-409a-bf07-e3d7575efd44%2Foutput_aigc.mp4?Expires=1792732595&OSSAccessKeyId=LTAI5tAmwsjSaaZVA6cEFAUu&Signature=qzFd2beBero3RAdWaKvswefj844%3D",
+      "method": "GET",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 1.816,
+      "shot_id": null,
+      "request": {
+        "task_id": "455033813770605"
+      },
+      "response": {
+        "output_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_07.mp4",
+        "size_bytes": 466222
+      },
+      "ts": "2026-10-22T05:16:38.475142Z"
+    },
+    {
+      "name": "minimax.poll_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video/455033813770605",
+      "method": "GET",
+      "status": 200,
+      "ok": true,
+      "duration_seconds": -1792571133.385,
+      "shot_id": null,
+      "request": {
+        "task_id": "455033813770605",
+        "timeout_seconds": 300
+      },
+      "response": {
+        "status": "Success",
+        "polls": 8
+      },
+      "ts": "2026-10-22T05:16:38.488049Z"
+    },
+    {
+      "name": "minimax.poll_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video/455033813770605",
+      "method": "GET",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 96.687,
+      "shot_id": "shot_07",
+      "request": {
+        "task_id": "455033813770605",
+        "timeout_seconds": 300
+      },
+      "response": {
+        "output_rel_path": "media/raw_clips/shot_07.mp4",
+        "size_bytes": 466222
+      },
+      "ts": "2026-10-22T05:16:38.504020Z"
+    },
+    {
+      "name": "minimax.upload_first_frame",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/storage/upload",
+      "method": "POST",
+      "status": 200,
+      "ok": true,
+      "duration_seconds": 3.648,
+      "shot_id": null,
+      "request": {
+        "file": "shot_06_clean.jpg",
+        "size_bytes": 248322
+      },
+      "response": {
+        "file_url": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F55907818-29ab-4b72-a56f-0e8c52a14595.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T051647Z&x-oss-expires=3600&x-oss-signature=cd6969815a08bde7a6dd97e8842c473a23abe8032d5b647de8145902b3b3ac57&x-oss-signature-version=OSS4-HMAC-SHA256"
+      },
+      "ts": "2026-10-22T05:16:50.127525Z"
+    },
+    {
+      "name": "minimax.upload_first_frame",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/storage/upload",
+      "method": "POST",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 3.69,
+      "shot_id": "shot_06",
+      "request": {
+        "input_image": "keyframes/shot_06_clean.jpg"
+      },
+      "response": {
+        "file_url": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F55907818-29ab-4b72-a56f-0e8c52a14595.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T051647Z&x-oss-expires=3600&x-oss-signature=cd6969815a08bde7a6dd97e8842c473a23abe8032d5b647de8145902b3b3ac57&x-oss-signature-version=OSS4-HMAC-SHA256"
+      },
+      "ts": "2026-10-22T05:16:50.168525Z"
+    },
+    {
+      "name": "minimax.submit_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video",
+      "method": "POST",
+      "status": 202,
+      "ok": true,
+      "duration_seconds": 6.158,
+      "shot_id": null,
+      "request": {
+        "model": "MiniMax-Hailuo-2.3",
+        "aspect_ratio": "9:16",
+        "duration": 6,
+        "input_image": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F55907818-29ab-4b72-a56f-0e8c52a14595.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T051647Z&x-oss-expires=3600&x-oss-signature=cd6969815a08bde7a6dd97e8842c473a23abe8032d5b647de8145902b3b3ac57&x-oss-signature-version=OSS4-HMAC-SHA256",
+        "resolution": null,
+        "subject_reference": null,
+        "prompt_chars": 1332
+      },
+      "response": {
+        "task_id": "455037630271823"
+      },
+      "ts": "2026-10-22T05:16:56.338780Z"
+    },
+    {
+      "name": "minimax.submit_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video",
+      "method": "POST",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 6.193,
+      "shot_id": "shot_06",
+      "request": {
+        "model": "MiniMax-Hailuo-2.3",
+        "prompt_chars": 1332,
+        "duration": 6,
+        "aspect_ratio": "9:16",
+        "resolution": null,
+        "input_image": "https://matrix-internal.oss-us-east-1.aliyuncs.com/user_file_upload_tmp%2F2026-10-22%2F55907818-29ab-4b72-a56f-0e8c52a14595.jpg?x-oss-credential=LTAI5t9dXq2sLrMZ8f1XfiFZ%2F20261022%2Fus-east-1%2Foss%2Faliyun_v4_request&x-oss-date=20261022T051647Z&x-oss-expires=3600&x-oss-signature=cd6969815a08bde7a6dd97e8842c473a23abe8032d5b647de8145902b3b3ac57&x-oss-signature-version=OSS4-HMAC-SHA256",
+        "subject_reference": null
+      },
+      "response": {
+        "task_id": "455037630271823"
+      },
+      "ts": "2026-10-22T05:16:56.373123Z"
+    },
+    {
+      "name": "minimax.download_video",
+      "endpoint": "https://public-cdn-video-data-algeng.oss-cn-wulanchabu.aliyuncs.com/inference_output%2Fvideo%2F2026-10-22%2Faa4efaf1-e928-445b-a0fb-2cca938a6801%2Foutput_aigc.mp4?Expires=1792732721&OSSAccessKeyId=LTAI5tAmwsjSaaZVA6cEFAUu&Signature=ipd2nUjwB%2FWC8%2BQC3Nzl6AFm7OE%3D",
+      "method": "GET",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 1.058,
+      "shot_id": null,
+      "request": {
+        "task_id": "455037630271823"
+      },
+      "response": {
+        "output_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_06.mp4",
+        "size_bytes": 796507
+      },
+      "ts": "2026-10-22T05:18:43.951749Z"
+    },
+    {
+      "name": "minimax.poll_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video/455037630271823",
+      "method": "GET",
+      "status": 200,
+      "ok": true,
+      "duration_seconds": -1792571122.454,
+      "shot_id": null,
+      "request": {
+        "task_id": "455037630271823",
+        "timeout_seconds": 300
+      },
+      "response": {
+        "status": "Success",
+        "polls": 9
+      },
+      "ts": "2026-10-22T05:18:43.987139Z"
+    },
+    {
+      "name": "minimax.poll_video",
+      "endpoint": "https://aiapi.2tocom.space/v1/media/video/455037630271823",
+      "method": "GET",
+      "status": "ok",
+      "ok": true,
+      "duration_seconds": 107.613,
+      "shot_id": "shot_06",
+      "request": {
+        "task_id": "455037630271823",
+        "timeout_seconds": 300
+      },
+      "response": {
+        "output_rel_path": "media/raw_clips/shot_06.mp4",
+        "size_bytes": 796507
+      },
+      "ts": "2026-10-22T05:18:43.999401Z"
+    }
+  ],
+  "counters": {
+    "events": 747,
+    "errors": 160,
+    "warnings": 19
+  },
+  "last_event": {
+    "seq": 747,
+    "ts": "2026-10-22T05:20:54.159667Z",
+    "type": "run_failed",
+    "stage": null,
+    "level": "error",
+    "text": "Verification gates failed (overall: FAILED)"
+  }
+}

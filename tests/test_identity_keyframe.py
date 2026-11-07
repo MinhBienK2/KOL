@@ -109,7 +109,7 @@ def test_synthesized_first_frames_follow_the_scene_prompt(tmp_path: Path, monkey
 
     calls = []
 
-    def fake_synth(prompt, out_path, reference_paths):
+    def fake_synth(prompt, out_path, reference_paths, provider="flow2api"):
         calls.append((prompt, [Path(p).name for p in reference_paths]))
         Image.new("RGB", (1080, 1920), (90, 60, 30)).save(out_path)
         return out_path
@@ -138,7 +138,7 @@ def test_synthesized_first_frames_follow_the_scene_prompt(tmp_path: Path, monkey
 def test_failed_synthesis_stops_stage_4_without_padding_a_reference(tmp_path: Path, monkeypatch):
     from pipeline import identity_keyframe
 
-    def boom(prompt, out_path, reference_paths):
+    def boom(prompt, out_path, reference_paths, provider="flow2api"):
         raise RuntimeError("Failed to obtain reCAPTCHA token")
 
     monkeypatch.setattr(identity_keyframe, "synthesize_first_frame", boom)
@@ -157,7 +157,7 @@ def test_per_shot_synthesis_references(tmp_path: Path, monkeypatch):
 
     seen = {}
 
-    def fake_synth(prompt, out_path, reference_paths):
+    def fake_synth(prompt, out_path, reference_paths, provider="flow2api"):
         seen[out_path.name] = [Path(p).name for p in reference_paths]
         Image.new("RGB", (1080, 1920), (1, 2, 3)).save(out_path)
         return out_path
@@ -177,6 +177,28 @@ def test_per_shot_synthesis_references(tmp_path: Path, monkeypatch):
     kf_map = {kf.shot_id: kf for kf in manifest.keyframes}
     assert seen[f"{first}_synth.png"] == ["face_anchor.png"]
     assert kf_map[second].keyframe_source == "synthesized"
+
+
+def test_minimax_provider_is_text_only_and_recorded(tmp_path: Path, monkeypatch):
+    from pipeline import identity_keyframe
+
+    calls = []
+
+    def fake_synth(prompt, out_path, reference_paths, provider="flow2api"):
+        calls.append((prompt, provider))
+        Image.new("RGB", (1080, 1920), (90, 60, 30)).save(out_path)
+        return out_path
+
+    monkeypatch.setattr(identity_keyframe, "synthesize_first_frame", fake_synth)
+    plan, product = _fashion_plan(tmp_path)
+    manifest = generate_clean_keyframes(
+        scene_plan=plan, output_dir=tmp_path, keyframes_dir=tmp_path / "keyframes",
+        reference_overrides={"product_hero": str(product)}, synthesize_frames=True, image_provider="minimax",
+    )
+    assert calls and all(provider == "minimax" and "Reference image" not in prompt for prompt, provider in calls)
+    assert all(kf.keyframe_source == "synthesized" and kf.synthesis_provider == "minimax" for kf in manifest.keyframes)
+    with pytest.raises(ValueError, match="image_provider"):
+        generate_clean_keyframes(scene_plan=plan, output_dir=tmp_path, synthesize_frames=True, image_provider="dalle")
 
 
 def test_per_shot_synthesis_opt_out_is_rejected(tmp_path: Path):

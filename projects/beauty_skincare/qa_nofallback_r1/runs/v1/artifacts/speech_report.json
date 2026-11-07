@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "model": "whisper-1",
+  "language": "vi",
+  "metric": "cer",
+  "threshold": 0.35,
+  "verified_shots": 7,
+  "shots": [
+    {
+      "shot_id": "shot_01",
+      "expected": "Từng chi tiết nhỏ... nâng tầm trải nghiệm mỗi ngày.",
+      "status": "verified",
+      "transcript": "từng chi tiết nhỏ nâng tầm trải nghiệm mỗi ngày",
+      "wer": 0.0,
+      "cer": 0.0,
+      "cer_unaccented": 0.0,
+      "ok": true
+    },
+    {
+      "shot_id": "shot_02",
+      "expected": "Khi làn da thiếu nước, bạn cần một điều đơn giản hơn.",
+      "status": "verified",
+      "transcript": "Khi làn da thiếu nước, bạn cần một điều đơn giản hơn",
+      "wer": 0.0,
+      "cer": 0.0,
+      "cer_unaccented": 0.0,
+      "ok": true
+    },
+    {
+      "shot_id": "shot_03",
+      "expected": "Serum dưỡng 10% HA 30ml kết hợp Niacinamide và HA.",
+      "status": "verified",
+      "transcript": "Serum dưỡng 10% B3 mụn kết hợp niacinamide và HA.",
+      "wer": 0.2,
+      "cer": 0.1282,
+      "cer_unaccented": 0.1282,
+      "ok": true
+    },
+    {
+      "shot_id": "shot_04",
+      "expected": "Hỗ trợ làn da sáng hơn, đều màu hơn và mờ vết thâm.",
+      "status": "verified",
+      "transcript": "Hỗ trợ làn da sáng hơn, đều màu hơn và mờ vết thâm.",
+      "wer": 0.0,
+      "cer": 0.0,
+      "cer_unaccented": 0.0,
+      "ok": true
+    },
+    {
+      "shot_id": "shot_05",
+      "expected": "Công thức dưỡng và phục hồi giúp chăm sóc làn da thiếu nước.",
+      "status": "verified",
+      "transcript": "Công thức dưỡng và phục hồi giúp chăm sóc làn da thiếu nước",
+      "wer": 0.0,
+      "cer": 0.0,
+      "cer_unaccented": 0.0,
+      "ok": true
+    },
+    {
+      "shot_id": "shot_06",
+      "expected": "Từng đường nét trông đồng đều hơn trong mỗi lần chăm da.",
+      "status": "verified",
+      "transcript": "từng đường nét trông đều hơn trong mỗi lần chăm da",
+      "wer": 0.0833,
+      "cer": 0.0909,
+      "cer_unaccented": 0.0909,
+      "ok": true
+    },
+    {
+      "shot_id": "shot_07",
+      "expected": "Thêm Serum dưỡng 10% HA 30ml vào góc chăm da của bạn.",
+      "status": "verified",
+      "transcript": "Thêm serum dưỡng 10% HA30 vào góc chăm da của bạn",
+      "wer": 0.1667,
+      "cer": 0.05,
+      "cer_unaccented": 0.05,
+      "ok": true
+    }
+  ]
+}

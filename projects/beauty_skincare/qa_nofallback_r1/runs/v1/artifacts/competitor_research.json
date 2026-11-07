@@ -1,0 +1,132 @@
+{
+  "campaign_id": "qa_nofallback_r1",
+  "product_url": null,
+  "product_intel": {
+    "title": "Serum dưỡng sáng mờ thâm phục hồi da Niacinamide 10% HA 30ml",
+    "brand": "",
+    "category": "Serum dưỡng da",
+    "product_archetype": "beauty_skincare",
+    "pricing": {
+      "current_price": 0.0,
+      "original_price": 0.0,
+      "currency": "VND",
+      "discount_percent": 0,
+      "price_tier": "mid-range"
+    },
+    "features": [
+      "Niacinamide 10%",
+      "HA",
+      "Dưỡng sáng",
+      "Mờ thâm",
+      "Phục hồi da",
+      "Dung tích 30ml"
+    ],
+    "dramatic_benefits": [
+      "Hỗ trợ làn da sáng hơn và đều màu hơn nhờ thành phần dưỡng sáng Niacinamide 10%.",
+      "Giúp làm mờ các vết thâm để da trông đồng đều hơn.",
+      "Kết hợp HA trong công thức dưỡng và phục hồi da, giúp chăm sóc làn da thiếu nước."
+    ],
+    "target_personas": [
+      "Người có làn da xỉn, không đều màu.",
+      "Người muốn cải thiện vết thâm và chăm sóc da bằng serum.",
+      "Người tìm sản phẩm dưỡng sáng, mờ thâm và phục hồi da."
+    ],
+    "awareness_level": "Problem Aware",
+    "objection_matrix": [
+      {
+        "objection": "Sản phẩm có thực sự chứa nồng độ Niacinamide được nêu trong mô tả không?",
+        "counter_evidence": "Nội dung sản phẩm ghi rõ Niacinamide 10% và HA trong thành phần.",
+        "demonstration_technique": "Hiển thị trực tiếp nhãn bao bì hoặc thông tin thành phần, zoom rõ vào dòng Niacinamide 10% và HA; không dùng phép đo hiệu quả ngoài thông tin đã cung cấp."
+      },
+      {
+        "objection": "Một serum có phù hợp với nhu cầu dưỡng sáng và mờ thâm không?",
+        "counter_evidence": "Mô tả sản phẩm nêu rõ các công dụng dưỡng sáng, mờ thâm và phục hồi da.",
+        "demonstration_technique": "Quay cận cảnh quy trình thoa serum lên da và so sánh hình ảnh bề mặt da trước và sau khi dùng; chỉ mô tả là hỗ trợ, không khẳng định kết quả chắc chắn."
+      },
+      {
+        "objection": "Sản phẩm có đủ lượng để sử dụng hàng ngày không?",
+        "counter_evidence": "Dung tích sản phẩm được ghi rõ là 30ml.",
+        "demonstration_technique": "Đặt chai serum cạnh một vật chuẩn hoặc thẻ đo để thể hiện dung tích thực tế theo thông tin 30ml; không suy diễn số lần sử dụng."
+      },
+      {
+        "objection": "Sản phẩm có dưỡng và phục hồi da như công bố không?",
+        "counter_evidence": "Thành phần HA và các thuật ngữ dưỡng, phục hồi da xuất hiện trong mô tả sản phẩm.",
+        "demonstration_technique": "Quay cận cảnh lớp serum sau khi thoa để thấy độ ẩm bề mặt và độ đồng nhất của lớp sản phẩm; không tạo bằng chứng y khoa ngoài dữ liệu nguồn."
+      }
+    ],
+    "sensory_anchors": [
+      "Bề mặt serum trong suốt hoặc hơi nhớt, đặt lên tay và tạo cảm giác dưỡng khi thoa đều.",
+      "Cận cảnh lớp serum được thoa trên da, với độ ẩm và độ bóng tự nhiên nhưng không tạo hiệu ứng không có trong mô tả.",
+      "Chai dung tích 30ml đặt cạnh góc bàn sạch sẽ, tạo hình ảnh đóng gói gọn gàng.",
+      "Ánh sáng chiếu qua lớp serum trên mu bàn tay để người xem nhìn rõ kết cấu và khả năng tán."
+    ],
+    "source": "llm"
+  },
+  "competitor_landscape": {
+    "saturated_angles": [
+      "Khoe da trắng sáng sau 7 ngày với before/after mờ ảo",
+      "KOL da đẹp sẵn review serum niacinamide quen thuộc",
+      "So sánh serum đắt tiền vs serum giá rẻ, khẳng định tiết kiệm",
+      "Drop test kết cấu serum chảy trên tay kèm nhạc ASMR",
+      "Hype 'thần thánh hóa' niacinamide 10% như phát minh mới"
+    ],
+    "competitor_weaknesses": [
+      "Khách phàn nàn serum chỉ chứa 2-5% niacinamide thực tế, không đủ liều để mờ thâm",
+      "Texture quá đặc gây bết dính, vón cục khi layer với kem chống nắng",
+      "Chai 30ml hết siêu nhanh, dùng 2 tuần đã cạn, tốn kém dài hạn",
+      "Gây châm chích, đỏ da, lên mụn ở người có da nhạy cảm",
+      "Hiệu quả mờ thâm chậm, phải dùng 2-3 tháng mới thấy, dễ bỏ cuộc"
+    ],
+    "whitespace_opportunities": [
+      "Lab test trực tiếp nồng độ niacinamide bằng phản ứng hóa học — chứng minh sản phẩm chứa ĐỦ 10% như cam kết, đánh vào nỗi lo bị gian lận",
+      "Micro-scoop đo lượng serum cần cho mỗi lần dùng + tính toán 30ml dùng được bao lâu, xóa nghi ngờ 'chai nhỏ dùng 1 tuần'",
+      "Demo HA cấp nước trên khăn giấy khô trước/sau, visual visceral, đánh vào nghi ngờ 'HA có thật trong chai không'",
+      "Format 'POV lật mặt serum giả' — vạch trẻ dấu hiệu serum niacinamide dởm trên thị trường, định vị mình là hàng chuẩn liều",
+      "Stop-motion vết thâm mờ dần cùng tone da đều hơn sau 14 ngày, kèm timestamp từng ngày tạo cảm giác scientific journey"
+    ]
+  },
+  "viral_hook_library": [
+    {
+      "hook_type": "shock_interrupt",
+      "spoken_line": "Serum niacinamide 10% giá rẻ — 90% là DỐI, đây là bằng chứng.",
+      "visual_action": "Tay cầm ống nghiệm đổ serum vào dung dịch thuốc thử — màu chuyển đậm, màn hình zoom cận cận phản ứng sủi bọt",
+      "on_screen_text": "THỬ NGAY: SERUM BẠN ĐANG DÙNG CÓ 10% KHÔNG?",
+      "retention_mechanism": "Cú sốc bị phản bội (audience đang dùng serum giá rẻ bị challenge), kèm bằng chứng khoa học trực tiếp trong 1.5s tạo credibility loop, không thể swipe vì cần xem kết quả",
+      "projected_stop_ratio": 0.91
+    },
+    {
+      "hook_type": "contrarian_debunking",
+      "spoken_line": "Đừng mua serum mờ thâm nếu trên nhãn KHÔNG có số này.",
+      "visual_action": "Close-up chai serum đối thủ bị gạch chéo đỏ X, sau đó zoom cận nhãn sản phẩm mình với '10% NIACINAMIDE' in đậm",
+      "on_screen_text": "BÍ MẬT: SỐ NÀY QUYẾT ĐỊNH HẾT HIỆU QUẢ",
+      "retention_mechanism": "Pattern interrupt bằng cảnh báo cấm đoán, kích hoạt FOMO 'mình đang dùng sai', tạo open loop phải xem đến cuối để biết con số nào",
+      "projected_stop_ratio": 0.87
+    },
+    {
+      "hook_type": "sensory_asmr",
+      "spoken_line": "Nghe tiếng này — chai serum 30ml này dày đặc hơn bạn tưởng.",
+      "visual_action": "Macro quay giọt serum rơi xuống mặt kính, ánh sáng rim light bắt từng bong bóng HA li ti, slow-motion 120fps kèm ASMR drip sound",
+      "on_screen_text": "1 GIỌT = CẤP NƯỚC CẢ NGÀY 😳",
+      "retention_mechanism": "Visceral sensory trigger — kết hợp thính giác + thị giác tạo dopamine hit, đối tượng skincare nữ 18-30 cực kỳ dwell-time với texture shot",
+      "projected_stop_ratio": 0.84
+    },
+    {
+      "hook_type": "problem_agitation",
+      "spoken_line": "Dùng serum 2 tháng vết thâm KHÔNG mờ — lý do nằm ở 1 chỗ.",
+      "visual_action": "POV tay cầm serum hết 2/3 chai, zoom cận vết thâm trên gò má không đổi, mặt người xem nhìn vào gương thở dài",
+      "on_screen_text": "DA BẠN KHÔNG HẾT THÂM VÌ THIẾU CÁI NÀY",
+      "retention_mechanism": "Hit cực mạnh vào nỗi đau mờ thâm kinh niên, đối tượng mục tiêu thấy chính mình trong 1.5s, open loop 'thiếu cái này' bắt buộc xem tiếp",
+      "projected_stop_ratio": 0.89
+    },
+    {
+      "hook_type": "pov_story",
+      "spoken_line": "Bạn cùng phòng cầm chai serum của tôi, đọc xong tá hỏa không dám dùng.",
+      "visual_action": "POV first-person mở cửa phòng, thấy bạn cùng phòng đang cầm chai lật đi lật lại với vẻ mặt sốc, nhạc suspense nhẹ dâng lên",
+      "on_screen_text": "CÔ ẤY VỪA PHÁT HIỆN ĐIỀU NÀY TRONG SERUM TÔI…",
+      "retention_mechanism": "Social drama + curiosity gap, tận dụng tâm lý eavesdropping, người xem phải xem để biết 'cô ấy phát hiện gì', kết hợp được cả yếu tố giải trí lẫn product reveal",
+      "projected_stop_ratio": 0.86
+    }
+  ],
+  "primary_persona": "Người có làn da xỉn, không đều màu.",
+  "price_anchor_strategy": ""
+}

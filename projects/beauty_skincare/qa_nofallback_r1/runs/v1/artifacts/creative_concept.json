@@ -1,0 +1,105 @@
+{
+  "campaign_id": "qa_nofallback_r1",
+  "product_name": "Serum dưỡng sáng mờ thâm phục hồi da Niacinamide 10% HA 30ml",
+  "concept_options": [
+    {
+      "angle_id": "angle_b_aesthetic_sensory",
+      "angle_archetype": "aesthetic_sensory_asmr",
+      "title": "Chuẩn Mực Tinh Tế: Trải Nghiệm Cùng Serum dưỡng sáng mờ thâm",
+      "target_audience_segment": "Tín đồ phong cách sống tinh tế, thích thẩm mỹ tối giản và chi tiết hoàn thiện",
+      "character_role": "model",
+      "audio_strategy": "asmr_hybrid",
+      "hook_strategy": {
+        "spoken_hook": "Từng chi tiết nhỏ... nâng tầm toàn bộ trải nghiệm mỗi ngày của bạn.",
+        "visual_hook": "Cú lướt camera macro siêu nét bắt sáng bề mặt chất liệu; âm thanh: Bề mặt serum trong suốt hoặc hơi nhớt, đặt lên tay và tạo cảm giác dưỡng khi thoa đều.",
+        "on_screen_text": "ĐẲNG CẤP TỪNG ĐƯỜNG NÉT",
+        "retention_trigger": "Kích thích dopamine thị giác và thính giác ASMR sang trọng"
+      },
+      "narrative_arc": [
+        "0-3s: Cận cảnh macro bóng bẩy với âm thanh thao tác thỏa mãn",
+        "3-7s: Người mẫu hòa mình trong không gian sống tối giản, hiện đại",
+        "7-15s: Từng chi tiết vận hành mượt mà, tĩnh lặng và đẳng cấp",
+        "15-20s: Cảm giác tự hào và thăng hoa khi sở hữu món đồ tinh xảo",
+        "20-25s: CTA thanh lịch, nâng cấp trải nghiệm ngay hôm nay"
+      ],
+      "conversion_thesis": "Tạo khao khát sở hữu phong cách sống (lifestyle aspiration), giảm nhạy cảm về giá.",
+      "projected_retention_score": 8.7,
+      "projected_conversion_score": 8.8
+    },
+    {
+      "angle_id": "angle_c_problem_agitation",
+      "angle_archetype": "direct_problem_agitation",
+      "title": "Chấm Dứt Phiền Toái Cùng Serum dưỡng sáng mờ thâm",
+      "target_audience_segment": "Người bận rộn thường xuyên gặp sự cố phiền toái hằng ngày",
+      "character_role": "presenter",
+      "audio_strategy": "on_camera_speech",
+      "hook_strategy": {
+        "spoken_hook": "Từng phát điên vì chuyện này chưa: Sản phẩm có thực sự chứa nồng?",
+        "visual_hook": "Dựng lại tình huống khó chịu quen thuộc: Sản phẩm có thực sự chứa nồng; nhân vật bất lực, bực bội",
+        "on_screen_text": "THẢM CẢNH QUEN THUỘC?",
+        "retention_trigger": "Khơi gợi cảm xúc ức chế và sự đồng cảm tình huống sâu sắc"
+      },
+      "narrative_arc": [
+        "0-3s: Tái hiện tình huống khó chịu quen thuộc",
+        "3-7s: Phân tích tổn thất về thời gian, tiền bạc và tâm trạng khi dùng đồ kém phù hợp",
+        "7-15s: Serum dưỡng sáng mờ thâm xuất hiện như giải pháp cứu cánh",
+        "15-20s: Chứng minh hiệu quả bằng thao tác thực tế trước ống kính",
+        "20-25s: Kêu gọi hành động rõ ràng, nhấp link giỏ hàng bên dưới"
+      ],
+      "conversion_thesis": "Kỹ thuật Agitate Pain -> Relieve Solution kinh điển của Direct Response, thôi thúc mua ngay để giải thoát.",
+      "projected_retention_score": 8.9,
+      "projected_conversion_score": 9.5
+    },
+    {
+      "angle_id": "angle_a_shock_interrupt",
+      "angle_archetype": "shock_pattern_interrupt",
+      "title": "Thử Thách Cực Hạn: Phá Vỡ Mọi Giới Hạn Của Serum dưỡng sáng mờ thâm",
+      "target_audience_segment": "Người trẻ thích khám phá, người mua thực tế đòi hỏi độ bền tuyệt đối",
+      "character_role": "presenter",
+      "audio_strategy": "on_camera_speech",
+      "hook_strategy": {
+        "spoken_hook": "Đừng dại mua Serum dưỡng sáng mờ thâm nếu bạn chưa xem màn thử thách này!",
+        "visual_hook": "Mở đầu bằng khoảnh khắc gây sốc: Hiển thị trực tiếp nhãn bao bì hoặc thông tin thành phần, zoom rõ vào dòng Niacinamide 10% và HA; không dùng phép đo hiệu quả ngoài thông tin đã cung cấp.",
+        "on_screen_text": "THỬ THÁCH ĐỘ BỀN CỰC HẠN!",
+        "retention_trigger": "Pattern interrupt gây sốc thị giác, phá tan phản xạ lướt qua"
+      },
+      "narrative_arc": [
+        "0-3s: Hiển thị trực tiếp nhãn bao bì hoặc thông tin thành phần, zoom rõ vào dòng Niacinamide 10% và HA; không dùng phép đo hiệu quả ngoài thông tin đã cung cấp.",
+        "3-7s: Vạch trần sự phiền toái của các loại hàng kém chất lượng trên thị trường",
+        "7-15s: Mổ xẻ các điểm khác biệt giải quyết triệt để vấn đề",
+        "15-20s: Bẻ gãy nỗi lo của khách hàng bằng bằng chứng thị giác thực tế",
+        "20-25s: Kêu gọi hành động rõ ràng, nhấp link giỏ hàng bên dưới"
+      ],
+      "conversion_thesis": "Bằng chứng thị giác trực diện (Proof-First) thuyết phục ngay cả những khách hàng hoài nghi nhất.",
+      "projected_retention_score": 9.1,
+      "projected_conversion_score": 9.3
+    }
+  ],
+  "winning_concept": {
+    "selected_angle_id": "angle_b_aesthetic_sensory",
+    "selection_rationale": "Chọn 'Chuẩn Mực Tinh Tế: Trải Nghiệm Cùng Serum dưỡng sáng mờ thâm': phù hợp archetype beauty_skincare, mức nhận thức 'Problem Aware', điểm kỳ vọng retention 8.7/conversion 8.8; vai trò model và audio asmr_hybrid hợp lệ với archetype.",
+    "confidence_score": 0.8,
+    "directorial_directives": {
+      "camera_pacing": "Nhịp cắt chậm, chuyển động macro mượt bám theo nhịp nhạc, giữ nhịp thở thị giác (chuyển động chính: macro_push_in, orbit)",
+      "lighting_mood": "beauty_high_key @ 5600K, ánh sáng khuếch tán mềm làm nổi chất liệu và bề mặt",
+      "key_visual_anchor": "Bề mặt serum trong suốt hoặc hơi nhớt, đặt lên tay và tạo cảm giác dưỡng khi thoa đều.",
+      "audio_mix_priority": "foley_and_music_first"
+    }
+  },
+  "metadata": {
+    "generator": "deterministic_fallback",
+    "research_grounded": true,
+    "angle_scores": {
+      "angle_a_shock_interrupt": 0.752,
+      "angle_b_aesthetic_sensory": 0.925,
+      "angle_c_problem_agitation": 0.892
+    },
+    "winner_repaired": true,
+    "role_adjustments": [],
+    "hook_lint": {
+      "angle_a_shock_interrupt": [
+        "spoken_hook has 16 words (max 15 for a 0-3s hook)"
+      ]
+    }
+  }
+}

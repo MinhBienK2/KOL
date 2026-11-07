@@ -1,0 +1,106 @@
+{
+  "ok": false,
+  "status": "verification_failed",
+  "exit_code": 3,
+  "project_id": "qa_nofallback_r1",
+  "topic": "beauty_skincare",
+  "version": "v1",
+  "from_stage": 5,
+  "workspace_root": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1",
+  "artifacts_dir": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/artifacts",
+  "failed_stage": 8,
+  "error": "Overall: FAILED (prompt_ledger_audit_gate: Master contains placeholder/degraded content: shot_02 (degraded_from=R2V); shot_04 (degraded_from=R2V); shot_05 (degraded_from=R2V); shot_06 (degraded_from=R2V); face_identity_gate: shot_02 keyframe: similarity 0.133 below threshold 0.363; shot_02 clip: similarity 0.075 below threshold 0.363; shot_04 keyframe: similarity 0.122 below threshold 0.363; shot_04 clip: similarity 0.136 below threshold 0.363; shot_05 keyframe: similarity 0.177 below threshold 0.363; shot_05 clip: similarity 0.193 below threshold 0.363; shot_06 keyframe: similarity 0.220 below threshold 0.363; shot_06 clip: similarity 0.074 below threshold 0.363)",
+  "failed_gates": [
+    {
+      "gate": "prompt_ledger_audit_gate",
+      "error": "Master contains placeholder/degraded content: shot_02 (degraded_from=R2V); shot_04 (degraded_from=R2V); shot_05 (degraded_from=R2V); shot_06 (degraded_from=R2V)"
+    },
+    {
+      "gate": "face_identity_gate",
+      "error": "shot_02 keyframe: similarity 0.133 below threshold 0.363; shot_02 clip: similarity 0.075 below threshold 0.363; shot_04 keyframe: similarity 0.122 below threshold 0.363; shot_04 clip: similarity 0.136 below threshold 0.363; shot_05 keyframe: similarity 0.177 below threshold 0.363; shot_05 clip: similarity 0.193 below threshold 0.363; shot_06 keyframe: similarity 0.220 below threshold 0.363; shot_06 clip: similarity 0.074 below threshold 0.363"
+    }
+  ],
+  "archetype": "beauty_skincare",
+  "archetype_source": "explicit",
+  "last_completed_stage": 7,
+  "estimate": {
+    "available": true,
+    "video_mode": "api",
+    "shots_total": 7,
+    "video_jobs": 5,
+    "video_jobs_cached": 2,
+    "video_seconds": 30.0,
+    "tts_calls": 7,
+    "tts_seconds": 28.0,
+    "image_calls": 0,
+    "paid_calls": 12,
+    "total_generated_seconds": 58.0,
+    "jobs": [
+      {
+        "shot_id": "shot_02",
+        "cache": "miss",
+        "submit": true,
+        "model": "MiniMax-Hailuo-2.3",
+        "mode": "I2V",
+        "duration": 6,
+        "resolution": null
+      },
+      {
+        "shot_id": "shot_04",
+        "cache": "miss",
+        "submit": true,
+        "model": "MiniMax-Hailuo-2.3",
+        "mode": "I2V",
+        "duration": 6,
+        "resolution": null
+      },
+      {
+        "shot_id": "shot_05",
+        "cache": "miss",
+        "submit": true,
+        "model": "MiniMax-Hailuo-2.3",
+        "mode": "I2V",
+        "duration": 6,
+        "resolution": null
+      },
+      {
+        "shot_id": "shot_06",
+        "cache": "miss",
+        "submit": true,
+        "model": "MiniMax-Hailuo-2.3",
+        "mode": "I2V",
+        "duration": 6,
+        "resolution": null
+      },
+      {
+        "shot_id": "shot_07",
+        "cache": "miss",
+        "submit": true,
+        "model": "MiniMax-Hailuo-2.3",
+        "mode": "I2V",
+        "duration": 6,
+        "resolution": null
+      }
+    ],
+    "by_model": {
+      "MiniMax-Hailuo-2.3": {
+        "kind": "video",
+        "calls": 5,
+        "seconds": 30.0,
+        "cost": null
+      },
+      "tts-1": {
+        "kind": "tts",
+        "calls": 7,
+        "seconds": 28.0,
+        "cost": null
+      }
+    },
+    "currency": null,
+    "estimated_cost": null,
+    "unpriced_models": [
+      "MiniMax-Hailuo-2.3",
+      "tts-1"
+    ]
+  }
+}

@@ -1,0 +1,173 @@
+{
+  "campaign_id": "qa_nofallback_r1",
+  "keyframes": [
+    {
+      "shot_id": "shot_01",
+      "image_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_01_synth.png",
+      "cleaned_image_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_01_clean.jpg",
+      "watermark_removed": true,
+      "width": 1080,
+      "height": 1920,
+      "generation_mode": "product_hero",
+      "reference_assets": [
+        "projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_01_synth.png"
+      ],
+      "keyframe_source": "synthesized",
+      "synthesis_references": [
+        "tasks/beauty_skincare/skin_serum/product_hero.png"
+      ],
+      "synthesis_error": null,
+      "synthesis_provider": "minimax",
+      "identity_vs_anchor": null
+    },
+    {
+      "shot_id": "shot_02",
+      "image_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_02_synth.png",
+      "cleaned_image_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_02_clean.jpg",
+      "watermark_removed": true,
+      "width": 1080,
+      "height": 1920,
+      "generation_mode": "r2v",
+      "reference_assets": [
+        "assets/characters/kol_main/outfits/minimalist_spa_silk/character_sheet.png",
+        "assets/characters/kol_main/face_anchor.png"
+      ],
+      "keyframe_source": "synthesized",
+      "synthesis_references": [
+        "assets/characters/kol_main/face_anchor.png",
+        "tasks/beauty_skincare/skin_serum/product_hero.png"
+      ],
+      "synthesis_error": null,
+      "synthesis_provider": "minimax",
+      "identity_vs_anchor": 0.1636
+    },
+    {
+      "shot_id": "shot_03",
+      "image_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_03_synth.png",
+      "cleaned_image_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_03_clean.jpg",
+      "watermark_removed": true,
+      "width": 1080,
+      "height": 1920,
+      "generation_mode": "product_hero",
+      "reference_assets": [
+        "projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_03_synth.png"
+      ],
+      "keyframe_source": "synthesized",
+      "synthesis_references": [
+        "tasks/beauty_skincare/skin_serum/product_hero.png"
+      ],
+      "synthesis_error": null,
+      "synthesis_provider": "minimax",
+      "identity_vs_anchor": null
+    },
+    {
+      "shot_id": "shot_04",
+      "image_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_04_synth.png",
+      "cleaned_image_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_04_clean.jpg",
+      "watermark_removed": true,
+      "width": 1080,
+      "height": 1920,
+      "generation_mode": "r2v",
+      "reference_assets": [
+        "assets/characters/kol_main/outfits/minimalist_spa_silk/character_sheet.png",
+        "assets/characters/kol_main/face_anchor.png"
+      ],
+      "keyframe_source": "synthesized",
+      "synthesis_references": [
+        "assets/characters/kol_main/face_anchor.png",
+        "tasks/beauty_skincare/skin_serum/product_hero.png"
+      ],
+      "synthesis_error": null,
+      "synthesis_provider": "minimax",
+      "identity_vs_anchor": 0.2085
+    },
+    {
+      "shot_id": "shot_05",
+      "image_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_05_synth.png",
+      "cleaned_image_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_05_clean.jpg",
+      "watermark_removed": true,
+      "width": 1080,
+      "height": 1920,
+      "generation_mode": "r2v",
+      "reference_assets": [
+        "assets/characters/kol_main/outfits/minimalist_spa_silk/character_sheet.png",
+        "assets/characters/kol_main/face_anchor.png"
+      ],
+      "keyframe_source": "synthesized",
+      "synthesis_references": [
+        "assets/characters/kol_main/face_anchor.png",
+        "tasks/beauty_skincare/skin_serum/product_hero.png"
+      ],
+      "synthesis_error": null,
+      "synthesis_provider": "minimax",
+      "identity_vs_anchor": 0.1089
+    },
+    {
+      "shot_id": "shot_06",
+      "image_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_06_synth.png",
+      "cleaned_image_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_06_clean.jpg",
+      "watermark_removed": true,
+      "width": 1080,
+      "height": 1920,
+      "generation_mode": "r2v",
+      "reference_assets": [
+        "assets/characters/kol_main/outfits/minimalist_spa_silk/character_sheet.png",
+        "assets/characters/kol_main/face_anchor.png"
+      ],
+      "keyframe_source": "synthesized",
+      "synthesis_references": [
+        "assets/characters/kol_main/face_anchor.png",
+        "tasks/beauty_skincare/skin_serum/product_hero.png"
+      ],
+      "synthesis_error": null,
+      "synthesis_provider": "minimax",
+      "identity_vs_anchor": 0.0136
+    },
+    {
+      "shot_id": "shot_07",
+      "image_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_07_synth.png",
+      "cleaned_image_path": "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_07_clean.jpg",
+      "watermark_removed": true,
+      "width": 1080,
+      "height": 1920,
+      "generation_mode": "product_hero",
+      "reference_assets": [
+        "projects/beauty_skincare/qa_nofallback_r1/runs/v1/keyframes/shot_07_synth.png"
+      ],
+      "keyframe_source": "synthesized",
+      "synthesis_references": [
+        "tasks/beauty_skincare/skin_serum/product_hero.png"
+      ],
+      "synthesis_error": null,
+      "synthesis_provider": "minimax",
+      "identity_vs_anchor": null
+    }
+  ],
+  "audio_stems": [
+    "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/audio/voice_shot_01.wav",
+    "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/audio/voice_shot_02.wav",
+    "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/audio/voice_shot_03.wav",
+    "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/audio/voice_shot_04.wav",
+    "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/audio/voice_shot_05.wav",
+    "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/audio/voice_shot_06.wav",
+    "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/audio/voice_shot_07.wav"
+  ],
+  "raw_video_clips": [
+    "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_01.mp4",
+    "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_02.mp4",
+    "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_03.mp4",
+    "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_04.mp4",
+    "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_05.mp4",
+    "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_06.mp4",
+    "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/raw_clips/shot_07.mp4"
+  ],
+  "synced_video_clips": [
+    "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/synced_clips/shot_01.mp4",
+    "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/synced_clips/shot_02.mp4",
+    "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/synced_clips/shot_03.mp4",
+    "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/synced_clips/shot_04.mp4",
+    "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/synced_clips/shot_05.mp4",
+    "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/synced_clips/shot_06.mp4",
+    "/home/pc599/Documents/KOL/projects/beauty_skincare/qa_nofallback_r1/runs/v1/media/synced_clips/shot_07.mp4"
+  ]
+}
