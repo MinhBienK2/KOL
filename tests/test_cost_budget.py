@@ -10,7 +10,7 @@ import pytest
 
 from pipeline.cost import estimate_for_workspace, estimate_paid_generation, load_unit_costs
 from pipeline.schemas import AssetManifestArtifact, KeyframeAsset, ScenePlanArtifact, ScriptArtifact, StoryboardShot
-from pipeline.video_engine import build_clip_request, clip_cache_status
+from pipeline.video_engine import DEFAULT_RESOLUTION, build_clip_request, clip_cache_status
 from pipeline.workspace import ProjectWorkspace
 from tests.test_helpers import create_test_clip
 from tools.director import EXIT_INVALID_INPUT, EXIT_OK, main as cli_main
@@ -56,7 +56,9 @@ def _cache_clip(ws: ProjectWorkspace, shot: StoryboardShot) -> None:
     """A valid cached diffusion clip whose fingerprint matches the shot's request."""
     clip = ws.raw_clips_dir / f"{shot.shot_id}.mp4"
     create_test_clip(PORTRAIT, clip, duration=3.0)
-    fp = build_clip_request(shot.shot_id, shot.prompt_6part, duration=shot.estimated_duration).fingerprint
+    fp = build_clip_request(
+        shot.shot_id, shot.prompt_6part, duration=shot.estimated_duration, resolution=DEFAULT_RESOLUTION
+    ).fingerprint
     clip.with_suffix(".meta.json").write_text(json.dumps({"fingerprint": fp}), encoding="utf-8")
     assert clip_cache_status(clip, fp) == "hit"
 
@@ -65,12 +67,12 @@ def test_estimate_counts_jobs_tts_and_seconds(ws: ProjectWorkspace):
     plan, manifest, script = _artifacts(ws)
     est = estimate_paid_generation(plan, manifest, script, ws.raw_clips_dir, unit_costs={})
     assert est["video_jobs"] == 3 and est["video_jobs_cached"] == 0
-    assert est["video_seconds"] == 6 + 6 + 10  # normalized Hailuo durations
+    assert est["video_seconds"] == 5 + 5 + 10  # normalized Pika durations (5s floor, 15s ceiling)
     assert est["tts_calls"] == 2  # the empty-text beat is silence, not a paid call
     assert est["image_calls"] == 0
-    assert est["total_generated_seconds"] == est["video_seconds"] + est["tts_seconds"] == 30.0
+    assert est["total_generated_seconds"] == est["video_seconds"] + est["tts_seconds"] == 28.0
     assert est["estimated_cost"] is None  # prices unknown by default
-    assert set(est["unpriced_models"]) == {"MiniMax-Hailuo-2.3", "tts-1"}
+    assert set(est["unpriced_models"]) == {"Pika-H3-Flex-MiniMax-H3", "tts-1"}
     json.dumps(est)
 
 
@@ -101,14 +103,14 @@ def test_ffmpeg_mode_and_offline_are_free(ws: ProjectWorkspace, monkeypatch: pyt
 
 def test_unit_cost_table_prices_jobs(ws: ProjectWorkspace):
     plan, manifest, script = _artifacts(ws)
-    table = {"currency": "USD", "MiniMax-Hailuo-2.3": {"per_second": 0.1}, "tts-1": 0.05}
+    table = {"currency": "USD", "Pika-H3-Flex-MiniMax-H3": {"per_second": 0.1}, "tts-1": 0.05}
     est = estimate_paid_generation(plan, manifest, script, ws.raw_clips_dir, unit_costs=table)
     assert est["currency"] == "USD"
-    assert est["estimated_cost"] == pytest.approx(22 * 0.1 + 2 * 0.05)
+    assert est["estimated_cost"] == pytest.approx(20 * 0.1 + 2 * 0.05)
     assert est["unpriced_models"] == []
-    assert est["by_model"]["MiniMax-Hailuo-2.3"]["calls"] == 3
+    assert est["by_model"]["Pika-H3-Flex-MiniMax-H3"]["calls"] == 3
     partial = estimate_paid_generation(
-        plan, manifest, script, ws.raw_clips_dir, unit_costs={"MiniMax-Hailuo-2.3": {"per_job": 1}}
+        plan, manifest, script, ws.raw_clips_dir, unit_costs={"Pika-H3-Flex-MiniMax-H3": {"per_job": 1}}
     )
     assert partial["estimated_cost"] is None and partial["unpriced_models"] == ["tts-1"]
 
@@ -176,8 +178,8 @@ def test_cap_exceeded_aborts_before_any_submit(ws: ProjectWorkspace, tmp_path: P
     patches = _patch_stages()
     mocks = {n: p.start() for n, p in patches.items()}
     try:
-        with patch("tools.generate_video.submit_video_job") as submit, \
-             patch("pipeline.video_engine.upload_first_frame") as upload:
+        with patch("pipeline.video_engine.submit_graph") as submit, \
+             patch("pipeline.video_engine.upload_image") as upload:
             code = _cli(tmp_path, "--from-stage", "5", "--max-video-jobs", "2", "--json")
         out = capsys.readouterr()
     finally:

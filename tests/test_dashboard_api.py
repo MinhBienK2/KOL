@@ -42,7 +42,7 @@ def test_run_view_exposes_stages_prompts_and_publish_log(client: TestClient):
     view = response.json()
 
     assert len(view["stages"]) == 8
-    assert view["prompts"][0]["model"] == "MiniMax-Hailuo-2.3"
+    assert view["prompts"][0]["model"] == "Pika-H3-Flex-MiniMax-H3"
     assert "Framing: [WIDE_SHOT]" in view["prompts"][0]["prompt"]
     assert view["publish_log"]["title"]
     assert view["render_report"]["verification_gates"][0]["passed"] is True

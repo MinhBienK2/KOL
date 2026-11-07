@@ -227,7 +227,7 @@ def build_workspace_run(base_dir: Path, project_id: str = "campaign_demo", topic
             STORY_PROMPT,
             stage=5,
             mode="I2V",
-            model="MiniMax-Hailuo-2.3",
+            model="Pika-H3-Flex-MiniMax-H3",
             aspect_ratio="9:16",
             duration_requested=6,
             first_frame=str(keyframes / "shot_01_clean.jpg"),
@@ -237,9 +237,9 @@ def build_workspace_run(base_dir: Path, project_id: str = "campaign_demo", topic
             size_bytes=4096,
         )
         recorder.record_api_call(
-            "minimax.submit_video",
-            endpoint="https://example.test/v1/media/video",
-            request={"model": "MiniMax-Hailuo-2.3", "api_key": "sk-should-be-redacted"},
+            "comfy.submit",
+            endpoint="https://example.test/prompt",
+            request={"model": "Pika-H3-Flex-MiniMax-H3", "api_key": "sk-should-be-redacted"},
             response={"task_id": "task-123"},
             status=200,
             ok=True,

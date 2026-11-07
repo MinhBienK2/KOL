@@ -8,6 +8,9 @@ The AI Director Agent operates under a modularized, optimized harness surface:
 - **`harness/tool_guidance.md`**: Strict CLI contract for `tools/director.py`, `--json` interface, and directorial intervention flags.
 - **`harness/error_recovery.md`**: Autonomous error diagnosis and recovery protocol across exit codes 0..4, `--from-stage`, `--inject`, and `--new-version`.
 - **`harness/scripts/`**: Deterministic helper scripts (`verify_run.py`, `validate_artifact.py`).
+- **`harness/stage_review_protocol.md`**: Independent subagent review protocol (0-10 rubric, max 3 loops) for Script, Storyboard, Keyframe.
+- **`assets/characters/kol_main/`**: Canonical repository KOL `Mai Ly` (`[KOL_MAIN]`) face anchor and identity outfits.
+- **`tools/review_stage.py`**: CLI evaluator for `--stage script|storyboard|keyframe|all`.
 
 ## 2. Agent Skills & Governance
 - **Issue tracker:** GitHub issues via `gh` CLI. See `docs/agents/issue-tracker.md`.

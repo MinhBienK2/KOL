@@ -40,7 +40,7 @@ Hệ thống sản xuất video quảng cáo thương mại tự trị (Autonomo
 # Chạy toàn bộ pipeline từ Step 1 đến Step 8:
 python3 tools/director.py --campaign campaign_lumina_mug_01 --product "Ly Giữ Nhiệt Thông Minh Lumina Pro"
 
-# Chạy với chế độ sinh video qua API MiniMax Hailuo:
+# Chạy với chế độ sinh video qua API (Stage 5 chạy trên ComfyUI gateway):
 python3 tools/director.py --video-mode api
 
 # Phục hồi / chạy tiếp từ một bước cụ thể (ví dụ Step 6):
@@ -90,9 +90,13 @@ Stage 1 có `--url` sẽ dùng `create_product_brief_from_concept`, nên Charact
 
 **Kết quả máy đọc được:** object `--json` của CLI cũng được lưu thành `projects/<topic>/<project>/runs/<vN>/run_result.json` (cùng một định dạng). `status`: `completed` / `failed` / `verification_failed` / `paused` / `invalid` / `budget_exceeded` / `checked`; khi tạm dừng có thêm `paused_after_stage`, `next_stage`, `resume_hint`. Exit code: `0` hoàn tất, `1` lỗi stage, `2` input sai, `3` Verification Gate từ chối, `4` tạm dừng. `--inject NAME=PATH`, `--check`, `--json` xem `DIRECTOR_AGENT_PROMPT.md`.
 
-**Ước tính chi phí trước khi sinh trả phí:** trước Stage 5/6, Director in và ghi (telemetry `run_meta.paid_estimate`, `run_result.json`, và `estimate` trong `--check --json`) kế hoạch gọi API trả phí: số video job mới, thời lượng giây sẽ sinh, số lần gọi TTS, số ảnh (luôn 0), tổng giây sinh. Giá chưa biết nên `estimated_cost` là `null`; khai báo bảng giá theo model qua `KOL_UNIT_COSTS` (JSON hoặc đường dẫn file), ví dụ `{"currency":"USD","MiniMax-Hailuo-2.3":{"per_job":0.3},"tts-1":{"per_call":0.01}}`. Hàm: `pipeline.cost.estimate_paid_generation`. `--check` ở giai đoạn đầu (chưa có `scene_plan.json`) trả `estimate.available: false`.
+**Ước tính chi phí trước khi sinh trả phí:** trước Stage 5/6, Director in và ghi (telemetry `run_meta.paid_estimate`, `run_result.json`, và `estimate` trong `--check --json`) kế hoạch gọi API trả phí: số video job mới, thời lượng giây sẽ sinh, số lần gọi TTS, số ảnh (luôn 0), tổng giây sinh. Giá chưa biết nên `estimated_cost` là `null`; khai báo bảng giá theo model qua `KOL_UNIT_COSTS` (JSON hoặc đường dẫn file), ví dụ `{"currency":"USD","Pika-H3-Flex-MiniMax-H3":{"per_job":0.3},"tts-1":{"per_call":0.01}}`. Hàm: `pipeline.cost.estimate_paid_generation`. `--check` ở giai đoạn đầu (chưa có `scene_plan.json`) trả `estimate.available: false`.
 
-**API key:** lấy từ biến môi trường; file `.env` ở thư mục gốc repo (đã gitignore, mẫu: `.env.example`) được `pipeline/config.py` nạp tự động, biến môi trường thật luôn ưu tiên. Thiếu `MINIMAX_API_KEY` khi cần gọi API: exit 2, `error_code: missing_api_key` (hoặc `ConfigurationError` khi gọi trực tiếp); chế độ `--offline` không cần key.
+**API key:** lấy từ biến môi trường; file `.env` ở thư mục gốc repo (đã gitignore, mẫu: `.env.example`) được `pipeline/config.py` nạp tự động, biến môi trường thật luôn ưu tiên.
+
+- Stage 5 (video) dùng **Comfy Colab Kit gateway** (`COMFY_GATEWAY_URL` + `COMFY_GATEWAY_TOKEN`), chạy Pika H3 Flex trên MiniMax H3 (Colab L4). Gateway nằm sau Cloudflare Access nên cần thêm `CF_ACCESS_CLIENT_ID` + `CF_ACCESS_CLIENT_SECRET_FILE`; thiếu token: exit 2, `error_code: missing_api_key`.
+- Stage 6 (TTS/ASR) và Stage 4 (tuỳ chọn) dùng **MiniMax** (`MINIMAX_API_KEY`).
+- Chế độ `--offline` không cần key nào.
 
 ```bash
 python3 tools/director.py --campaign demo --pause-after-stage 3   # dừng sau storyboard, exit 4

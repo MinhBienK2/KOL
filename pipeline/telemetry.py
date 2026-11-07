@@ -63,7 +63,7 @@ STAGE_CATALOG: Tuple[StageSpec, ...] = (
     StageSpec(2, "scriptwriting", "Multi-Archetype High-Conversion Scriptwriting"),
     StageSpec(3, "storyboard_staging", "DramaClaw Spatial Storyboard & OpenMontage Slideshow Risk Gate"),
     StageSpec(4, "identity_keyframes", "KOL Identity Locking & Clean Keyframe Staging"),
-    StageSpec(5, "video_diffusion", "Genuine Video Diffusion Generation (Hailuo-2.3)"),
+    StageSpec(5, "video_diffusion", "Genuine Video Diffusion Generation (Pika H3 Flex / MiniMax H3)"),
     StageSpec(6, "audio_lip_sync", "Neural TTS Audio & Lip-Sync Alignment"),
     StageSpec(7, "composition", "Final FFmpeg Multi-Track Composition & Audio Ducking"),
     StageSpec(8, "verification_publish", "Independent Quality Verification Gates & Packaging"),

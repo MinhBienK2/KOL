@@ -14,13 +14,13 @@ from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
-#: Hailuo camera commands (bracket syntax). A shot uses exactly one.
+#: Camera commands (bracket syntax). A shot uses exactly one.
 CAMERA_COMMANDS = (
     "Static shot", "Push in", "Pull out", "Truck left", "Truck right", "Pan left", "Pan right",
     "Tilt up", "Tilt down", "Pedestal up", "Pedestal down", "Zoom in", "Zoom out", "Tracking shot",
     "Shake",
 )
-#: Motion prompts describe change over time; longer prompts make Hailuo average the instructions.
+#: Motion prompts describe change over time; longer prompts make the model average the instructions.
 MAX_MOTION_WORDS = 80
 #: Vietnamese TTS reads roughly this many characters per second at speed 1.0 (measured on
 #: speech-01 voices); used only for the pre-render estimate, the real stem is measured later.
@@ -94,9 +94,9 @@ class Shot(BaseModel):
 
     @field_validator("duration")
     @classmethod
-    def _hailuo_duration(cls, value: int) -> int:
-        if value not in (6, 10):
-            raise ValueError("Hailuo-2.3 renders 6s or 10s clips")
+    def _clip_duration(cls, value: int) -> int:
+        if value not in (5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15):
+            raise ValueError("Pika H3 Flex renders whole-second clips between 5s and 15s")
         return value
 
 

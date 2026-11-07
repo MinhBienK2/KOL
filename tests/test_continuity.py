@@ -47,9 +47,15 @@ def test_first_shot_must_be_anchor():
     assert any("must be an anchor" in e for e in res["errors"])
 
 
-def test_duration_must_be_hailuo_length():
+@pytest.mark.parametrize("duration", [5, 6, 10, 15])
+def test_duration_accepts_the_clip_range(duration):
+    assert _bible(duration=duration).shots[1].duration == duration
+
+
+@pytest.mark.parametrize("duration", [0, 4, 16])
+def test_duration_outside_the_clip_range_is_rejected(duration):
     with pytest.raises(ValueError):
-        _bible(duration=5)
+        _bible(duration=duration)
 
 
 def _clip(path: Path, blur_tail_except: int) -> Path:

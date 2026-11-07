@@ -55,7 +55,7 @@ _CTA_TRANSITION = {"type": "fade", "duration": 0.4}
 _CUT_TRANSITION = {"type": "cut", "duration": 0.0}
 
 # --- Timing contract -----------------------------------------------------------
-# Hailuo-2.3 renders 6s or 10s clips (see video_engine); a 6s beat is the cheapest
+# The video provider renders whole seconds between 5s and 15s (see video_engine); a 6s beat is the cheapest
 # clip and the TikTok/Reels sweet spot for one idea per shot, so beats are capped there.
 MAX_BEAT_SECONDS = 6.0
 MIN_BEAT_SECONDS = 1.5
@@ -788,7 +788,7 @@ def _build_archetype_beats(
 
 
 def _build_legacy_mug_beats(brief: BriefArtifact) -> List[ScriptBeat]:
-    """Legacy Lumina mug demo: 4 beats, each at most 6s (the old 12s solution beat exceeded Hailuo's 10s limit)."""
+    """Legacy Lumina mug demo: 4 beats, each at most 6s (the old 12s solution beat exceeded the 10s clip limit)."""
     common = dict(archetype=ProductArchetype.GENERAL_COMMERCIAL, lighting_contract=LightingContract.STUDIO_3POINT)
     return [
         ScriptBeat(

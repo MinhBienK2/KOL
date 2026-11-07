@@ -28,6 +28,7 @@ from pipeline.composer import compose_master_commercial
 from pipeline.verification import VERIFICATION_GATE_COUNT, run_all_verification_gates
 from pipeline.cost import estimate_for_workspace, format_estimate, unavailable_estimate
 from pipeline.config import MINIMAX_API_KEY, ARTIFACTS_DIR, OUTPUT_DIR, RAW_CLIPS_DIR, SYNCED_CLIPS_DIR, AUDIO_DIR, KEYFRAMES_DIR, BASE_DIR
+from pipeline.comfy_video import has_gateway_token
 
 LAST_PAUSABLE_STAGE = 7
 LAST_STAGE = 8
@@ -518,11 +519,17 @@ def run_pipeline(
                 with recorder._lock:
                     recorder.state["run_meta"]["paid_estimate"] = paid_estimate
                 recorder.flush()
-                if paid_estimate.get("paid_calls") and not MINIMAX_API_KEY:
+                missing_keys = []
+                if paid_estimate.get("video_jobs") and not has_gateway_token():
+                    missing_keys.append("COMFY_GATEWAY_TOKEN (Stage 5 video, ComfyUI gateway)")
+                if paid_estimate.get("tts_calls") and not MINIMAX_API_KEY:
+                    missing_keys.append("MINIMAX_API_KEY (Stage 6 TTS)")
+                if paid_estimate.get("paid_calls") and missing_keys:
                     error = (
                         f"Configuration error: {len(paid_stages)} paid stage(s) planned "
                         f"({paid_estimate['video_jobs']} video job(s), {paid_estimate['tts_calls']} TTS call(s)) but "
-                        f"MINIMAX_API_KEY is not set. Export it or put it in .env (see .env.example), or run --offline."
+                        f"these credentials are missing: {', '.join(missing_keys)}. Export them or put them in .env "
+                        f"(see .env.example), or run --offline."
                     )
                     print(f"[DIRECTOR ERROR] {error}", file=sys.stderr)
                     recorder.finish_run(False, summary=error, elapsed_seconds=round(time.time() - start_time, 2))

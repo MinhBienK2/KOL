@@ -19,7 +19,7 @@
     2: "Multi-Archetype High-Conversion Scriptwriting",
     3: "DramaClaw Spatial Storyboard & OpenMontage Slideshow Risk Gate",
     4: "KOL Identity Locking & Clean Keyframe Staging",
-    5: "Genuine Video Diffusion Generation (Hailuo-2.3)",
+    5: "Genuine Video Diffusion Generation (Pika H3 Flex / MiniMax H3)",
     6: "Neural TTS Audio & Lip-Sync Alignment",
     7: "Final FFmpeg Multi-Track Composition & Audio Ducking",
     8: "Independent Quality Verification Gates & Packaging"

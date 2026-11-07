@@ -37,7 +37,8 @@ from pipeline.video_engine import (
 )
 from pipeline.verification import verify_prompt_ledger_gate
 from pipeline.workspace import ProjectWorkspace
-from tools import dramaclaw_shot_builder, generate_video
+from pipeline import comfy_video
+from tools import dramaclaw_shot_builder
 
 
 @pytest.fixture(autouse=True)
@@ -61,8 +62,8 @@ def network_explodes(monkeypatch):
     monkeypatch.setattr(socket.socket, "connect", _boom)
     monkeypatch.setattr(socket, "create_connection", _boom)
     for module, names in (
-        (generate_video, ("upload_first_frame", "submit_video_job", "poll_and_download_video")),
-        (video_engine, ("upload_first_frame", "submit_video_job", "poll_and_download_video")),
+        (comfy_video, ("upload_image", "submit_graph", "poll_and_download_video")),
+        (video_engine, ("upload_image", "submit_graph", "poll_and_download_video")),
         (researcher, ("call_llm", "resolve_affiliate_url")),
         (dramaclaw_shot_builder, ("upload_reference_image",)),
     ):
@@ -116,9 +117,9 @@ def test_guard_raises_clear_error_when_offline(monkeypatch):
 @pytest.mark.parametrize(
     "call",
     [
-        lambda tmp: generate_video.upload_first_frame("assets/characters/kol_main/portrait.png"),
-        lambda tmp: generate_video.submit_video_job("prompt"),
-        lambda tmp: generate_video.poll_and_download_video("task", tmp / "x.mp4"),
+        lambda tmp: comfy_video.upload_image("assets/characters/kol_main/portrait.png"),
+        lambda tmp: comfy_video.submit_graph({"1": {"class_type": "SaveVideo", "inputs": {}}}),
+        lambda tmp: comfy_video.poll_and_download_video("prompt", tmp / "x.mp4"),
         lambda tmp: researcher.call_llm("system", "user"),
         lambda tmp: dramaclaw_shot_builder.upload_reference_image("assets/characters/kol_main/portrait.png"),
         lambda tmp: guarded_urlopen(urllib.request.Request("http://127.0.0.1:9/"), operation="t"),

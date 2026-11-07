@@ -1,12 +1,12 @@
 """Pre-generation cost estimate: what paid calls a run is about to make (no network, no writes).
 
-``estimate_paid_generation`` counts the paid MiniMax video jobs Stage 5 would submit (shots whose
+``estimate_paid_generation`` counts the paid video jobs Stage 5 would submit (shots whose
 clip is not already cached), the Stage 6 TTS calls and any image calls, plus the total generated
 seconds. Prices are unknown by default: supply a per-model unit-cost table through
 ``KOL_UNIT_COSTS`` (a JSON object, or a path to a JSON file)::
 
     {"currency": "USD",
-     "MiniMax-Hailuo-2.3": {"per_job": 0.28},          # or "per_second"
+     "Pika-H3-Flex-MiniMax-H3": {"per_job": 0.28},     # or "per_second"
      "tts-1": {"per_call": 0.01}}
 
 A bare number for a model means ``per_job`` (video) / ``per_call`` (TTS). Anything not in the

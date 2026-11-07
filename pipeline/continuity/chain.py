@@ -24,7 +24,7 @@ from pipeline.continuity.bible import ShotBible
 #: Hand-off candidates: the last N frames (~0.5s at 24fps). The last frame is often blurred or
 #: mid-blink, so the sharpest of the tail wins and the clip is cut there.
 HANDOFF_TAIL_FRAMES = 12
-#: Hailuo's first frames after the input image are frequently a soft "settle"; the edit drops them.
+#: The first frames after the input image are frequently a soft "settle"; the edit drops them.
 CHAIN_HEAD_DROP_FRAMES = 2
 #: Same-person similarity inside one video (well above the cross-person ~0.1-0.3 band).
 CHAIN_IDENTITY_THRESHOLD = 0.45

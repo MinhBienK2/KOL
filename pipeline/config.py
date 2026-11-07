@@ -99,7 +99,16 @@ CHARACTER_PATH = BASE_DIR / "assets" / "characters" / "kol_main" / "character.js
 
 MINIMAX_BASE_URL = os.environ.get("MINIMAX_BASE_URL", "https://aiapi.2tocom.space").rstrip("/")
 #: Resolved from ``MINIMAX_API_KEY`` at use time (``ConfigurationError`` if missing).
+#: MiniMax still serves the TTS stem, the ASR round-trip and (optionally) Stage-4 keyframes;
+#: it no longer renders video (Stage 5 runs on the ComfyUI gateway).
 MINIMAX_API_KEY = _RequiredSecret("MINIMAX_API_KEY")
+
+#: Stage-5 video provider: the Comfy Colab Kit gateway (Pika H3 Flex on MiniMax H3, Colab L4).
+COMFY_GATEWAY_URL = os.environ.get(
+    "COMFY_GATEWAY_URL", os.environ.get("CKIT_URL", "https://gate.dongmynghedaibai.com")
+).rstrip("/")
+#: Resolved from ``COMFY_GATEWAY_TOKEN`` (or ``CKIT_TOKEN``) at use time.
+COMFY_GATEWAY_TOKEN = _RequiredSecret("COMFY_GATEWAY_TOKEN")
 
 FLOW2API_BASE_URL = os.environ.get("FLOW2API_BASE_URL", "http://100.111.37.118:8000").rstrip("/")
 FLOW2API_API_KEY = _RequiredSecret("FLOW2API_API_KEY")
@@ -108,7 +117,7 @@ DEFAULT_IMAGE_MODEL = os.environ.get("DEFAULT_IMAGE_MODEL", "gemini-3.1-flash-im
 #: never retried on another one. ``tools/director.py --image-provider`` overrides it per run.
 KEYFRAME_IMAGE_PROVIDER = os.environ.get("KEYFRAME_IMAGE_PROVIDER", "flow2api")
 
-DEFAULT_VIDEO_MODEL = "MiniMax-Hailuo-2.3"
+DEFAULT_VIDEO_MODEL = os.environ.get("KOL_VIDEO_MODEL", "Pika-H3-Flex-MiniMax-H3")
 DEFAULT_TTS_MODEL = "tts-1"
 DEFAULT_TTS_VOICE = "alloy"
 DEFAULT_ASPECT_RATIO = "9:16"

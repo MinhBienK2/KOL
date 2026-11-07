@@ -122,7 +122,7 @@ def build_framing_directive(
 # ==============================================================================
 # Natural-language vocabulary for video diffusion prompts
 #
-# Hailuo / Veo / Kling / Sora guidance favours plain cinematographic phrasing
+# Video-model guidance (Veo / Kling / Sora / Pika) favours plain cinematographic phrasing
 # ("slow push-in", "85mm lens, shallow depth of field") over snake_case enum
 # values. These maps translate pipeline enums into that phrasing.
 # ==============================================================================
@@ -266,7 +266,7 @@ def compact_video_prompt(text: str, max_words: int = 180) -> str:
     """Make a composed prompt model-ready: humanised, de-duplicated and within a word budget.
 
     Video models follow short, specific prompts better than 250-word concatenations
-    (Veo ~100-150 words, Hailuo < 200). This is deterministic and keeps the directive
+    (Veo ~100-150 words, Pika H3 < 200). This is deterministic and keeps the directive
     order of the input, dropping only filler, duplicated sentences and clauses
     superseded by the SET:/WEAR: directives.
     """

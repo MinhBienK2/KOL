@@ -9,10 +9,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from pipeline import video_engine as ve
+from pipeline.comfy_video import ComfyValidationError, ComfyVideoError
 from pipeline.schemas import AssetManifestArtifact, KeyframeAsset, ScenePlanArtifact
 from pipeline.video_engine import VideoGenerationError
 from tests.test_helpers import create_test_clip
-from tools.generate_video import VideoAPIError
 
 PORTRAIT = Path("assets/characters/kol_main/portrait.png").resolve()
 
@@ -24,8 +24,15 @@ def _png(path: Path, color: str) -> Path:
     return path
 
 
-def _poll_writes_clip(task_id: str, output_path: Path, timeout_seconds: int = 300):
+def _poll_writes_clip(prompt_id: str, output_path: Path, timeout_seconds: int = 600):
     return create_test_clip(PORTRAIT, output_path, duration=1.0)
+
+
+def _model_node(graph: dict) -> dict:
+    for node in graph.values():
+        if node["class_type"] in ("MiniMaxH3ImageToVideo", "MiniMaxH3ReferenceToVideo"):
+            return node
+    raise AssertionError("no MiniMax H3 node in the submitted graph")
 
 
 def _render(tmp_path: Path, **overrides):
@@ -52,36 +59,36 @@ def _no_sleep():
 
 
 def test_missing_first_frame_fails_loudly_instead_of_degrading_to_t2v(tmp_path: Path):
-    with patch("pipeline.video_engine.upload_first_frame") as up, \
-         patch("pipeline.video_engine.submit_video_job") as sub:
+    with patch("pipeline.video_engine.upload_image") as up, \
+         patch("pipeline.video_engine.submit_graph") as sub:
         with pytest.raises(VideoGenerationError, match="First Frame"):
             _render(tmp_path, image_path=tmp_path / "does_not_exist.png")
     up.assert_not_called()
     sub.assert_not_called()
 
 
-def test_r2v_sends_face_anchor_as_subject_reference_not_as_first_frame(tmp_path: Path):
+def test_r2v_sends_face_anchor_as_reference_not_as_first_frame(tmp_path: Path):
     sheet = _png(tmp_path / "character_sheet.png", "white")
     face = _png(tmp_path / "face_anchor.png", "gray")
-    with patch("pipeline.video_engine.upload_first_frame", return_value="https://cdn/face.png") as up, \
-         patch("pipeline.video_engine.submit_video_job", return_value="t_r2v") as sub, \
+    with patch("pipeline.video_engine.upload_image", return_value="ref.png") as up, \
+         patch("pipeline.video_engine.submit_graph", return_value="prompt_r2v") as sub, \
          patch("pipeline.video_engine.poll_and_download_video", side_effect=_poll_writes_clip), \
          patch("pipeline.video_engine.telemetry.record_prompt") as rec:
         _render(tmp_path, image_path=sheet, generation_mode="r2v", reference_assets=[str(sheet), str(face)])
 
-    up.assert_called_once()
-    assert Path(up.call_args[0][0]) == face
-    kwargs = sub.call_args.kwargs
-    assert kwargs["subject_reference"] == ["https://cdn/face.png"]
-    assert kwargs["image_url"] is None
-    assert kwargs["model"] == ve.DEFAULT_R2V_MODEL
+    uploaded = [Path(call[0][0]) for call in up.call_args_list]
+    assert face in uploaded
+    graph = sub.call_args[0][0]
+    model = _model_node(graph)
+    assert model["class_type"] == "MiniMaxH3ReferenceToVideo"
+    assert model["inputs"]["ref_images.ref_image_0"]
     modes = {c.kwargs.get("mode") for c in rec.call_args_list if c.kwargs.get("mode")}
     assert modes == {"R2V"}
 
 
 def test_r2v_without_resolvable_face_anchor_raises_before_any_api_call(tmp_path: Path):
     sheet = _png(tmp_path / "character_sheet.png", "white")
-    with patch("pipeline.video_engine.upload_first_frame") as up, patch("pipeline.video_engine.submit_video_job") as sub:
+    with patch("pipeline.video_engine.upload_image") as up, patch("pipeline.video_engine.submit_graph") as sub:
         with pytest.raises(VideoGenerationError, match="face anchor"):
             _render(
                 tmp_path,
@@ -96,8 +103,8 @@ def test_r2v_without_resolvable_face_anchor_raises_before_any_api_call(tmp_path:
 def test_r2v_face_anchor_i2v_strategy_is_recorded_as_degraded_i2v(tmp_path: Path):
     sheet = _png(tmp_path / "character_sheet.png", "white")
     face = _png(tmp_path / "face_anchor.png", "gray")
-    with patch("pipeline.video_engine.upload_first_frame", return_value="https://cdn/face.png") as up, \
-         patch("pipeline.video_engine.submit_video_job", return_value="t") as sub, \
+    with patch("pipeline.video_engine.upload_image", return_value="ref.png") as up, \
+         patch("pipeline.video_engine.submit_graph", return_value="prompt") as sub, \
          patch("pipeline.video_engine.poll_and_download_video", side_effect=_poll_writes_clip), \
          patch("pipeline.video_engine.telemetry.record_prompt") as rec:
         _render(
@@ -108,8 +115,8 @@ def test_r2v_face_anchor_i2v_strategy_is_recorded_as_degraded_i2v(tmp_path: Path
             r2v_strategy="face_anchor_i2v",
         )
     assert Path(up.call_args[0][0]) == face
-    assert sub.call_args.kwargs["image_url"] == "https://cdn/face.png"
-    assert "subject_reference" not in sub.call_args.kwargs
+    model = _model_node(sub.call_args[0][0])
+    assert model["class_type"] == "MiniMaxH3ImageToVideo"
     first = next(c for c in rec.call_args_list if c.kwargs.get("mode"))
     assert first.kwargs["mode"] == "I2V"
     assert first.kwargs["degraded_from"] == "R2V"
@@ -130,21 +137,40 @@ def test_r2v_synth_i2v_starts_from_the_synthesized_frame(tmp_path: Path, provide
                               r2v_strategy="synth_i2v")
 
 
+def test_auto_strategy_prefers_an_identity_locked_frame_and_falls_back_to_the_anchor(tmp_path: Path):
+    frame = _png(tmp_path / "shot_01_clean.png", "white")
+    face = _png(tmp_path / "face_anchor.png", "gray")
+    sheet = _png(tmp_path / "character_sheet.png", "black")
+
+    locked = ve.build_clip_request(
+        "shot_01", "p", frame, generation_mode="r2v", reference_assets=[str(sheet), str(face)],
+        first_frame_provider="flow2api",
+    )
+    assert locked.mode == "I2V" and locked.first_frame == frame and locked.degraded_from is None
+
+    unlocked = ve.build_clip_request(
+        "shot_01", "p", frame, generation_mode="r2v", reference_assets=[str(sheet), str(face)],
+        first_frame_provider="minimax",
+    )
+    assert unlocked.mode == "R2V" and unlocked.first_frame is None
+    assert unlocked.subject_refs[0] == face and unlocked.subject_refs[1] == sheet
+
+
 # --- retry classification ---------------------------------------------------------------
 
 
 def test_non_retryable_api_error_is_not_resubmitted(tmp_path: Path):
-    err = VideoAPIError("MiniMax error 1026: sensitive", 1026)
-    with patch("pipeline.video_engine.upload_first_frame", return_value="https://cdn/f.png"), \
-         patch("pipeline.video_engine.submit_video_job", side_effect=err) as sub:
-        with pytest.raises(VideoGenerationError, match="1026"):
+    err = ComfyValidationError("Prompt outputs failed validation")
+    with patch("pipeline.video_engine.upload_image", return_value="frame.png"), \
+         patch("pipeline.video_engine.submit_graph", side_effect=err) as sub:
+        with pytest.raises(VideoGenerationError):
             _render(tmp_path)
     assert sub.call_count == 1
 
 
 def test_retryable_error_is_retried_then_succeeds(tmp_path: Path):
-    with patch("pipeline.video_engine.upload_first_frame", return_value="https://cdn/f.png"), \
-         patch("pipeline.video_engine.submit_video_job", side_effect=[VideoAPIError("rate", 1002), "t_ok"]) as sub, \
+    with patch("pipeline.video_engine.upload_image", return_value="frame.png"), \
+         patch("pipeline.video_engine.submit_graph", side_effect=[ComfyVideoError("gateway 504"), "prompt_ok"]) as sub, \
          patch("pipeline.video_engine.poll_and_download_video", side_effect=_poll_writes_clip):
         _render(tmp_path)
     assert sub.call_count == 2
@@ -156,15 +182,15 @@ def test_retryable_error_is_retried_then_succeeds(tmp_path: Path):
 def test_poll_timeout_resumes_same_task_instead_of_paying_twice(tmp_path: Path):
     calls = {"n": 0}
 
-    def poll(task_id, output_path, timeout_seconds=300):
+    def poll(prompt_id, output_path, timeout_seconds=600):
         calls["n"] += 1
         if calls["n"] == 1:
             raise TimeoutError("still rendering")
-        assert task_id == "t_slow"
-        return _poll_writes_clip(task_id, output_path)
+        assert prompt_id == "prompt_slow"
+        return _poll_writes_clip(prompt_id, output_path)
 
-    with patch("pipeline.video_engine.upload_first_frame", return_value="https://cdn/f.png") as up, \
-         patch("pipeline.video_engine.submit_video_job", return_value="t_slow") as sub, \
+    with patch("pipeline.video_engine.upload_image", return_value="frame.png") as up, \
+         patch("pipeline.video_engine.submit_graph", return_value="prompt_slow") as sub, \
          patch("pipeline.video_engine.poll_and_download_video", side_effect=poll):
         out = _render(tmp_path)
 
@@ -173,12 +199,12 @@ def test_poll_timeout_resumes_same_task_instead_of_paying_twice(tmp_path: Path):
     # No dangling in-flight task once the clip is finished; provenance meta is written.
     assert not (tmp_path / "shot_01.task.json").exists()
     meta = json.loads((tmp_path / "shot_01.meta.json").read_text())
-    assert meta["task_id"] == "t_slow" and meta["fingerprint"]
+    assert meta["task_id"] == "prompt_slow" and meta["fingerprint"]
 
 
 def test_rerun_after_crash_resumes_in_flight_task(tmp_path: Path):
-    with patch("pipeline.video_engine.upload_first_frame", return_value="https://cdn/f.png"), \
-         patch("pipeline.video_engine.submit_video_job", return_value="t_inflight"), \
+    with patch("pipeline.video_engine.upload_image", return_value="frame.png"), \
+         patch("pipeline.video_engine.submit_graph", return_value="prompt_inflight"), \
          patch("pipeline.video_engine.poll_and_download_video", side_effect=TimeoutError("slow")):
         with pytest.raises(VideoGenerationError):
             _render(tmp_path, max_retries=1)
@@ -186,54 +212,54 @@ def test_rerun_after_crash_resumes_in_flight_task(tmp_path: Path):
 
     seen = []
 
-    def poll(task_id, output_path, timeout_seconds=300):
-        seen.append(task_id)
-        return _poll_writes_clip(task_id, output_path)
+    def poll(prompt_id, output_path, timeout_seconds=600):
+        seen.append(prompt_id)
+        return _poll_writes_clip(prompt_id, output_path)
 
-    with patch("pipeline.video_engine.upload_first_frame") as up, \
-         patch("pipeline.video_engine.submit_video_job") as sub, \
+    with patch("pipeline.video_engine.upload_image") as up, \
+         patch("pipeline.video_engine.submit_graph") as sub, \
          patch("pipeline.video_engine.poll_and_download_video", side_effect=poll):
         _render(tmp_path, max_retries=1)
-    assert seen == ["t_inflight"]
+    assert seen == ["prompt_inflight"]
     up.assert_not_called()
     sub.assert_not_called()
 
 
 def test_changed_prompt_does_not_resume_old_task(tmp_path: Path):
-    with patch("pipeline.video_engine.upload_first_frame", return_value="https://cdn/f.png"), \
-         patch("pipeline.video_engine.submit_video_job", return_value="t_old"), \
+    with patch("pipeline.video_engine.upload_image", return_value="frame.png"), \
+         patch("pipeline.video_engine.submit_graph", return_value="prompt_old"), \
          patch("pipeline.video_engine.poll_and_download_video", side_effect=TimeoutError("slow")):
         with pytest.raises(VideoGenerationError):
             _render(tmp_path, max_retries=1)
 
     seen = []
 
-    def poll(task_id, output_path, timeout_seconds=300):
-        seen.append(task_id)
-        return _poll_writes_clip(task_id, output_path)
+    def poll(prompt_id, output_path, timeout_seconds=600):
+        seen.append(prompt_id)
+        return _poll_writes_clip(prompt_id, output_path)
 
-    with patch("pipeline.video_engine.upload_first_frame", return_value="https://cdn/f.png"), \
-         patch("pipeline.video_engine.submit_video_job", return_value="t_new") as sub, \
+    with patch("pipeline.video_engine.upload_image", return_value="frame.png"), \
+         patch("pipeline.video_engine.submit_graph", return_value="prompt_new") as sub, \
          patch("pipeline.video_engine.poll_and_download_video", side_effect=poll):
         _render(tmp_path, prompt="A completely different directorial prompt", max_retries=1)
     sub.assert_called_once()
-    assert seen == ["t_new"]
+    assert seen == ["prompt_new"]
 
 
 def test_failed_remote_task_is_resubmitted_not_resumed(tmp_path: Path):
     polls = []
 
-    def poll(task_id, output_path, timeout_seconds=300):
-        polls.append(task_id)
-        if task_id == "t_dead":
-            raise VideoAPIError("Video generation failed", None, task_failed=True)
-        return _poll_writes_clip(task_id, output_path)
+    def poll(prompt_id, output_path, timeout_seconds=600):
+        polls.append(prompt_id)
+        if prompt_id == "prompt_dead":
+            raise ComfyVideoError("Graph execution failed")
+        return _poll_writes_clip(prompt_id, output_path)
 
-    with patch("pipeline.video_engine.upload_first_frame", return_value="https://cdn/f.png"), \
-         patch("pipeline.video_engine.submit_video_job", side_effect=["t_dead", "t_fresh"]) as sub, \
+    with patch("pipeline.video_engine.upload_image", return_value="frame.png"), \
+         patch("pipeline.video_engine.submit_graph", side_effect=["prompt_dead", "prompt_fresh"]) as sub, \
          patch("pipeline.video_engine.poll_and_download_video", side_effect=poll):
         _render(tmp_path)
-    assert polls == ["t_dead", "t_fresh"]
+    assert polls == ["prompt_dead", "prompt_fresh"]
     assert sub.call_count == 2
 
 
@@ -299,8 +325,8 @@ def _batch(tmp_path: Path, prompts: dict[str, str], manifest=None, **kwargs):
 
 
 def test_batch_reuses_current_clips_but_rerenders_when_prompt_changed(tmp_path: Path):
-    with patch("pipeline.video_engine.upload_first_frame", return_value="https://cdn/f.png"), \
-         patch("pipeline.video_engine.submit_video_job", return_value="t1") as sub, \
+    with patch("pipeline.video_engine.upload_image", return_value="frame.png"), \
+         patch("pipeline.video_engine.submit_graph", return_value="prompt1") as sub, \
          patch("pipeline.video_engine.poll_and_download_video", side_effect=_poll_writes_clip):
         _batch(tmp_path, {"shot_01": "prompt A", "shot_02": "prompt B"})
         assert sub.call_count == 2

@@ -73,3 +73,20 @@ Khi truyền cờ `--json`, stdout chỉ in ra duy nhất MỘT object JSON duy 
 - `--new-version`: Phân nhánh một version mới (v2, v3) kế thừa media đã render qua hardlink để tối ưu chi phí và thời gian.
 - `--check`: Chế độ chỉ đọc, kiểm tra tính hợp lệ của plan và artifact tiền đề mà không thực thi bất kỳ stage nào.
 - `--offline`: Chế độ offline không dùng mạng, đặt `KOL_OFFLINE=1` và ép `--video-mode ffmpeg` để test logic nhanh.
+- `--stage-review`: (Stage 2/3/4) Kích hoạt tiền kiểm định độc lập giữa các stage (script, storyboard, keyframe). Tự động chấm điểm 0-10 và lưu vào `artifacts/stage_reviews.json`.
+
+## 4. CÔNG CỤ THẨM ĐỊNH CHẶNG ĐỘC LẬP (`tools/review_stage.py`)
+Subagent Reviewer độc lập (hoặc Đạo Diễn) kiểm tra chất lượng artifact và nhận feedback:
+```bash
+# Thẩm định kịch bản:
+python3 tools/review_stage.py --stage script --workspace <workspace_path> --json
+
+# Thẩm định phân cảnh và prompt video:
+python3 tools/review_stage.py --stage storyboard --workspace <workspace_path> --json
+
+# Thẩm định ảnh keyframe:
+python3 tools/review_stage.py --stage keyframe --workspace <workspace_path> --json
+```
+- **Mã thoát 0 (`EXIT_APPROVED`):** Điểm >= 8.0/10, tất cả tiêu chí đạt, sẵn sàng chuyển stage.
+- **Mã thoát 3 (`EXIT_NEEDS_REVISION`):** Điểm < 8.0/10, trả về danh sách lỗi cụ thể và hành động sửa chữa để Agent cha hoàn thiện kịch bản/storyboard (tối đa 3 vòng review).
+

@@ -1,8 +1,14 @@
-"""Step 5: Video Generation Engine (MiniMax Hailuo-2.3 I2V & T2V, plus local placeholders).
+"""Step 5: Video Generation Engine (ComfyUI gateway: Pika H3 Flex on MiniMax H3, plus local placeholders).
 
 ``mode="api"`` (alias ``"diffusion"``): ZERO TOLERANCE for static images or ffmpeg zoompan
 fallbacks. Every shot is rendered through genuine video diffusion with exponential backoff
 retries and rigorous validation. It never degrades to a placeholder on failure.
+
+The clips are rendered on the Colab L4 GPU behind the Comfy Colab Kit gateway
+(``pipeline.comfy_video``): ``pika-h3-flex-t2v`` for text-only shots, ``pika-h3-flex-fl2va``
+for image-to-video (first frame, optionally plus a last frame) and ``pika-h3-flex-ref2va``
+for reference-to-video (the identity anchor as ``<Picture 1>``). Each clip comes back with
+a native stereo audio track.
 
 ``mode="ffmpeg"``: an explicit, network-free LOCAL_FFMPEG run. Each shot becomes a short
 ffmpeg motion clip (zoompan on its keyframe, or a testsrc2 pattern) at 9:16 for the beat's
@@ -33,37 +39,50 @@ from pipeline.offline import OfflineNetworkError, guard_network, is_offline, off
 from pipeline.config import (
     ARTIFACTS_DIR,
     BASE_DIR,
+    COMFY_GATEWAY_URL,
     DEFAULT_ASPECT_RATIO,
     DEFAULT_VIDEO_MODEL,
-    MINIMAX_API_KEY,
-    MINIMAX_BASE_URL,
     RAW_CLIPS_DIR,
 )
 from pipeline.workspace import ProjectWorkspace
 from pipeline.schemas import AssetManifestArtifact, ScenePlanArtifact, StoryboardShot
 from pipeline.slideshow_risk import score_slideshow_risk
-from tools.generate_video import (
-    VideoAPIError,
+from pipeline.comfy_video import (
+    FLOW_FL2VA,
+    FLOW_REF2VA,
+    FLOW_T2V,
+    PROMPT_BINDING_VERSION,
+    build_graph,
+    compose_prompt,
+    fit_resolution,
+    frames_for_duration,
+    image_size,
     is_retryable_error,
     normalize_duration,
     poll_and_download_video,
-    submit_video_job,
-    upload_first_frame,
+    resolution_megapixels,
+    submit_graph,
+    upload_image,
 )
 
 logger = logging.getLogger(__name__)
 
-#: R2V (Reference-to-Video) model: MiniMax's subject-reference model takes the Face Anchor as a
-#: single character image (Hailuo-2.3 itself has no ``subject_reference``). Override via env.
-DEFAULT_R2V_MODEL = os.environ.get("KOL_R2V_MODEL", "S2V-01")
-#: ``subject_reference`` (default), ``synth_i2v`` (I2V from the Stage-4 synthesized first frame; for gateways
-#: without subject-reference support; ``degraded_from=R2V`` unless Flow2API drew that frame from the face anchor)
-#: or ``face_anchor_i2v`` (degraded: Face Anchor as I2V First Frame, recorded as ``degraded_from=R2V``).
-DEFAULT_R2V_STRATEGY = os.environ.get("KOL_R2V_STRATEGY", "subject_reference")
-#: Optional output resolution (``768P``/``1080P``); unset keeps the API default (768P). 1080P forces 6s clips.
-DEFAULT_RESOLUTION: Optional[str] = os.environ.get("KOL_VIDEO_RESOLUTION") or None
+#: How a character shot (one that wants the Identity Lock) is rendered:
+#: ``auto`` (default): the Stage-4 first frame is used when Flow2API drew it from the face anchor
+#: (it carries the identity, so I2V keeps the framing and the face), otherwise the Face Anchor is
+#: sent as a reference image and the gateway's ``ref2va`` workflow conditions on it natively.
+#: ``subject_reference``: always the Face Anchor as a reference image (``ref2va``).
+#: ``synth_i2v``: I2V from the Stage-4 synthesized first frame (``degraded_from=R2V`` unless
+#: Flow2API drew that frame from the face anchor).
+#: ``face_anchor_i2v`` (degraded: Face Anchor as I2V First Frame, recorded as ``degraded_from=R2V``).
+DEFAULT_R2V_STRATEGY = os.environ.get("KOL_R2V_STRATEGY", "auto")
+#: Requested resolution tier (``768P``/``1080P``); unset keeps the provider's ~1 MP default.
+DEFAULT_RESOLUTION: Optional[str] = os.environ.get("KOL_VIDEO_RESOLUTION") or "768P"
 #: Stage-4 ``keyframe_source`` values a real (paid) clip may start from.
 READY_KEYFRAME_SOURCES = ("synthesized", "override")
+
+#: Which gateway workflow renders which mode.
+FLOW_BY_MODE = {"T2V": FLOW_T2V, "I2V": FLOW_FL2VA, "R2V": FLOW_REF2VA}
 
 #: Stage-5 batch progress, shared with the threaded per-shot renderer.
 _progress_lock = threading.Lock()
@@ -322,6 +341,7 @@ class ClipRequest:
     def fingerprint(self) -> str:
         spec = {
             "prompt": self.prompt,
+            "prompt_binding": PROMPT_BINDING_VERSION,
             "mode": self.mode,
             "model": self.model,
             "duration": self.duration,
@@ -355,6 +375,16 @@ def _pick_face_anchor(reference_assets: Optional[List[str]]) -> Optional[Path]:
     return _resolve_existing((named or refs[-1:])[0])
 
 
+def _pick_style_reference(reference_assets: Optional[List[str]]) -> Optional[Path]:
+    """The styling reference (character sheet) that complements the face anchor, if any."""
+    refs = [r for r in (reference_assets or []) if "face" not in Path(r).name.lower()]
+    for ref in refs:
+        resolved = _resolve_existing(ref)
+        if resolved is not None:
+            return resolved
+    return None
+
+
 def build_clip_request(
     shot_id: str,
     prompt: str,
@@ -365,7 +395,6 @@ def build_clip_request(
     generation_mode: Optional[str] = None,
     reference_assets: Optional[List[str]] = None,
     resolution: Optional[str] = None,
-    r2v_model: str = DEFAULT_R2V_MODEL,
     r2v_strategy: str = DEFAULT_R2V_STRATEGY,
     first_frame_provider: Optional[str] = None,
 ) -> ClipRequest:
@@ -373,11 +402,35 @@ def build_clip_request(
 
     - A requested First Frame that is missing is an error (never silently degraded to T2V,
       which would drop the Identity Lock).
-    - R2V sends the Face Anchor as ``subject_reference`` (MiniMax's reference-to-video contract
-      takes a single character face; a multi-panel Character Sheet cannot be one).
+    - R2V sends the Face Anchor as a reference image: the gateway's ``ref2va`` workflow takes
+      the anchor natively, so the identity lock survives (a multi-panel Character Sheet
+      cannot be one reference, hence the face anchor is picked).
     """
     gen_duration = normalize_duration(duration, resolution)
     wants_r2v = generation_mode == "r2v" or bool(reference_assets and len(reference_assets) > 1)
+
+    if wants_r2v and r2v_strategy == "auto":
+        frame = _resolve_existing(image_path) if image_path else None
+        # A Flow2API frame was drawn from the face anchor, so it already carries the identity:
+        # continuing that frame (I2V) keeps both the framing and the locked face.
+        if frame is not None and first_frame_provider == "flow2api":
+            return ClipRequest(
+                shot_id, prompt, "I2V", model, gen_duration, aspect_ratio, resolution, first_frame=frame,
+                degraded_from=None,
+            )
+        face = _pick_face_anchor(reference_assets)
+        if face is None:
+            raise VideoGenerationError(
+                f"Shot '{shot_id}' requires the Identity Lock but has neither an identity-locked first frame "
+                f"(image_path={image_path}, synthesis_provider={first_frame_provider}) nor a face anchor "
+                f"(reference_assets={reference_assets}). Run Stage 4 / restore the Character Sheet Integrity "
+                f"Gate assets; refusing to degrade the Identity Lock."
+            )
+        style = _pick_style_reference(reference_assets)
+        subject_refs = (face, style) if style is not None else (face,)
+        return ClipRequest(
+            shot_id, prompt, "R2V", model, gen_duration, aspect_ratio, resolution, subject_refs=subject_refs
+        )
 
     if wants_r2v and r2v_strategy == "synth_i2v":
         frame = _resolve_existing(image_path) if image_path else None
@@ -405,8 +458,10 @@ def build_clip_request(
                 shot_id, prompt, "I2V", model, gen_duration, aspect_ratio, resolution,
                 first_frame=face, degraded_from="R2V",
             )
+        style = _pick_style_reference(reference_assets)
+        subject_refs = (face, style) if style is not None else (face,)
         return ClipRequest(
-            shot_id, prompt, "R2V", r2v_model, gen_duration, aspect_ratio, resolution, subject_refs=(face,)
+            shot_id, prompt, "R2V", model, gen_duration, aspect_ratio, resolution, subject_refs=subject_refs
         )
 
     if image_path:
@@ -456,11 +511,8 @@ def clip_cache_status(clip_path: str | Path, fingerprint: str) -> str:
 
 
 def _retry_delay(attempt: int, initial_retry_delay: float, exc: BaseException) -> float:
-    """Exponential backoff with jitter; rate-limit (1002) errors back off 4x longer."""
-    delay = (initial_retry_delay * (2 ** (attempt - 1))) + random.uniform(1.0, 3.0)
-    if isinstance(exc, VideoAPIError) and exc.rate_limited:
-        delay *= 4
-    return delay
+    """Exponential backoff with jitter."""
+    return (initial_retry_delay * (2 ** (attempt - 1))) + random.uniform(1.0, 3.0)
 
 
 def render_single_video_clip(
@@ -473,20 +525,21 @@ def render_single_video_clip(
     model: str = DEFAULT_VIDEO_MODEL,
     max_retries: int = 3,
     initial_retry_delay: float = 5.0,
-    poll_timeout_seconds: int = 300,
+    poll_timeout_seconds: int = 600,
     generation_mode: Optional[str] = None,
     reference_assets: Optional[List[str]] = None,
     resolution: Optional[str] = DEFAULT_RESOLUTION,
-    r2v_model: str = DEFAULT_R2V_MODEL,
     r2v_strategy: str = DEFAULT_R2V_STRATEGY,
     first_frame_provider: Optional[str] = None,
 ) -> str:
-    """Renders a single shot clip using genuine MiniMax Hailuo-2.3 video diffusion.
+    """Renders a single shot clip on the ComfyUI gateway (Pika H3 Flex on MiniMax H3).
 
     Supports:
-    - I2V (Image-to-Video): ``image_path`` is the authoritative First Frame (must exist).
-    - R2V (Reference-to-Video): the shot's Face Anchor is sent as ``subject_reference``.
-    - T2V (Text-to-Video): no image; generates purely from the spatial prompt.
+    - I2V (Image-to-Video): ``image_path`` is the authoritative First Frame (must exist);
+      rendered by the ``fl2va`` workflow with the frame as its first frame.
+    - R2V (Reference-to-Video): the shot's Face Anchor is sent as a reference image and
+      rendered by the ``ref2va`` workflow (identity anchor, native reference conditioning).
+    - T2V (Text-to-Video): no image; generated by the ``t2v`` workflow from the spatial prompt.
 
     Robustness:
     - Exponential backoff with jitter; non-retryable API errors (auth, balance, sensitive
@@ -497,16 +550,20 @@ def render_single_video_clip(
 
     NEVER falls back to static image slideshows or ffmpeg pan-zoom.
     """
-    guard_network("minimax.video_generation", f"shot {shot_id}")
+    guard_network("comfy.video_generation", f"shot {shot_id}")
     out_p = Path(output_path).resolve()
     out_p.parent.mkdir(parents=True, exist_ok=True)
 
     req = build_clip_request(
         shot_id, prompt, image_path, duration, aspect_ratio, model,
-        generation_mode, reference_assets, resolution, r2v_model, r2v_strategy, first_frame_provider,
+        generation_mode, reference_assets, resolution, r2v_strategy, first_frame_provider,
     )
     fingerprint = req.fingerprint
     task_file = _task_path(out_p)
+    flow = FLOW_BY_MODE[req.mode]
+    # The prompt the model actually receives: the reference binding is part of it, so the
+    # Prompt Ledger records the sent text, not the pre-binding one.
+    sent_prompt = compose_prompt(flow, prompt, references=len(req.subject_refs))
 
     task_id: Optional[str] = None
     saved = _read_json(task_file)
@@ -531,7 +588,7 @@ def render_single_video_clip(
             # Prompt ledger: the exact prompt, model and first frame per attempt.
             telemetry.record_prompt(
                 shot_id,
-                prompt,
+                sent_prompt,
                 stage=5,
                 mode=req.mode,
                 model=req.model,
@@ -551,14 +608,14 @@ def render_single_video_clip(
             if task_id is not None:
                 print(f"[VideoEngine] [{shot_id}] Resuming in-flight task {task_id} (no new submission).")
             else:
-                task_id = _upload_and_submit(req, out_p, fingerprint)
+                task_id = _upload_and_submit(req, out_p, fingerprint, sent_prompt)
 
             polled_task_id = task_id
             poll_started = time.monotonic()
             poll_error: Optional[str] = None
             try:
                 poll_and_download_video(
-                    task_id=polled_task_id,
+                    prompt_id=polled_task_id,
                     output_path=out_p,
                     timeout_seconds=poll_timeout_seconds,
                 )
@@ -569,10 +626,10 @@ def render_single_video_clip(
                 raise
             finally:
                 telemetry.record_api_call(
-                    "minimax.poll_video",
-                    endpoint=f"{MINIMAX_BASE_URL}/v1/media/video/{polled_task_id}",
+                    "comfy.poll",
+                    endpoint=f"{COMFY_GATEWAY_URL}/history/{polled_task_id}",
                     method="GET",
-                    request={"task_id": polled_task_id, "timeout_seconds": poll_timeout_seconds},
+                    request={"prompt_id": polled_task_id, "timeout_seconds": poll_timeout_seconds},
                     response={"output_rel_path": _rel_path(out_p), "size_bytes": _file_size(out_p)},
                     status="error" if poll_error else "ok",
                     ok=poll_error is None,
@@ -637,88 +694,62 @@ def render_single_video_clip(
     )
 
 
-def _upload_and_submit(req: ClipRequest, out_p: Path, fingerprint: str) -> str:
-    """Upload the request's images, submit the job and persist its task id. Returns the task id."""
+def _upload_and_submit(req: ClipRequest, out_p: Path, fingerprint: str, sent_prompt: str) -> str:
+    """Upload the request's images, build the gateway graph, queue it and persist the prompt id.
+
+    The graph is assembled locally (no paid call yet) and queued with one ``POST /prompt``;
+    the ComfyUI ``prompt_id`` is stored next to the clip so a poll timeout or a restart
+    resumes the *same* queued render instead of paying for a second one.
+    """
     shot_id = req.shot_id
-    uploaded: List[str] = []
-    for image in ([req.first_frame] if req.first_frame else []) + list(req.subject_refs):
-        print(f"[VideoEngine] [{shot_id}] Uploading {'first frame' if image == req.first_frame else 'face anchor'}: {image.name}...")
-        upload_started = time.monotonic()
-        file_url: Optional[str] = None
-        upload_error: Optional[str] = None
-        try:
-            file_url = upload_first_frame(image)
-            uploaded.append(file_url)
-        except Exception as exc:
-            upload_error = str(exc)
-            raise
-        finally:
-            telemetry.record_api_call(
-                "minimax.upload_first_frame",
-                endpoint=f"{MINIMAX_BASE_URL}/v1/media/storage/upload",
-                request={"input_image": _rel_path(image)},
-                response={"file_url": file_url} if file_url else None,
-                status="error" if upload_error else "ok",
-                ok=upload_error is None,
-                duration_seconds=time.monotonic() - upload_started,
-                stage=5,
-                shot_id=shot_id,
-            )
+    flow = FLOW_BY_MODE[req.mode]
 
-    first_frame_url = uploaded[0] if req.first_frame else None
-    subject_urls = uploaded[1:] if req.first_frame else uploaded
+    first_name: Optional[str] = None
+    if req.first_frame:
+        print(f"[VideoEngine] [{shot_id}] Uploading first frame: {req.first_frame.name}...")
+        first_name = upload_image(req.first_frame)
 
-    submit_kwargs: Dict[str, Any] = dict(
-        prompt=req.prompt,
-        image_url=first_frame_url,
-        aspect_ratio=req.aspect_ratio,
-        duration=req.duration,
-        model=req.model,
+    reference_names: List[str] = []
+    for ref in req.subject_refs:
+        print(f"[VideoEngine] [{shot_id}] Uploading identity anchor: {ref.name}...")
+        reference_names.append(upload_image(ref))
+
+    width, height = fit_resolution(
+        req.aspect_ratio,
+        megapixels=resolution_megapixels(req.resolution),
+        reference_size=image_size(req.first_frame),
     )
-    if subject_urls and req.mode == "R2V":
-        submit_kwargs["subject_reference"] = subject_urls
-    if req.resolution:
-        submit_kwargs["resolution"] = req.resolution
+    length = frames_for_duration(req.duration)
+    print(
+        f"[VideoEngine] [{shot_id}] Graph: flow={flow} size={width}x{height} frames={length} "
+        f"({round(length / 24, 2)}s) mode={req.mode}"
+    )
 
-    submit_started = time.monotonic()
-    submit_error: Optional[str] = None
-    task_id: Optional[str] = None
-    try:
-        task_id = submit_video_job(**submit_kwargs)
-    except Exception as exc:
-        submit_error = str(exc)
-        raise
-    finally:
-        telemetry.record_api_call(
-            "minimax.submit_video",
-            endpoint=f"{MINIMAX_BASE_URL}/v1/media/video",
-            request={
-                "model": req.model,
-                "prompt_chars": len(req.prompt),
-                "duration": req.duration,
-                "aspect_ratio": req.aspect_ratio,
-                "resolution": req.resolution,
-                "input_image": first_frame_url,
-                "subject_reference": subject_urls or None,
-            },
-            response={"task_id": task_id} if task_id else None,
-            status="error" if submit_error else "ok",
-            ok=submit_error is None,
-            duration_seconds=time.monotonic() - submit_started,
-            stage=5,
-            shot_id=shot_id,
-        )
-    print(f"[VideoEngine] [{shot_id}] Task submitted successfully: {task_id}")
-    _write_json_atomic(_task_path(out_p), {"task_id": task_id, "fingerprint": fingerprint, "shot_id": shot_id})
+    graph = build_graph(
+        flow,
+        sent_prompt,
+        first_frame=first_name,
+        references=reference_names,
+        width=width,
+        height=height,
+        length=length,
+        filename_prefix=f"kol/{shot_id}",
+    )
+    prompt_id = submit_graph(graph)
+    print(f"[VideoEngine] [{shot_id}] Graph queued successfully: {prompt_id}")
+    _write_json_atomic(
+        _task_path(out_p),
+        {"task_id": prompt_id, "fingerprint": fingerprint, "shot_id": shot_id, "flow": flow},
+    )
     telemetry.record_prompt(
         shot_id,
-        req.prompt,
+        sent_prompt,
         stage=5,
-        first_frame_url=first_frame_url,
-        subject_reference_urls=subject_urls or None,
-        task_id=task_id,
+        first_frame_url=first_name,
+        subject_reference_urls=reference_names or None,
+        task_id=prompt_id,
     )
-    return str(task_id)
+    return str(prompt_id)
 
 
 def _shot_request_kwargs(shot: StoryboardShot, kf: Any) -> Dict[str, Any]:
@@ -778,14 +809,14 @@ def render_all_video_clips(
     mode: str = "api",
     max_retries: int = 3,
     initial_retry_delay: float = 5.0,
-    poll_timeout_seconds: int = 300,
+    poll_timeout_seconds: int = 600,
     max_concurrency: int = 3,
     workspace: Optional[ProjectWorkspace] = None,
 ) -> List[str]:
     """Renders clips for all storyboard shots concurrently.
 
-    ``mode="api"`` (or legacy ``"diffusion"``): genuine MiniMax Hailuo-2.3 diffusion with zero
-    tolerance for static images; raises ``OfflineNetworkError`` up front if offline.
+    ``mode="api"`` (or legacy ``"diffusion"``): genuine diffusion on the ComfyUI gateway with
+    zero tolerance for static images; raises ``OfflineNetworkError`` up front if offline.
     Clips whose request fingerprint is unchanged are reused (no new paid jobs); the first
     failing shot cancels all not-yet-started shots so no further credits are spent.
     ``mode="ffmpeg"``: local, network-free LOCAL_FFMPEG placeholder clips (see module doc).
@@ -793,7 +824,7 @@ def render_all_video_clips(
     """
     resolved_mode = resolve_video_mode(mode)
     if resolved_mode == "api":
-        guard_network("minimax.video_generation", "render_all_video_clips(mode='api')")
+        guard_network("comfy.video_generation", "render_all_video_clips(mode='api')")
     local = resolved_mode == "ffmpeg"
     target_artifacts_dir = workspace.artifacts_dir if workspace is not None else (artifacts_dir or ARTIFACTS_DIR)
     target_clips_dir = workspace.raw_clips_dir if workspace is not None else (raw_clips_dir or RAW_CLIPS_DIR)

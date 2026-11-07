@@ -29,3 +29,5 @@ assets/models/
 
 # Local secrets (see .env.example)
 .env
+
+.keys 

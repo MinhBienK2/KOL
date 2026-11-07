@@ -12,9 +12,10 @@ import urllib.request
 from pathlib import Path
 from typing import List, Optional
 
+from pipeline.comfy_video import FLOW_FL2VA
 from pipeline.config import FLOW2API_API_KEY, FLOW2API_BASE_URL, MINIMAX_API_KEY, MINIMAX_BASE_URL
 from pipeline.offline import guard_network, guarded_urlopen, guarded_urlretrieve
-from tools.generate_video import poll_and_download_video, submit_video_job, upload_first_frame
+from pipeline.comfy_video import render_clip
 
 FLOW2API_IMAGE_MODELS = {"9:16": "gemini-3.1-flash-image-portrait-2k", "16:9": "gemini-3.1-flash-image-landscape-2k"}
 
@@ -43,8 +44,30 @@ def _get(path: str, timeout: int = 60) -> dict:
 
 
 def upload(path: str | Path) -> str:
-    """Temporary public URL for a local file (MiniMax OSS, ~1h)."""
-    return upload_first_frame(Path(path).resolve())
+    """Temporary public URL for a local file (MiniMax OSS, ~1h).
+
+    Used by the MiniMax vision model (image description); the video path no longer needs a
+    public URL because the gateway takes the image file itself.
+    """
+    file_path = Path(path).resolve()
+    boundary = "----WebKitFormBoundaryContinuityMedia"
+    blob = file_path.read_bytes()
+    mime = "image/png" if file_path.suffix.lower() == ".png" else "image/jpeg"
+    body = b"".join([
+        f"--{boundary}\r\n".encode(),
+        f'Content-Disposition: form-data; name="file"; filename="{file_path.name}"\r\n'.encode(),
+        f"Content-Type: {mime}\r\n\r\n".encode(),
+        blob,
+        f"\r\n--{boundary}--\r\n".encode(),
+    ])
+    req = urllib.request.Request(
+        MINIMAX_BASE_URL + "/v1/media/storage/upload",
+        data=body,
+        headers={**_headers(), "Content-Type": f"multipart/form-data; boundary={boundary}"},
+    )
+    with guarded_urlopen(req, operation="minimax.upload_media", timeout=90) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+    return str(data["data"]["file_url"])
 
 
 def minimax_image(prompt: str, out_path: Path, *, reference_urls: Optional[List[str]] = None,
@@ -105,11 +128,18 @@ def describe_image(path: str | Path, question: str) -> str:
     return str((res.get("data") or {}).get("description") or "")
 
 
-def render_i2v(first_frame: str | Path, prompt: str, out_path: Path, *, duration: int = 6, resolution: str = "768P") -> Path:
-    """One Hailuo-2.3 image-to-video clip from a local first frame."""
-    task_id = submit_video_job(prompt=prompt, image_url=upload(first_frame), aspect_ratio="9:16",
-                               duration=duration, resolution=resolution)
-    poll_and_download_video(task_id, out_path, timeout_seconds=600)
+def render_i2v(first_frame: str | Path, prompt: str, out_path: Path, *, duration: int = 6,
+               resolution: str = "768P") -> Path:
+    """One image-to-video clip from a local first frame (ComfyUI gateway, Pika H3 Flex)."""
+    render_clip(
+        FLOW_FL2VA,
+        prompt,
+        out_path,
+        first_frame=Path(first_frame),
+        duration=duration,
+        aspect_ratio="9:16",
+        filename_prefix="kol/continuity",
+    )
     return out_path
 
 

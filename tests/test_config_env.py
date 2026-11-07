@@ -12,7 +12,7 @@ import pytest
 from pipeline import config
 from pipeline.config import ConfigurationError, load_dotenv, parse_env_file
 from pipeline.offline import OfflineNetworkError, offline_mode
-from tools import generate_video
+from pipeline import comfy_video
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -57,21 +57,28 @@ def test_key_resolved_at_call_time_and_never_in_repr(monkeypatch: pytest.MonkeyP
     assert "secret-123" not in repr(config.MINIMAX_API_KEY)
 
 
-def test_generate_video_submit_without_key_raises_config_error_without_network(
+def test_comfy_submit_without_key_raises_config_error_without_network(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
-    monkeypatch.delenv("MINIMAX_API_KEY", raising=False)
+    monkeypatch.delenv("COMFY_GATEWAY_TOKEN", raising=False)
+    monkeypatch.delenv("CKIT_TOKEN", raising=False)
+    monkeypatch.setattr(comfy_video, "_agent_env", lambda: {})
+    monkeypatch.setattr(comfy_video, "_ckit_config", lambda: {})
     with patch("urllib.request.urlopen") as urlopen:
         with pytest.raises(ConfigurationError):
-            generate_video.submit_video_job(prompt="x")
+            comfy_video.submit_graph({"1": {"class_type": "SaveVideo", "inputs": {}}})
     urlopen.assert_not_called()
-    assert generate_video.is_retryable_error(ConfigurationError("x")) is False
+    assert comfy_video.is_retryable_error(ConfigurationError("x")) is False
 
 
 def test_offline_mode_needs_no_key(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.delenv("MINIMAX_API_KEY", raising=False)
+    monkeypatch.delenv("COMFY_GATEWAY_TOKEN", raising=False)
+    monkeypatch.delenv("CKIT_TOKEN", raising=False)
+    monkeypatch.setattr(comfy_video, "_agent_env", lambda: {})
+    monkeypatch.setattr(comfy_video, "_ckit_config", lambda: {})
     with offline_mode(True), pytest.raises(OfflineNetworkError):
-        generate_video.submit_video_job(prompt="x")
+        comfy_video.submit_graph({"1": {"class_type": "SaveVideo", "inputs": {}}})
 
 
 def test_no_api_key_literal_left_in_tracked_source():

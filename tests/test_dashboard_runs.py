@@ -66,7 +66,7 @@ def test_workspace_prompts_carry_api_parameters(run_tree: dict):
     prompt = prompts["shot_01"]
     assert prompt["prompt"].startswith("Framing: [WIDE_SHOT]")
     assert prompt["mode"] == "I2V"
-    assert prompt["model"] == "MiniMax-Hailuo-2.3"
+    assert prompt["model"] == "Pika-H3-Flex-MiniMax-H3"
     assert prompt["task_id"] == "task-123"
     assert prompt["duration_requested"] == 6
     assert prompt["output_url"]
